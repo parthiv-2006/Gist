@@ -21,9 +21,11 @@ _PROMPT_TEMPLATE = (
     'Your task is to {mode_instruction}.\n\n'
     'Constraints:\n'
     '- Be brief (2-4 sentences max).\n'
-    '- Do not use bullet points.\n'
     '- Do not repeat the original text.\n'
     '- Just explain it.\n\n'
+    'Visual Analogies:\n'
+    'If the concept is complex, you ARE encouraged to use a small Mermaid.js diagram or an ASCII chart. '
+    'Format diagrams within a code block (e.g., ```mermaid ... ```).\n\n'
     'Selected text: "{selected_text}"'
 )
 
@@ -42,7 +44,10 @@ def build_prompt(selected_text: str, page_context: str, complexity_level: str = 
 
 
 async def stream_explanation(
-    selected_text: str, page_context: str, complexity_level: str = "standard"
+    selected_text: str,
+    page_context: str,
+    complexity_level: str = "standard",
+    messages: list[dict] | None = None,
 ) -> AsyncGenerator[str, None]:
     """
     Call the Gemini API with streaming enabled.
@@ -59,7 +64,19 @@ async def stream_explanation(
         raise RuntimeError("GEMINI_API_KEY is not set")
 
     client = genai.Client(api_key=api_key)
-    prompt = build_prompt(selected_text, page_context, complexity_level)
+
+    # For the very first turn, build the initial prompt
+    if not messages:
+        contents = [build_prompt(selected_text, page_context, complexity_level)]
+    else:
+        # Convert our ChatMessage list into the format the Gemini SDK expects
+        # { 'role': 'user'|'model', 'parts': [{'text': '...'}] }
+        contents = []
+        for msg in messages:
+            contents.append({
+                "role": "user" if msg["role"] == "user" else "model",
+                "parts": [{"text": msg["content"]}]
+            })
 
     # Bridge the synchronous SDK iterator to this async generator via a queue.
     # Each chunk is enqueued by a daemon thread as it arrives from the network;
@@ -71,7 +88,7 @@ async def stream_explanation(
         try:
             for chunk in client.models.generate_content_stream(
                 model="gemini-2.5-flash",
-                contents=prompt,
+                contents=contents,
             ):
                 chunk_queue.put(chunk)
         except Exception as exc:

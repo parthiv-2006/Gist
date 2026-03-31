@@ -1,5 +1,5 @@
 # app/models/schemas.py
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 from typing import Literal, Optional, List
 
 
@@ -14,15 +14,19 @@ class SimplifyRequest(BaseModel):
     complexity_level: Literal["standard", "simple", "legal", "academic"] = "standard"
     messages: Optional[List[ChatMessage]] = None
 
-    @field_validator("selected_text")
-    @classmethod
-    def validate_selected_text(cls, v: str) -> str:
-        stripped = v.strip()
+    @model_validator(mode="after")
+    def validate_selected_text(self) -> "SimplifyRequest":
+        # Follow-up turns supply an empty selected_text — that's valid when
+        # the conversation history (messages) provides the full context.
+        if self.messages:
+            return self
+        stripped = self.selected_text.strip()
         if not stripped:
             raise ValueError("EMPTY_TEXT")
         if len(stripped) > 2000:
             raise ValueError("TEXT_TOO_LONG")
-        return stripped
+        self.selected_text = stripped
+        return self
 
     @field_validator("page_context")
     @classmethod
