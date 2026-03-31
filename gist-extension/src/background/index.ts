@@ -13,19 +13,32 @@ chrome.runtime.onInstalled.addListener(() => {
   fetch(`${BACKEND_URL.replace("/api/v1/simplify", "/health")}`).catch(() => {});
 });
 
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   if (info.menuItemId !== "gist-this" || !tab?.id) return;
+  await ensureContentScript(tab.id);
   chrome.tabs.sendMessage(tab.id, { type: "GIST_CONTEXT_MENU_TRIGGERED", payload: {} });
 });
 
 chrome.commands.onCommand.addListener((command) => {
   if (command !== "trigger-gist") return;
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     const tab = tabs[0];
     if (!tab?.id) return;
+    await ensureContentScript(tab.id);
     chrome.tabs.sendMessage(tab.id, { type: "GIST_SHORTCUT_TRIGGERED", payload: {} });
   });
 });
+
+async function ensureContentScript(tabId: number): Promise<void> {
+  try {
+    await chrome.scripting.executeScript({
+      target: { tabId },
+      files: ["content.js"],
+    });
+  } catch {
+    // Already injected or restricted page (chrome://, extensions page, etc.) — proceed anyway
+  }
+}
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, _sendResponse) => {
   if (!isGistMessage(message)) return;

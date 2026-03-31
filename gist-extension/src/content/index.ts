@@ -9,37 +9,46 @@ import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/mess
 import { extractSelectedText, validateText } from "../utils/text";
 import { mountPopover, updatePopover } from "./shadow-host";
 
-// Mount the shadow host once on script injection
-mountPopover();
+declare global {
+  interface Window { __gistMounted?: boolean }
+}
 
-chrome.runtime.onMessage.addListener((message: unknown) => {
-  if (!isGistMessage(message)) return;
+// Guard against double-injection (e.g. when scripting.executeScript is used on a tab
+// that already had the content script injected declaratively at document_idle).
+if (!window.__gistMounted) {
+  window.__gistMounted = true;
 
-  const msg = message as GistMessage;
+  mountPopover();
 
-  switch (msg.type) {
-    case "GIST_CONTEXT_MENU_TRIGGERED":
-    case "GIST_SHORTCUT_TRIGGERED": {
-      handleTrigger();
-      break;
+  chrome.runtime.onMessage.addListener((message: unknown) => {
+    if (!isGistMessage(message)) return;
+
+    const msg = message as GistMessage;
+
+    switch (msg.type) {
+      case "GIST_CONTEXT_MENU_TRIGGERED":
+      case "GIST_SHORTCUT_TRIGGERED": {
+        handleTrigger();
+        break;
+      }
+
+      case "GIST_CHUNK": {
+        updatePopover({ state: "STREAMING", chunk: msg.payload.chunk ?? "" });
+        break;
+      }
+
+      case "GIST_COMPLETE": {
+        updatePopover({ state: "DONE" });
+        break;
+      }
+
+      case "GIST_ERROR": {
+        updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong." });
+        break;
+      }
     }
-
-    case "GIST_CHUNK": {
-      updatePopover({ state: "STREAMING", chunk: msg.payload.chunk ?? "" });
-      break;
-    }
-
-    case "GIST_COMPLETE": {
-      updatePopover({ state: "DONE" });
-      break;
-    }
-
-    case "GIST_ERROR": {
-      updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong." });
-      break;
-    }
-  }
-});
+  });
+}
 
 function handleTrigger(): void {
   const selection = window.getSelection();
