@@ -58,19 +58,13 @@ export function Popover({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [state, onClose]);
 
-  // Close on click outside.
-  // Use e.composedPath() instead of e.target — Node.contains() does not cross
-  // Shadow DOM boundaries, and e.target is retargeted to the shadow host which
-  // makes the "inside" check unreliable. composedPath() always includes every
-  // element in the full event path, including shadow-root internals.
+  // Close when the user clicks outside the popover.
+  // The shadow host has a mousedown listener that calls stopPropagation() for
+  // any click originating inside the shadow DOM — so if this document-level
+  // handler fires at all, the click was definitively outside the popover.
   useEffect(() => {
     if (state === "IDLE") return;
-    const handleClickOutside = (e: MouseEvent) => {
-      const host = document.getElementById("gist-shadow-host");
-      if (host && !e.composedPath().includes(host)) {
-        onClose();
-      }
-    };
+    const handleClickOutside = () => onClose();
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [state, onClose]);

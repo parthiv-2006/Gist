@@ -62,6 +62,15 @@ export function mountPopover(): void {
     shadowRoot.appendChild(viteStyle); // appendChild moves an existing node — no clone needed
   }
 
+  // Stop mousedown events that originate inside the shadow DOM from reaching
+  // document-level listeners. The popover uses position:fixed inside a 0x0
+  // shadow host, so Chrome's hit-testing may not include the host in
+  // composedPath(). Stopping propagation at the host level is the reliable
+  // fix: inside clicks never reach the document handler, outside clicks do.
+  shadowHost.addEventListener("mousedown", (e) => {
+    e.stopPropagation();
+  });
+
   const mountPoint = document.createElement("div");
   shadowRoot.appendChild(mountPoint);
 
