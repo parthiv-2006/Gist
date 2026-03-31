@@ -6,6 +6,7 @@ import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Popover, type PopoverState } from "./components/Popover";
 import type { ComplexityLevel, ChatMessage } from "../utils/messages";
+import popoverStyles from "./components/Popover.module.css?inline";
 
 let shadowHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
@@ -45,22 +46,22 @@ export function mountPopover(): void {
   shadowHost.style.cssText = "all: initial; position: fixed; z-index: 2147483647;";
   document.body.appendChild(shadowHost);
 
-  // Inject Inter font inside the shadow DOM
   shadowRoot = shadowHost.attachShadow({ mode: "open" });
+
+  // Inject Inter font as a <link> inside the shadow root
   const fontLink = document.createElement("link");
   fontLink.rel = "stylesheet";
   fontLink.href =
     "https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap";
   shadowRoot.appendChild(fontLink);
 
-  // Vite's IIFE build injects all CSS into document.head at bundle execution time.
-  // Move it into the shadow root so styles scope correctly and don't pollute the host page.
-  const viteStyle = Array.from(document.head.querySelectorAll("style")).find(
-    (el) => el.textContent?.includes("--gist-bg")
-  );
-  if (viteStyle) {
-    shadowRoot.appendChild(viteStyle); // appendChild moves an existing node — no clone needed
-  }
+  // Inject the Popover stylesheet into the shadow root via a <style> element.
+  // Vite's `?inline` query returns the CSS as a plain string at build time —
+  // deterministic, refactor-safe, and immune to race conditions or host-page
+  // CSS variable collisions.
+  const style = document.createElement("style");
+  style.textContent = popoverStyles;
+  shadowRoot.appendChild(style);
 
   // Stop mousedown events that originate inside the shadow DOM from reaching
   // document-level listeners. The popover uses position:fixed inside a 0x0

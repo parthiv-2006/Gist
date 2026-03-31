@@ -30,7 +30,16 @@ describe("Popover Component", () => {
   });
 
   it("renders full explanation when state is DONE", () => {
-    render(<Popover state="DONE" text="Full explanation here." onClose={() => {}} />);
+    // In DONE state the Popover renders committed chat history from `messages`,
+    // not the streaming `text` prop directly.
+    render(
+      <Popover
+        state="DONE"
+        text=""
+        messages={[{ role: "model", content: "Full explanation here." }]}
+        onClose={() => {}}
+      />
+    );
     expect(screen.getByText("Full explanation here.")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /close/i })).toBeInTheDocument();
   });

@@ -96,7 +96,7 @@ pytest --cov=app --cov-report=term-missing
 4. **Never call the real Gemini API in tests.** Mock ALL outbound HTTP with `pytest-httpx` for Python and `vi.fn()` for TypeScript.
 5. **Chrome/Chromium only.** No Firefox or Safari compatibility shims in MVP.
 6. **No user accounts, no auth, no PDF parsing** — hard out-of-scope.
-7. **The LLM model string is always `gemini-1.5-flash`.** No other model names.
+7. **The LLM model string is always `gemini-2.5-flash`.** No other model names. The model is defined as `GEMINI_MODEL` in `app/services/gemini.py` — change it there only.
 8. **TDD is mandatory.** Write tests before implementation for every phase. Red → Green → Refactor.
 
 ---
