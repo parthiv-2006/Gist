@@ -118,6 +118,19 @@ export function unmountPopover(): void {
   }
 }
 
+// Stable references — defined once so React sees the same prop identity on every
+// render. This prevents the click-outside useEffect in Popover from re-firing on
+// each streaming chunk (which briefly removes/re-adds the mousedown listener and
+// creates a race-condition window where clicks incorrectly close the popover).
+const stableOnClose = () => unmountPopover();
+const stableOnSendMessage = (query: string) => {
+  messages.push({ role: "user", content: query });
+  updatePopover({ state: "LOADING", chunk: "follow-up" });
+  if (sendMessageCallback) {
+    sendMessageCallback(query, messages);
+  }
+};
+
 interface RenderOptions {
   state: PopoverState;
   text?: string;
@@ -135,16 +148,9 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       error,
       position: currentPosition,
       mode: currentMode,
-      onClose: () => unmountPopover(),
+      onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
-      onSendMessage: (query: string) => {
-        // Push user message to local history
-        messages.push({ role: "user", content: query });
-        updatePopover({ state: "LOADING", chunk: "follow-up" }); // chunk="follow-up" is a flag to NOT clear history
-        if (sendMessageCallback) {
-          sendMessageCallback(query, messages);
-        }
-      },
+      onSendMessage: stableOnSendMessage,
     })
   );
 }
