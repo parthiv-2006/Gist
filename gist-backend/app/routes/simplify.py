@@ -35,6 +35,14 @@ async def simplify(request: Request):
                     "code": "TEXT_TOO_LONG",
                 },
             )
+        if "HISTORY_TOO_LONG" in first_error_msg:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "error": "Conversation history exceeds the maximum allowed size.",
+                    "code": "HISTORY_TOO_LONG",
+                },
+            )
         return JSONResponse(
             status_code=400,
             content={"error": str(e), "code": "VALIDATION_ERROR"},
