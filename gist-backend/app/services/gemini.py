@@ -70,7 +70,7 @@ async def stream_explanation(
     def _produce() -> None:
         try:
             for chunk in client.models.generate_content_stream(
-                model="gemini-2.0-flash",
+                model="gemini-2.5-flash",
                 contents=prompt,
             ):
                 chunk_queue.put(chunk)
