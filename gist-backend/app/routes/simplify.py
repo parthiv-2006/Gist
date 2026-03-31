@@ -53,11 +53,11 @@ async def simplify(request: Request):
         async for chunk in gen:
             first_chunk = chunk
             break
-    except RuntimeError:
+    except RuntimeError as e:
         return JSONResponse(
             status_code=503,
             content={
-                "error": "The LLM service is temporarily unavailable.",
+                "error": f"The LLM service is temporarily unavailable. Detail: {e}",
                 "code": "LLM_UNAVAILABLE",
             },
         )
