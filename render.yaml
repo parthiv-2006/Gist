@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: gist-backend
+    runtime: python
+    rootDir: gist-backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: GEMINI_API_KEY
+        sync: false           # Set manually in Render dashboard — NEVER commit this value
+      - key: ALLOWED_ORIGINS
+        value: "*"            # Replace with chrome-extension://YOUR_EXTENSION_ID after publishing
+    autoDeploy: true
