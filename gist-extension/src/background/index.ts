@@ -46,15 +46,15 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, _sendResponse) =
   const tabId = sender.tab?.id;
   if (!tabId) return;
 
-  const { selectedText, pageContext } = message.payload;
+  const { selectedText, pageContext, complexityLevel } = message.payload;
   if (!selectedText) return;
 
   console.log("[Gist BG] GIST_REQUEST received", { tabId, selectedText: selectedText.slice(0, 50) });
-  streamFromBackend(tabId, selectedText, pageContext ?? "");
+  streamFromBackend(tabId, selectedText, pageContext ?? "", complexityLevel ?? "standard");
   // No return true — we use chrome.tabs.sendMessage, never sendResponse
 });
 
-async function streamFromBackend(tabId: number, selectedText: string, pageContext: string) {
+async function streamFromBackend(tabId: number, selectedText: string, pageContext: string, complexityLevel: string) {
   console.log("[Gist BG] fetch →", BACKEND_URL);
   try {
     const response = await fetch(BACKEND_URL, {
@@ -63,7 +63,7 @@ async function streamFromBackend(tabId: number, selectedText: string, pageContex
       body: JSON.stringify({
         selected_text: selectedText,
         page_context: pageContext,
-        complexity_level: "standard",
+        complexity_level: complexityLevel,
       }),
     });
 

@@ -96,6 +96,8 @@ export function updatePopover(update: PopoverUpdate): void {
 
 export function unmountPopover(): void {
   if (reactRoot) {
+    accumulatedText = "";
+    currentMode = "standard";
     reactRoot.render(React.createElement(Popover, { state: "IDLE", text: "", onClose: () => {} }));
   }
 }

@@ -81,7 +81,9 @@ function handleTrigger(): void {
   }
 
   // Show loading state and get the selection position for popover placement
-  const selectionRect = selection?.getRangeAt(0).getBoundingClientRect() ?? null;
+  const selectionRect = (selection && selection.rangeCount > 0)
+    ? selection.getRangeAt(0).getBoundingClientRect()
+    : null;
   updatePopover({ state: "LOADING", position: selectionRect ?? undefined });
 
   // Send the request to the background worker for LLM processing
