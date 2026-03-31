@@ -36,6 +36,15 @@ export function mountPopover(): void {
     "https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap";
   shadowRoot.appendChild(fontLink);
 
+  // Vite's IIFE build injects all CSS into document.head at bundle execution time.
+  // Move it into the shadow root so styles scope correctly and don't pollute the host page.
+  const viteStyle = Array.from(document.head.querySelectorAll("style")).find(
+    (el) => el.textContent?.includes("--gist-bg")
+  );
+  if (viteStyle) {
+    shadowRoot.appendChild(viteStyle); // appendChild moves an existing node — no clone needed
+  }
+
   const mountPoint = document.createElement("div");
   shadowRoot.appendChild(mountPoint);
 

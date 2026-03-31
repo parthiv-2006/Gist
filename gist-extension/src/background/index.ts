@@ -33,7 +33,7 @@ async function ensureContentScript(tabId: number): Promise<void> {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["loader.js"],
+      files: ["content.js"],
     });
   } catch {
     // Already injected or restricted page (chrome://, extensions page, etc.) — proceed anyway
@@ -50,7 +50,7 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, _sendResponse) =
   if (!selectedText) return;
 
   streamFromBackend(tabId, selectedText, pageContext ?? "");
-  return true;
+  // No return true — we use chrome.tabs.sendMessage, never sendResponse
 });
 
 async function streamFromBackend(tabId: number, selectedText: string, pageContext: string) {
