@@ -3,7 +3,7 @@ import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/mess
 // Switch to local backend during development to avoid Render redeploy waits.
 // To use local: run `uvicorn app.main:app --reload --port 8000` in gist-backend/
 // Then flip DEV_MODE to true and rebuild the extension.
-const DEV_MODE = false;
+const DEV_MODE = true;
 const BACKEND_URL = DEV_MODE
   ? "http://localhost:8000/api/v1/simplify"
   : "https://gist-vc8m.onrender.com/api/v1/simplify";
@@ -48,19 +48,28 @@ async function ensureContentScript(tabId: number): Promise<void> {
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, _sendResponse) => {
   if (!isGistMessage(message)) return;
-  if (message.type !== "GIST_REQUEST") return;
   const tabId = sender.tab?.id;
   if (!tabId) return;
 
-  const { selectedText, pageContext, complexityLevel } = message.payload;
-  if (!selectedText) return;
-
-  console.log("[Gist BG] GIST_REQUEST received", { tabId, selectedText: selectedText.slice(0, 50) });
-  streamFromBackend(tabId, selectedText, pageContext ?? "", complexityLevel ?? "standard");
-  // No return true — we use chrome.tabs.sendMessage, never sendResponse
+  if (message.type === "GIST_REQUEST") {
+    const { selectedText, pageContext, complexityLevel } = message.payload;
+    if (!selectedText) return;
+    console.log("[Gist BG] GIST_REQUEST received", { tabId, selectedText: selectedText.slice(0, 50) });
+    streamFromBackend(tabId, selectedText, pageContext ?? "", complexityLevel ?? "standard");
+  } else if (message.type === "GIST_FOLLOW_UP") {
+    const { pageContext, messages, complexityLevel } = message.payload;
+    console.log("[Gist BG] GIST_FOLLOW_UP received", { tabId, historyLength: messages?.length });
+    streamFromBackend(tabId, "", pageContext ?? "", complexityLevel ?? "standard", messages);
+  }
 });
 
-async function streamFromBackend(tabId: number, selectedText: string, pageContext: string, complexityLevel: string) {
+async function streamFromBackend(
+  tabId: number,
+  selectedText: string,
+  pageContext: string,
+  complexityLevel: string,
+  messages?: any[]
+) {
   console.log("[Gist BG] fetch →", BACKEND_URL);
   try {
     const response = await fetch(BACKEND_URL, {
@@ -70,6 +79,7 @@ async function streamFromBackend(tabId: number, selectedText: string, pageContex
         selected_text: selectedText,
         page_context: pageContext,
         complexity_level: complexityLevel,
+        messages: messages,
       }),
     });
 
