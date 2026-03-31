@@ -1,10 +1,9 @@
-import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
+import { buildGistRequest, isGistMessage, type GistMessage, type ChatMessage } from "../utils/messages";
 
-// Switch to local backend during development to avoid Render redeploy waits.
-// To use local: run `uvicorn app.main:app --reload --port 8000` in gist-backend/
-// Then flip DEV_MODE to true and rebuild the extension.
-const DEV_MODE = true;
-const BACKEND_URL = DEV_MODE
+// Backend URL is selected automatically by Vite at build time.
+// `vite build` (production) → Render URL
+// `vite build --watch` / `vite` (dev) → localhost
+const BACKEND_URL = import.meta.env.DEV
   ? "http://localhost:8000/api/v1/simplify"
   : "https://gist-vc8m.onrender.com/api/v1/simplify";
 
@@ -68,7 +67,7 @@ async function streamFromBackend(
   selectedText: string,
   pageContext: string,
   complexityLevel: string,
-  messages?: any[]
+  messages?: ChatMessage[]
 ) {
   console.log("[Gist BG] fetch →", BACKEND_URL);
   try {
