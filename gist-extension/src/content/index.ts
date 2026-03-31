@@ -7,7 +7,7 @@
 
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers } from "./shadow-host";
 import { RateLimiter } from "../utils/rate-limiter";
 
 const rateLimiter = new RateLimiter(5, 10_000);
@@ -22,6 +22,30 @@ if (!window.__gistMounted) {
   window.__gistMounted = true;
 
   mountPopover();
+
+  setHandlers(
+    (mode) => {
+      // Re-trigger with same text but new mode
+      const selection = window.getSelection();
+      const text = extractSelectedText(selection);
+      if (text) {
+        updatePopover({ state: "LOADING", mode });
+        chrome.runtime.sendMessage(buildGistRequest(text, document.title, mode));
+      }
+    },
+    (query, history) => {
+      // Send the follow-up request to the background worker
+      chrome.runtime.sendMessage({
+        type: "GIST_FOLLOW_UP",
+        payload: {
+          selectedText: "", // Not needed for follow-up as it's in the history
+          pageContext: document.title,
+          messages: history,
+          query,
+        }
+      });
+    }
+  );
 
   chrome.runtime.onMessage.addListener((message: unknown) => {
     if (!isGistMessage(message)) return;

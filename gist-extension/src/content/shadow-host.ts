@@ -5,7 +5,7 @@
 import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Popover, type PopoverState } from "./components/Popover";
-import type { ComplexityLevel } from "../utils/messages";
+import type { ComplexityLevel, ChatMessage } from "../utils/messages";
 
 let shadowHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
@@ -13,13 +13,20 @@ let reactRoot: Root | null = null;
 
 // Internal accumulated text (builds up as STREAMING chunks arrive)
 let accumulatedText = "";
-// Current explanation mode — updated on LOADING, persisted through STREAMING/DONE
+let messages: ChatMessage[] = [];
 let currentMode: ComplexityLevel = "standard";
-// Callback set by content/index.ts to handle mode button clicks
-let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
+let currentPosition: DOMRect | undefined = undefined;
 
-export function setModeChangeHandler(handler: (mode: ComplexityLevel) => void): void {
-  modeChangeCallback = handler;
+// Callbacks set by content/index.ts
+let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
+let sendMessageCallback: ((query: string, history: ChatMessage[]) => void) | null = null;
+
+export function setHandlers(
+  onModeChange: (mode: ComplexityLevel) => void,
+  onSendMessage: (query: string, history: ChatMessage[]) => void
+): void {
+  modeChangeCallback = onModeChange;
+  sendMessageCallback = onSendMessage;
 }
 
 export interface PopoverUpdate {
@@ -66,12 +73,15 @@ export function updatePopover(update: PopoverUpdate): void {
   if (!reactRoot) return;
 
   if (update.state === "LOADING") {
-    accumulatedText = "";
+    // If it's a fresh Gist (not a follow-up), clear history
+    if (!update.chunk) {
+      messages = [];
+      accumulatedText = "";
+    }
     if (update.mode) currentMode = update.mode;
-    renderPopover({
-      state: "LOADING",
-      position: update.position,
-    });
+    if (update.position) currentPosition = update.position;
+    
+    renderPopover({ state: "LOADING" });
     return;
   }
 
@@ -82,7 +92,12 @@ export function updatePopover(update: PopoverUpdate): void {
   }
 
   if (update.state === "DONE") {
-    renderPopover({ state: "DONE", text: accumulatedText });
+    // Commit the accumulated text to history
+    if (accumulatedText) {
+      messages.push({ role: "model", content: accumulatedText });
+      accumulatedText = "";
+    }
+    renderPopover({ state: "DONE" });
     return;
   }
 
@@ -97,8 +112,9 @@ export function updatePopover(update: PopoverUpdate): void {
 export function unmountPopover(): void {
   if (reactRoot) {
     accumulatedText = "";
+    messages = [];
     currentMode = "standard";
-    reactRoot.render(React.createElement(Popover, { state: "IDLE", text: "", onClose: () => {} }));
+    renderPopover({ state: "IDLE" });
   }
 }
 
@@ -106,19 +122,29 @@ interface RenderOptions {
   state: PopoverState;
   text?: string;
   error?: string;
-  position?: DOMRect;
 }
 
-function renderPopover({ state, text = "", error, position }: RenderOptions): void {
+function renderPopover({ state, text = "", error }: RenderOptions): void {
   if (!reactRoot) return;
 
   reactRoot.render(
     React.createElement(Popover, {
       state,
       text,
+      messages,
       error,
-      position,
+      position: currentPosition,
+      mode: currentMode,
       onClose: () => unmountPopover(),
+      onModeChange: modeChangeCallback ?? undefined,
+      onSendMessage: (query: string) => {
+        // Push user message to local history
+        messages.push({ role: "user", content: query });
+        updatePopover({ state: "LOADING", chunk: "follow-up" }); // chunk="follow-up" is a flag to NOT clear history
+        if (sendMessageCallback) {
+          sendMessageCallback(query, messages);
+        }
+      },
     })
   );
 }
