@@ -27,6 +27,7 @@ if (!window.__gistMounted) {
     if (!isGistMessage(message)) return;
 
     const msg = message as GistMessage;
+    console.log("[Gist CS] message received:", msg.type);
 
     switch (msg.type) {
       case "GIST_CONTEXT_MENU_TRIGGERED":
@@ -36,16 +37,19 @@ if (!window.__gistMounted) {
       }
 
       case "GIST_CHUNK": {
+        console.log("[Gist CS] GIST_CHUNK →", (msg.payload.chunk ?? "").slice(0, 30));
         updatePopover({ state: "STREAMING", chunk: msg.payload.chunk ?? "" });
         break;
       }
 
       case "GIST_COMPLETE": {
+        console.log("[Gist CS] GIST_COMPLETE");
         updatePopover({ state: "DONE" });
         break;
       }
 
       case "GIST_ERROR": {
+        console.warn("[Gist CS] GIST_ERROR:", msg.payload.error);
         updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong." });
         break;
       }

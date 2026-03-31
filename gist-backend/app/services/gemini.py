@@ -1,6 +1,8 @@
 # app/services/gemini.py
 import os
 import asyncio
+import queue
+import threading
 from typing import AsyncGenerator
 
 from google import genai
@@ -48,20 +50,32 @@ async def stream_explanation(
     client = genai.Client(api_key=api_key)
     prompt = build_prompt(selected_text, page_context)
 
-    try:
-        # generate_content_stream returns a synchronous iterator.
-        # asyncio.to_thread keeps the event loop free while the SDK does I/O.
-        def _stream():
-            return list(
-                client.models.generate_content_stream(
-                    model="gemini-1.5-flash",
-                    contents=prompt,
-                )
-            )
+    # Bridge the synchronous SDK iterator to this async generator via a queue.
+    # Each chunk is enqueued by a daemon thread as it arrives from the network;
+    # the event loop reads one chunk at a time — true streaming, no buffering.
+    _SENTINEL = object()
+    chunk_queue: queue.Queue = queue.Queue()
 
-        chunks = await asyncio.to_thread(_stream)
-        for chunk in chunks:
-            if chunk.text:
-                yield chunk.text
-    except Exception as e:
-        raise RuntimeError(f"Gemini API error: {e}") from e
+    def _produce() -> None:
+        try:
+            for chunk in client.models.generate_content_stream(
+                model="gemini-1.5-flash",
+                contents=prompt,
+            ):
+                chunk_queue.put(chunk)
+        except Exception as exc:
+            chunk_queue.put(RuntimeError(f"Gemini API error: {exc}"))
+        finally:
+            chunk_queue.put(_SENTINEL)
+
+    loop = asyncio.get_running_loop()
+    threading.Thread(target=_produce, daemon=True).start()
+
+    while True:
+        item = await loop.run_in_executor(None, chunk_queue.get)
+        if item is _SENTINEL:
+            return
+        if isinstance(item, RuntimeError):
+            raise item
+        if item.text:
+            yield item.text

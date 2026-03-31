@@ -45,20 +45,14 @@ async def simplify(request: Request):
             content={"error": "Invalid request body.", "code": "VALIDATION_ERROR"},
         )
 
-    # 2. Check for Gemini errors upfront by attempting to call the service.
-    #    We collect the first chunk to catch any RuntimeError before we commit
-    #    to a StreamingResponse — if the service raises, we can still return a
-    #    proper 503 JSON response.
+    # 2. Attempt to fetch the first chunk to catch RuntimeError before we
+    #    commit to a StreamingResponse — lets us still return a proper 503.
     first_chunk: str | None = None
-    remaining_chunks: list[str] = []
     try:
         gen = stream_explanation(payload.selected_text, payload.page_context)
         async for chunk in gen:
             first_chunk = chunk
             break
-        # If we successfully got the first chunk, buffer the rest
-        async for chunk in gen:
-            remaining_chunks.append(chunk)
     except RuntimeError:
         return JSONResponse(
             status_code=503,
@@ -68,19 +62,15 @@ async def simplify(request: Request):
             },
         )
 
-    # 3. Define the SSE generator (using pre-fetched chunks + stream)
+    # 3. Define the SSE generator — yields the first chunk, then continues
+    #    the same generator without buffering the remainder.
     async def event_generator():
-        # Yield the first chunk we already fetched
         if first_chunk:
-            data = json.dumps({"chunk": first_chunk})
-            yield f"data: {data}\n\n"
+            yield f"data: {json.dumps({'chunk': first_chunk})}\n\n"
 
-        # Yield any additional chunks already buffered
-        for chunk in remaining_chunks:
-            data = json.dumps({"chunk": chunk})
-            yield f"data: {data}\n\n"
+        async for chunk in gen:
+            yield f"data: {json.dumps({'chunk': chunk})}\n\n"
 
-        # Signal completion
         yield "data: [DONE]\n\n"
 
     # 4. Return as a streaming response

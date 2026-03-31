@@ -49,11 +49,13 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, _sendResponse) =
   const { selectedText, pageContext } = message.payload;
   if (!selectedText) return;
 
+  console.log("[Gist BG] GIST_REQUEST received", { tabId, selectedText: selectedText.slice(0, 50) });
   streamFromBackend(tabId, selectedText, pageContext ?? "");
   // No return true — we use chrome.tabs.sendMessage, never sendResponse
 });
 
 async function streamFromBackend(tabId: number, selectedText: string, pageContext: string) {
+  console.log("[Gist BG] fetch →", BACKEND_URL);
   try {
     const response = await fetch(BACKEND_URL, {
       method: "POST",
@@ -65,8 +67,11 @@ async function streamFromBackend(tabId: number, selectedText: string, pageContex
       }),
     });
 
+    console.log("[Gist BG] fetch response status:", response.status);
+
     if (!response.ok) {
       const err = await response.json().catch(() => ({ error: "Request failed" }));
+      console.warn("[Gist BG] non-OK response:", err);
       const errorMsg: GistMessage = {
         type: "GIST_ERROR",
         payload: { error: err.error ?? "Something went wrong. Please try again." },
@@ -76,10 +81,14 @@ async function streamFromBackend(tabId: number, selectedText: string, pageContex
     }
 
     const reader = response.body?.getReader();
-    if (!reader) return;
+    if (!reader) {
+      console.error("[Gist BG] response.body is null — cannot stream");
+      return;
+    }
 
     const decoder = new TextDecoder();
     let buffer = "";
+    let chunkCount = 0;
 
     while (true) {
       const { done, value } = await reader.read();
@@ -95,6 +104,7 @@ async function streamFromBackend(tabId: number, selectedText: string, pageContex
 
         const data = trimmed.slice(5).trim();
         if (data === "[DONE]") {
+          console.log("[Gist BG] stream complete — chunks received:", chunkCount);
           const completeMsg: GistMessage = { type: "GIST_COMPLETE", payload: {} };
           chrome.tabs.sendMessage(tabId, completeMsg);
           return;
@@ -102,6 +112,8 @@ async function streamFromBackend(tabId: number, selectedText: string, pageContex
 
         try {
           const parsed = JSON.parse(data) as { chunk: string };
+          chunkCount++;
+          console.log("[Gist BG] GIST_CHUNK #" + chunkCount + ":", parsed.chunk.slice(0, 30));
           const chunkMsg: GistMessage = { type: "GIST_CHUNK", payload: { chunk: parsed.chunk } };
           chrome.tabs.sendMessage(tabId, chunkMsg);
         } catch {
@@ -110,9 +122,11 @@ async function streamFromBackend(tabId: number, selectedText: string, pageContex
       }
     }
 
+    console.log("[Gist BG] stream ended without [DONE] — chunks received:", chunkCount);
     const completeMsg: GistMessage = { type: "GIST_COMPLETE", payload: {} };
     chrome.tabs.sendMessage(tabId, completeMsg);
-  } catch {
+  } catch (err) {
+    console.error("[Gist BG] fetch error:", err);
     const errorMsg: GistMessage = {
       type: "GIST_ERROR",
       payload: { error: "Network error. Check your connection and try again." },
