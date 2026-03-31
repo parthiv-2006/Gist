@@ -1,12 +1,18 @@
 # app/models/schemas.py
 from pydantic import BaseModel, field_validator
-from typing import Literal
+from typing import Literal, Optional, List
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "model"]
+    content: str
 
 
 class SimplifyRequest(BaseModel):
     selected_text: str
     page_context: str
     complexity_level: Literal["standard", "simple", "legal", "academic"] = "standard"
+    messages: Optional[List[ChatMessage]] = None
 
     @field_validator("selected_text")
     @classmethod

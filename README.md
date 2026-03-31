@@ -182,6 +182,9 @@ Before submitting:
 > Features:
 > - Right-click context menu or Ctrl/Cmd+Shift+E keyboard shortcut
 > - Streams the explanation token-by-token for near-instant feedback
+> - **[NEW] Interactive Follow-up Chat**: Ask questions about any explanation
+> - **[NEW] Visual Analogies**: Automatic diagrams (Mermaid.js/ASCII) for complex concepts
+> - **[NEW] Text-to-Speech**: Listen to explanations with a single click
 > - Fully isolated UI — never interferes with host-page styles
 > - Works on all websites including GitHub, MDN, and Wikipedia
 

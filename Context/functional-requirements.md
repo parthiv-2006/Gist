@@ -59,6 +59,15 @@ The internet is gated by specialized vocabulary. When reading technical document
 - **History Log:** Last 20 explanations persisted to `chrome.storage.local`
 - **Pinned Popover:** Allow user to "pin" the popover and drag it
 
+### 4.3 V3: Interactive & Multi-Modal Explanations (Current Target)
+
+| Feature | Description |
+|---|---|
+| **Follow-up Chat** | User can ask follow-up questions about the simplified explanation in a mini-chat interface |
+| **Visual Analogies** | AI generates Mermaid.js or ASCII diagrams to explain concepts visually |
+| **Text-to-Speech (TTS)** | A "Listen" button triggers browser-native voice narration of the explanation |
+| **Markdown Rendering** | Popover supports rich text, code blocks, and diagrams |
+
 ### 4.3 Out of Scope (Hard Blocks — Do Not Implement)
 
 - PDF parsing (Canvas/PDF.js text extraction is flaky and a solo-project time sink)
@@ -175,15 +184,22 @@ All messages between the content script and background worker MUST use this type
 
 export type MessageType =
   | "GIST_REQUEST"      // Content Script → Background Worker
+  | "GIST_FOLLOW_UP"    // Content Script → Background Worker (new query)
   | "GIST_CHUNK"        // Background Worker → Content Script (streaming)
   | "GIST_COMPLETE"     // Background Worker → Content Script
   | "GIST_ERROR";       // Background Worker → Content Script
+
+export interface ChatMessage {
+  role: "user" | "model";
+  content: string;
+}
 
 export interface GistMessage {
   type: MessageType;
   payload: {
     selectedText?: string;
     pageContext?: string;   // document.title
+    messages?: ChatMessage[]; // Full dialogue history for follow-ups
     chunk?: string;         // A streamed text chunk
     error?: string;         // Human-readable error message
   };
@@ -208,9 +224,10 @@ export interface GistMessage {
 
 | Field | Type | Required | Notes |
 |---|---|---|---|
-| `selected_text` | string | ✅ | Max 2,000 characters. Reject with 400 if exceeded. |
-| `page_context` | string | ✅ | Page `document.title`. Grounds the LLM in the correct domain. |
-| `complexity_level` | string | ✅ | MVP only accepts `"standard"`. V2 adds `"eli5"` and `"academic"`. |
+| `selected_text` | string | ✅ | Max 2,000 characters. |
+| `page_context` | string | ✅ | Page `document.title`. |
+| `complexity_level` | string | ✅ | `"standard"`, `"eli5"`, `"legal"`, `"academic"` |
+| `messages` | array | ❌ | Optional list of `{ role, content }` objects for follow-ups. |
 
 **Response: Server-Sent Events (SSE) stream**
 
