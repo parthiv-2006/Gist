@@ -1,4 +1,4 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
@@ -7,7 +7,6 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        content: resolve(__dirname, "src/content/index.ts"),
         background: resolve(__dirname, "src/background/index.ts"),
         popup: resolve(__dirname, "src/popup/index.html"),
       },
