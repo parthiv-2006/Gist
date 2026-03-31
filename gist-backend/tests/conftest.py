@@ -65,8 +65,9 @@ def mock_gemini_success():
     with patch("app.services.gemini.genai") as mock_genai:
         mock_client = MagicMock()
         mock_genai.Client.return_value = mock_client
-        # generate_content_stream is called inside _stream() which does list(...)
-        mock_client.models.generate_content_stream.return_value = iter([fake_chunk])
+        # Use side_effect so each call gets a fresh iterator (return_value=iter([...])
+        # would be exhausted after the first call).
+        mock_client.models.generate_content_stream.side_effect = lambda **_: iter([fake_chunk])
         yield mock_genai
 
 
