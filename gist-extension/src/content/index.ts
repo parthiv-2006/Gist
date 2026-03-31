@@ -8,6 +8,9 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
 import { mountPopover, updatePopover } from "./shadow-host";
+import { RateLimiter } from "../utils/rate-limiter";
+
+const rateLimiter = new RateLimiter(5, 10_000);
 
 declare global {
   interface Window { __gistMounted?: boolean }
@@ -51,6 +54,14 @@ if (!window.__gistMounted) {
 }
 
 function handleTrigger(): void {
+  if (!rateLimiter.isAllowed()) {
+    updatePopover({
+      state: "ERROR",
+      error: "Slow down! You're explaining text too fast. Wait a moment and try again.",
+    });
+    return;
+  }
+
   const selection = window.getSelection();
   const text = extractSelectedText(selection);
 
