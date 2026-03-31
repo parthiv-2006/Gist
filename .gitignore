@@ -5,3 +5,5 @@ dist/
 .idea/
 .DS_Store
 .env    
+.claude/
+.omc/
