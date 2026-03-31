@@ -33,7 +33,7 @@ async function ensureContentScript(tabId: number): Promise<void> {
   try {
     await chrome.scripting.executeScript({
       target: { tabId },
-      files: ["content.js"],
+      files: ["loader.js"],
     });
   } catch {
     // Already injected or restricted page (chrome://, extensions page, etc.) — proceed anyway
