@@ -11,4 +11,4 @@ services:
         sync: false           # Set manually in Render dashboard — NEVER commit this value
       - key: ALLOWED_ORIGINS
         value: "*"            # Replace with chrome-extension://YOUR_EXTENSION_ID after publishing
-    autoDeploy: true
+    autoDeploy: false

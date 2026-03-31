@@ -1,6 +1,12 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 
-const BACKEND_URL = "https://gist-vc8m.onrender.com/api/v1/simplify";
+// Switch to local backend during development to avoid Render redeploy waits.
+// To use local: run `uvicorn app.main:app --reload --port 8000` in gist-backend/
+// Then flip DEV_MODE to true and rebuild the extension.
+const DEV_MODE = false;
+const BACKEND_URL = DEV_MODE
+  ? "http://localhost:8000/api/v1/simplify"
+  : "https://gist-vc8m.onrender.com/api/v1/simplify";
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
