@@ -124,6 +124,38 @@ class TestTextTooLong:
         assert response.status_code == 200
 
 
+class TestComplexityModes:
+    """All four complexity modes must be accepted and return a valid stream."""
+
+    async def test_simple_mode_returns_200(self, client, mock_gemini_success):
+        response = await client.post(
+            "/api/v1/simplify",
+            json={"selected_text": "text", "page_context": "Page", "complexity_level": "simple"},
+        )
+        assert response.status_code == 200
+
+    async def test_legal_mode_returns_200(self, client, mock_gemini_success):
+        response = await client.post(
+            "/api/v1/simplify",
+            json={"selected_text": "text", "page_context": "Page", "complexity_level": "legal"},
+        )
+        assert response.status_code == 200
+
+    async def test_academic_mode_returns_200(self, client, mock_gemini_success):
+        response = await client.post(
+            "/api/v1/simplify",
+            json={"selected_text": "text", "page_context": "Page", "complexity_level": "academic"},
+        )
+        assert response.status_code == 200
+
+    async def test_invalid_mode_returns_400(self, client):
+        response = await client.post(
+            "/api/v1/simplify",
+            json={"selected_text": "text", "page_context": "Page", "complexity_level": "expert"},
+        )
+        assert response.status_code == 400
+
+
 class TestGeminiFailure:
     """Upstream Gemini API errors must be handled gracefully."""
 

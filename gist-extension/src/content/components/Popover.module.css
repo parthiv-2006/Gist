@@ -114,6 +114,45 @@
   outline-offset: 2px;
 }
 
+/* ─── Mode Selector ──────────────────────────────────────────── */
+
+.modeSelector {
+  display: flex;
+  gap: 4px;
+  margin-bottom: var(--gist-gap);
+}
+
+.modeButton {
+  flex: 1;
+  padding: 4px 0;
+  border: 1px solid var(--gist-border);
+  border-radius: var(--gist-radius-sm);
+  background: transparent;
+  color: var(--gist-text-secondary);
+  font-family: var(--gist-font-family);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 100ms ease, color 100ms ease, border-color 100ms ease;
+}
+
+.modeButton:hover:not(:disabled) {
+  background: var(--gist-bg-hover);
+  color: var(--gist-text-primary);
+  border-color: var(--gist-border-strong);
+}
+
+.modeButton:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.modButtonActive {
+  background: hsla(265, 89%, 78%, 0.15);
+  color: var(--gist-accent);
+  border-color: var(--gist-accent);
+}
+
 /* ─── Skeleton / Loading ─────────────────────────────────────── */
 
 .skeleton {

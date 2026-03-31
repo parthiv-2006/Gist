@@ -6,20 +6,27 @@ export type MessageType =
   | "GIST_COMPLETE"
   | "GIST_ERROR";
 
+export type ComplexityLevel = "standard" | "simple" | "legal" | "academic";
+
 export interface GistMessage {
   type: MessageType;
   payload: {
     selectedText?: string;
     pageContext?: string;
+    complexityLevel?: ComplexityLevel;
     chunk?: string;
     error?: string;
   };
 }
 
-export function buildGistRequest(selectedText: string, pageContext: string): GistMessage {
+export function buildGistRequest(
+  selectedText: string,
+  pageContext: string,
+  complexityLevel: ComplexityLevel = "standard"
+): GistMessage {
   return {
     type: "GIST_REQUEST",
-    payload: { selectedText, pageContext },
+    payload: { selectedText, pageContext, complexityLevel },
   };
 }
 

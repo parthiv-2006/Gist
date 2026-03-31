@@ -49,7 +49,7 @@ async def simplify(request: Request):
     #    commit to a StreamingResponse — lets us still return a proper 503.
     first_chunk: str | None = None
     try:
-        gen = stream_explanation(payload.selected_text, payload.page_context)
+        gen = stream_explanation(payload.selected_text, payload.page_context, payload.complexity_level)
         async for chunk in gen:
             first_chunk = chunk
             break

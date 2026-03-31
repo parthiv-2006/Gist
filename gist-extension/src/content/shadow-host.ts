@@ -5,6 +5,7 @@
 import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Popover, type PopoverState } from "./components/Popover";
+import type { ComplexityLevel } from "../utils/messages";
 
 let shadowHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
@@ -12,12 +13,21 @@ let reactRoot: Root | null = null;
 
 // Internal accumulated text (builds up as STREAMING chunks arrive)
 let accumulatedText = "";
+// Current explanation mode — updated on LOADING, persisted through STREAMING/DONE
+let currentMode: ComplexityLevel = "standard";
+// Callback set by content/index.ts to handle mode button clicks
+let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
+
+export function setModeChangeHandler(handler: (mode: ComplexityLevel) => void): void {
+  modeChangeCallback = handler;
+}
 
 export interface PopoverUpdate {
   state: PopoverState;
   chunk?: string;
   error?: string;
   position?: DOMRect;
+  mode?: ComplexityLevel;
 }
 
 export function mountPopover(): void {
@@ -57,6 +67,7 @@ export function updatePopover(update: PopoverUpdate): void {
 
   if (update.state === "LOADING") {
     accumulatedText = "";
+    if (update.mode) currentMode = update.mode;
     renderPopover({
       state: "LOADING",
       position: update.position,

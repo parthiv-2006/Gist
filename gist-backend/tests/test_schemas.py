@@ -76,3 +76,36 @@ class TestSimplifyRequest:
             complexity_level="standard",
         )
         assert req.page_context == "Unknown page"
+
+    def test_simple_complexity_level_is_valid(self):
+        """'simple' must be accepted as a valid complexity_level."""
+        req = SimplifyRequest(
+            selected_text="text", page_context="Page", complexity_level="simple"
+        )
+        assert req.complexity_level == "simple"
+
+    def test_legal_complexity_level_is_valid(self):
+        """'legal' must be accepted as a valid complexity_level."""
+        req = SimplifyRequest(
+            selected_text="text", page_context="Page", complexity_level="legal"
+        )
+        assert req.complexity_level == "legal"
+
+    def test_academic_complexity_level_is_valid(self):
+        """'academic' must be accepted as a valid complexity_level."""
+        req = SimplifyRequest(
+            selected_text="text", page_context="Page", complexity_level="academic"
+        )
+        assert req.complexity_level == "academic"
+
+    def test_invalid_complexity_level_raises_validation_error(self):
+        """An unknown complexity_level must raise a ValidationError."""
+        with pytest.raises(ValidationError):
+            SimplifyRequest(
+                selected_text="text", page_context="Page", complexity_level="expert"
+            )
+
+    def test_complexity_level_defaults_to_standard(self):
+        """complexity_level must default to 'standard' when omitted."""
+        req = SimplifyRequest(selected_text="text", page_context="Page")
+        assert req.complexity_level == "standard"

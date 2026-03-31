@@ -6,7 +6,7 @@ from typing import Literal
 class SimplifyRequest(BaseModel):
     selected_text: str
     page_context: str
-    complexity_level: Literal["standard"] = "standard"
+    complexity_level: Literal["standard", "simple", "legal", "academic"] = "standard"
 
     @field_validator("selected_text")
     @classmethod

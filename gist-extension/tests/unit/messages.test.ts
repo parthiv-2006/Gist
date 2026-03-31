@@ -16,6 +16,28 @@ describe("buildGistRequest", () => {
   });
 });
 
+describe("buildGistRequest with complexityLevel", () => {
+  it("defaults to standard when no complexityLevel is provided", () => {
+    const msg = buildGistRequest("text", "context");
+    expect(msg.payload.complexityLevel).toBe("standard");
+  });
+
+  it("forwards simple mode", () => {
+    const msg = buildGistRequest("text", "context", "simple");
+    expect(msg.payload.complexityLevel).toBe("simple");
+  });
+
+  it("forwards legal mode", () => {
+    const msg = buildGistRequest("text", "context", "legal");
+    expect(msg.payload.complexityLevel).toBe("legal");
+  });
+
+  it("forwards academic mode", () => {
+    const msg = buildGistRequest("text", "context", "academic");
+    expect(msg.payload.complexityLevel).toBe("academic");
+  });
+});
+
 describe("isGistMessage", () => {
   it("returns true for a valid GistMessage", () => {
     expect(isGistMessage({ type: "GIST_REQUEST", payload: {} })).toBe(true);

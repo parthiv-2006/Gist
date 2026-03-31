@@ -9,29 +9,40 @@ from google import genai
 from google.genai import types
 
 
-SYSTEM_PROMPT_TEMPLATE = (
-    'You are a concise reading assistant. The user has highlighted a piece of '
-    'text from a webpage titled: "{page_context}".\n\n'
-    'Your task is to explain the selected text in plain English, as if speaking '
-    'to a curious high schooler. Be brief (2-4 sentences max). Do not use bullet '
-    'points. Do not repeat the original text back. Just explain it.\n\n'
+_MODE_INSTRUCTIONS: dict[str, str] = {
+    "standard": "explain the selected text in plain English, as if speaking to a curious high schooler",
+    "simple": "explain the selected text using extremely simple language and helpful analogies, as if speaking to a 5-year-old",
+    "legal": "translate this legal jargon into a clear summary of what it means for the user's rights and responsibilities",
+    "academic": "distill this academic passage into its core scholarly argument or finding, while staying very concise",
+}
+
+_PROMPT_TEMPLATE = (
+    'You are a concise reading assistant. The user has highlighted text from a page titled: "{page_context}".\n\n'
+    'Your task is to {mode_instruction}.\n\n'
+    'Constraints:\n'
+    '- Be brief (2-4 sentences max).\n'
+    '- Do not use bullet points.\n'
+    '- Do not repeat the original text.\n'
+    '- Just explain it.\n\n'
     'Selected text: "{selected_text}"'
 )
 
 
-def build_prompt(selected_text: str, page_context: str) -> str:
+def build_prompt(selected_text: str, page_context: str, complexity_level: str = "standard") -> str:
     """
-    Build the full prompt string.
+    Build the full prompt string for the given complexity_level.
     Pure function — no side effects, easy to unit test.
     """
-    return SYSTEM_PROMPT_TEMPLATE.format(
+    instruction = _MODE_INSTRUCTIONS.get(complexity_level, _MODE_INSTRUCTIONS["standard"])
+    return _PROMPT_TEMPLATE.format(
         page_context=page_context or "Unknown page",
         selected_text=selected_text,
+        mode_instruction=instruction,
     )
 
 
 async def stream_explanation(
-    selected_text: str, page_context: str
+    selected_text: str, page_context: str, complexity_level: str = "standard"
 ) -> AsyncGenerator[str, None]:
     """
     Call the Gemini API with streaming enabled.
@@ -48,7 +59,7 @@ async def stream_explanation(
         raise RuntimeError("GEMINI_API_KEY is not set")
 
     client = genai.Client(api_key=api_key)
-    prompt = build_prompt(selected_text, page_context)
+    prompt = build_prompt(selected_text, page_context, complexity_level)
 
     # Bridge the synchronous SDK iterator to this async generator via a queue.
     # Each chunk is enqueued by a daemon thread as it arrives from the network;

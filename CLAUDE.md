@@ -33,6 +33,7 @@ Gist/                          ← repo root (you are here)
 │       ├── shadow-dom-react-injection.md
 │       ├── vite-multi-entry-build.md
 │       ├── popover-design.md        ← Visual spec: colors, fonts, spacing (read before Phase 3 UI)
+│       ├── explanation-modes.md     ← Prompt engineering spec for ELI5, Legal, Academic (read before Phase 5)
 │       └── gist-patterns.md
 ├── gist-extension/            ← Chrome Extension (TypeScript + React + Vite) [created in Phase 1]
 └── gist-backend/              ← FastAPI backend (Python 3.11+)              [created in Phase 2]
@@ -134,8 +135,9 @@ The background worker MUST use `chrome.tabs.sendMessage(tabId, ...)` — NOT `ch
 | 0 | Documentation & planning | ✅ Done |
 | 1 | Extension Skeleton & Infrastructure | ✅ Done — 26/26 tests passing, build succeeds |
 | 2 | Backend API & LLM Engine | ✅ Done — 31/31 tests passing, 93% coverage, deployed to Render |
-| 3 | Integration & Popover UI | ⏳ Not started |
-| 4 | Polish, Edge Cases & Store Submission | ⏳ Not started |
+| 3 | Integration & Popover UI | ✅ Done — end-to-end flow working |
+| 4 | Polish, Edge Cases & Store Submission | ✅ Done |
+| 5 | Explanation Selection Modes | ⏳ Not started |
 
 **Before starting any phase:** Read the corresponding section in
 `@Context/functional-requirements.md` and the relevant skill files listed above.

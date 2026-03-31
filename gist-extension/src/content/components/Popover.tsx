@@ -1,18 +1,28 @@
 // src/content/components/Popover.tsx
 import React, { useEffect } from "react";
 import styles from "./Popover.module.css";
+import type { ComplexityLevel } from "../../utils/messages";
 
 export type PopoverState = "IDLE" | "LOADING" | "STREAMING" | "DONE" | "ERROR";
+
+const MODES: { value: ComplexityLevel; label: string }[] = [
+  { value: "standard", label: "Standard" },
+  { value: "simple",   label: "ELI5" },
+  { value: "legal",    label: "Legal" },
+  { value: "academic", label: "Academic" },
+];
 
 export interface PopoverProps {
   state: PopoverState;
   text: string;
   error?: string;
   position?: DOMRect;
+  mode?: ComplexityLevel;
   onClose: () => void;
+  onModeChange?: (mode: ComplexityLevel) => void;
 }
 
-export function Popover({ state, text, error, position, onClose }: PopoverProps) {
+export function Popover({ state, text, error, position, mode = "standard", onClose, onModeChange }: PopoverProps) {
   // Close on Escape key
   useEffect(() => {
     if (state === "IDLE") return;
@@ -67,6 +77,23 @@ export function Popover({ state, text, error, position, onClose }: PopoverProps)
           ✕
         </button>
       </div>
+
+      {/* Mode selector */}
+      {onModeChange && (
+        <div className={styles.modeSelector}>
+          {MODES.map(({ value, label }) => (
+            <button
+              key={value}
+              className={`${styles.modeButton} ${mode === value ? styles.modButtonActive : ""}`}
+              aria-pressed={mode === value}
+              disabled={state === "LOADING" || state === "STREAMING"}
+              onClick={() => onModeChange(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Body */}
       {state === "LOADING" && (

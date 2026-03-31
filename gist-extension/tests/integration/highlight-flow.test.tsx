@@ -74,3 +74,44 @@ describe("Popover Component", () => {
     await waitFor(() => expect(mockClose).toHaveBeenCalledOnce());
   });
 });
+
+describe("Popover mode selector", () => {
+  it("renders all four mode buttons when onModeChange is provided", () => {
+    render(
+      <Popover state="DONE" text="text" onClose={() => {}} onModeChange={() => {}} mode="standard" />
+    );
+    expect(screen.getByRole("button", { name: /standard/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /eli5/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /legal/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /academic/i })).toBeInTheDocument();
+  });
+
+  it("marks the active mode button as selected", () => {
+    render(
+      <Popover state="DONE" text="text" onClose={() => {}} onModeChange={() => {}} mode="legal" />
+    );
+    expect(screen.getByRole("button", { name: /legal/i })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: /standard/i })).toHaveAttribute("aria-pressed", "false");
+  });
+
+  it("calls onModeChange with the new mode when a mode button is clicked", async () => {
+    const mockModeChange = vi.fn();
+    render(
+      <Popover state="DONE" text="text" onClose={() => {}} onModeChange={mockModeChange} mode="standard" />
+    );
+    screen.getByRole("button", { name: /eli5/i }).click();
+    await waitFor(() => expect(mockModeChange).toHaveBeenCalledWith("simple"));
+  });
+
+  it("disables mode buttons while LOADING", () => {
+    render(
+      <Popover state="LOADING" text="" onClose={() => {}} onModeChange={() => {}} mode="standard" />
+    );
+    expect(screen.getByRole("button", { name: /standard/i })).toBeDisabled();
+  });
+
+  it("does not render mode selector when onModeChange is not provided", () => {
+    render(<Popover state="DONE" text="text" onClose={() => {}} />);
+    expect(screen.queryByRole("button", { name: /eli5/i })).not.toBeInTheDocument();
+  });
+});
