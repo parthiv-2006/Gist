@@ -1,0 +1,66 @@
+// src/content/index.ts
+// Content Script — injected into every page tab.
+// Responsibilities:
+//  1. Listen for triggers from the background worker (context menu, keyboard shortcut)
+//  2. Read window.getSelection() and send GIST_REQUEST to the background worker
+//  3. Mount/unmount the React popover in response to GIST_CHUNK / GIST_COMPLETE / GIST_ERROR
+
+import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
+import { extractSelectedText, validateText } from "../utils/text";
+import { mountPopover, updatePopover } from "./shadow-host";
+
+// Mount the shadow host once on script injection
+mountPopover();
+
+chrome.runtime.onMessage.addListener((message: unknown) => {
+  if (!isGistMessage(message)) return;
+
+  const msg = message as GistMessage;
+
+  switch (msg.type) {
+    case "GIST_CONTEXT_MENU_TRIGGERED":
+    case "GIST_SHORTCUT_TRIGGERED": {
+      handleTrigger();
+      break;
+    }
+
+    case "GIST_CHUNK": {
+      updatePopover({ state: "STREAMING", chunk: msg.payload.chunk ?? "" });
+      break;
+    }
+
+    case "GIST_COMPLETE": {
+      updatePopover({ state: "DONE" });
+      break;
+    }
+
+    case "GIST_ERROR": {
+      updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong." });
+      break;
+    }
+  }
+});
+
+function handleTrigger(): void {
+  const selection = window.getSelection();
+  const text = extractSelectedText(selection);
+
+  if (!text) return;
+
+  const validation = validateText(text);
+  if (validation === "TEXT_TOO_LONG") {
+    updatePopover({ state: "ERROR", error: "Selected text is too long (max 2000 characters)." });
+    return;
+  }
+  if (validation === "EMPTY_TEXT") {
+    return;
+  }
+
+  // Show loading state and get the selection position for popover placement
+  const selectionRect = selection?.getRangeAt(0).getBoundingClientRect() ?? null;
+  updatePopover({ state: "LOADING", position: selectionRect ?? undefined });
+
+  // Send the request to the background worker for LLM processing
+  const pageContext = document.title;
+  chrome.runtime.sendMessage(buildGistRequest(text, pageContext));
+}
