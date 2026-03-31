@@ -1,46 +1,28 @@
 // src/content/components/Mermaid.tsx
-import { useEffect, useRef } from "react";
-import mermaid from "mermaid";
-
-mermaid.initialize({
-  startOnLoad: true,
-  theme: "dark",
-  securityLevel: "loose",
-  fontFamily: "Inter, sans-serif",
-});
+// Renders mermaid diagram source as a styled code block.
+// The mermaid JS library is intentionally NOT imported here — bundling it
+// pulls in KaTeX which injects unpaired UTF-16 surrogates and an internal BOM
+// into the output, causing Chrome to reject content.js as non-UTF-8.
 
 interface MermaidProps {
   chart: string;
 }
 
-export const Mermaid = ({ chart }: MermaidProps) => {
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (ref.current && chart) {
-      ref.current.removeAttribute("data-processed");
-      mermaid.contentLoaded();
-      
-      // We need to trigger a re-render/render of the chart
-      const renderChart = async () => {
-        try {
-          const { svg } = await mermaid.render(
-            `mermaid-${Math.random().toString(36).substr(2, 9)}`,
-            chart
-          );
-          if (ref.current) {
-            ref.current.innerHTML = svg;
-          }
-        } catch (err) {
-          console.error("Mermaid render error:", err);
-          if (ref.current) {
-            ref.current.innerHTML = `<pre>Error rendering diagram</pre>`;
-          }
-        }
-      };
-      renderChart();
-    }
-  }, [chart]);
-
-  return <div ref={ref} className="mermaid-container" style={{ margin: '10px 0' }} />;
-};
+export const Mermaid = ({ chart }: MermaidProps) => (
+  <pre
+    style={{
+      background: "hsla(240,10%,5%,0.6)",
+      border: "1px solid hsla(240,10%,30%,0.4)",
+      borderRadius: "6px",
+      padding: "10px 12px",
+      fontSize: "0.82em",
+      fontFamily: "'Fira Code', monospace",
+      overflowX: "auto",
+      margin: "10px 0",
+      whiteSpace: "pre",
+      color: "var(--gist-text-secondary)",
+    }}
+  >
+    {chart}
+  </pre>
+);
