@@ -87,7 +87,9 @@ Gist is a **decoupled two-layer system**: a Manifest V3 Chrome Extension (TypeSc
     │       Registers context menu item.
     │       Manages keyboard shortcuts.
     │       Owns all outbound network fetch() calls (avoids CORS).
-    │       Relays streamed chunks back to the content script.
+    │       Relays streamed chunks back to content script via chrome.tabs.sendMessage(tabId, msg).
+    │       NOTE: content script → background uses chrome.runtime.sendMessage();
+    │             background → content script uses chrome.tabs.sendMessage(tabId, ...).
     │
     └── Extension Popup (popup.html / popup.tsx) [Optional settings page]
 
@@ -418,7 +420,7 @@ async def test_simplify_returns_stream_for_valid_input(httpx_mock):
     # Mock the Gemini API response
     httpx_mock.add_response(
         method="POST",
-        url="https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent",
+        url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent",
         content=b'data: {"candidates": [{"content": {"parts": [{"text": "JS does one thing at a time."}]}}]}\n\n',
         status_code=200,
     )
@@ -472,7 +474,7 @@ async def test_simplify_returns_503_when_gemini_fails(httpx_mock):
     """If Gemini returns a non-200, we must surface a 503."""
     httpx_mock.add_response(
         method="POST",
-        url="https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent",
+        url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent",
         status_code=500,
         content=b'{"error": "Internal Server Error"}',
     )
@@ -685,7 +687,7 @@ async def test_whitespace_only_text_rejected():
 async def test_exactly_2000_chars_is_accepted(httpx_mock):
     httpx_mock.add_response(
         method="POST",
-        url="https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:streamGenerateContent",
+        url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:streamGenerateContent",
         content=b'data: {"candidates": [{"content": {"parts": [{"text": "OK"}]}}]}\n\n',
         status_code=200,
     )
