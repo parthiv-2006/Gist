@@ -3,6 +3,17 @@
 > **Read this file first.** This is the single source of truth for project conventions, commands,
 > and constraints. Refer to it at the start of every session. Never contradict it.
 
+## Context Gathering Rule
+Before reading files, using grep, or exploring directories, you must ALWAYS use `qmd` to search for context in local projects.
+
+Available tools:
+- `qmd search "query"` — Fast keyword search (BM25)
+- `qmd query "query"` — Hybrid search with LLM reranking (Best for complex questions)
+- `qmd vsearch "query"` — Semantic vector search
+- `qmd get <file>` — Retrieve a specific document
+
+Use `qmd query` for understanding architecture, bugs, or logic across the gist-backend and gist-extension. Use `qmd search` for quick exact-match lookups. 
+Only use your default Read/Glob/Grep tools if `qmd` fails to return relevant results.
 ---
 
 ## What Is Gist?
