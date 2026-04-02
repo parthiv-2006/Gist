@@ -1,13 +1,6 @@
-// src/content/index.ts
-// Content Script — injected into every page tab.
-// Responsibilities:
-//  1. Listen for triggers from the background worker (context menu, keyboard shortcut)
-//  2. Read window.getSelection() and send GIST_REQUEST to the background worker
-//  3. Mount/unmount the React popover in response to GIST_CHUNK / GIST_COMPLETE / GIST_ERROR
-
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay } from "./shadow-host";
 import { RateLimiter } from "../utils/rate-limiter";
 
 const rateLimiter = new RateLimiter(5, 10_000);
@@ -16,8 +9,7 @@ declare global {
   interface Window { __gistMounted?: boolean }
 }
 
-// Guard against double-injection (e.g. when scripting.executeScript is used on a tab
-// that already had the content script injected declaratively at document_idle).
+// Guard against double-injection
 if (!window.__gistMounted) {
   window.__gistMounted = true;
 
@@ -38,12 +30,15 @@ if (!window.__gistMounted) {
       chrome.runtime.sendMessage({
         type: "GIST_FOLLOW_UP",
         payload: {
-          selectedText: "", // Not needed for follow-up as it's in the history
+          selectedText: "",
           pageContext: document.title,
           messages: history,
           query,
         }
       });
+    },
+    (rect) => {
+      handleCapture(rect);
     }
   );
 
@@ -60,20 +55,22 @@ if (!window.__gistMounted) {
         break;
       }
 
+      case "GIST_CAPTURE_START": {
+        mountCaptureOverlay();
+        break;
+      }
+
       case "GIST_CHUNK": {
-        console.log("[Gist CS] GIST_CHUNK →", (msg.payload.chunk ?? "").slice(0, 30));
         updatePopover({ state: "STREAMING", chunk: msg.payload.chunk ?? "" });
         break;
       }
 
       case "GIST_COMPLETE": {
-        console.log("[Gist CS] GIST_COMPLETE");
         updatePopover({ state: "DONE" });
         break;
       }
 
       case "GIST_ERROR": {
-        console.warn("[Gist CS] GIST_ERROR:", msg.payload.error);
         updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong." });
         break;
       }
@@ -104,13 +101,59 @@ function handleTrigger(): void {
     return;
   }
 
-  // Show loading state and get the selection position for popover placement
   const selectionRect = (selection && selection.rangeCount > 0)
     ? selection.getRangeAt(0).getBoundingClientRect()
     : null;
   updatePopover({ state: "LOADING", position: selectionRect ?? undefined });
 
-  // Send the request to the background worker for LLM processing
   const pageContext = document.title;
   chrome.runtime.sendMessage(buildGistRequest(text, pageContext));
+}
+
+async function handleCapture(rect: { x: number; y: number; width: number; height: number }): Promise<void> {
+  // 1. Loading state for popover
+  const fauxRect = new DOMRect(rect.x, rect.y, rect.width, rect.height);
+  updatePopover({ state: "LOADING", position: fauxRect });
+
+  try {
+    // 2. Request full tab screenshot from background
+    const response = await chrome.runtime.sendMessage({ type: "CAPTURE_VISIBLE_TAB", payload: {} });
+    if (!response || !response.dataUrl) throw new Error("Capture failed");
+
+    // 3. Crop it via canvas
+    const img = new Image();
+    img.src = response.dataUrl;
+    await new Promise((resolve) => (img.onload = resolve));
+
+    const canvas = document.createElement("canvas");
+    // Account for device pixel ratio
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) throw new Error("Canvas context failed");
+
+    ctx.drawImage(
+      img,
+      rect.x * dpr,
+      rect.y * dpr,
+      rect.width * dpr,
+      rect.height * dpr,
+      0,
+      0,
+      rect.width * dpr,
+      rect.height * dpr
+    );
+
+    const croppedDataUrl = canvas.toDataURL("image/png");
+
+    // 4. Update popover with thumbnail
+    updatePopover({ state: "LOADING", imageData: croppedDataUrl });
+
+    // 5. Send to backend
+    chrome.runtime.sendMessage(buildGistRequest("", document.title, "standard", croppedDataUrl.split(",")[1]));
+  } catch (err) {
+    updatePopover({ state: "ERROR", error: "Failed to capture screen area." });
+  }
 }

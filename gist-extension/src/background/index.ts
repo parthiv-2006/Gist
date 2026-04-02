@@ -25,12 +25,16 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
 });
 
 chrome.commands.onCommand.addListener((command) => {
-  if (command !== "trigger-gist") return;
   chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
     const tab = tabs[0];
     if (!tab?.id) return;
     await ensureContentScript(tab.id);
-    chrome.tabs.sendMessage(tab.id, { type: "GIST_SHORTCUT_TRIGGERED", payload: {} });
+
+    if (command === "trigger-gist") {
+      chrome.tabs.sendMessage(tab.id, { type: "GIST_SHORTCUT_TRIGGERED", payload: {} });
+    } else if (command === "capture-gist") {
+      chrome.tabs.sendMessage(tab.id, { type: "GIST_CAPTURE_START", payload: {} });
+    }
   });
 });
 
@@ -45,16 +49,38 @@ async function ensureContentScript(tabId: number): Promise<void> {
   }
 }
 
-chrome.runtime.onMessage.addListener((message: unknown, sender, _sendResponse) => {
+chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
   if (!isGistMessage(message)) return;
+
+  if (message.type === "CAPTURE_VISIBLE_TAB") {
+    chrome.tabs.captureVisibleTab(chrome.windows.WINDOW_ID_CURRENT, { format: "png" }, (dataUrl) => {
+      sendResponse({ dataUrl });
+    });
+    return true; // Keep channel open for async response
+  }
+
   const tabId = sender.tab?.id;
   if (!tabId) return;
 
   if (message.type === "GIST_REQUEST") {
-    const { selectedText, pageContext, complexityLevel } = message.payload;
-    if (!selectedText) return;
-    console.log("[Gist BG] GIST_REQUEST received", { tabId, selectedText: selectedText.slice(0, 50) });
-    streamFromBackend(tabId, selectedText, pageContext ?? "", complexityLevel ?? "standard");
+    const { selectedText, pageContext, complexityLevel, imageData, imageMimeType } = message.payload;
+    // We allow selectedText to be empty if imageData is present
+    if (!selectedText && !imageData) return;
+
+    console.log("[Gist BG] GIST_REQUEST received", {
+      tabId,
+      hasText: !!selectedText,
+      hasImage: !!imageData,
+    });
+    streamFromBackend(
+      tabId,
+      selectedText ?? "",
+      pageContext ?? "",
+      complexityLevel ?? "standard",
+      undefined,
+      imageData,
+      imageMimeType
+    );
   } else if (message.type === "GIST_FOLLOW_UP") {
     const { pageContext, messages, complexityLevel } = message.payload;
     console.log("[Gist BG] GIST_FOLLOW_UP received", { tabId, historyLength: messages?.length });
@@ -67,7 +93,9 @@ async function streamFromBackend(
   selectedText: string,
   pageContext: string,
   complexityLevel: string,
-  messages?: ChatMessage[]
+  messages?: ChatMessage[],
+  imageData?: string,
+  imageMimeType?: string
 ) {
   console.log("[Gist BG] fetch →", BACKEND_URL);
   try {
@@ -75,10 +103,12 @@ async function streamFromBackend(
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        selected_text: selectedText,
+        selected_text: selectedText || undefined,
         page_context: pageContext,
         complexity_level: complexityLevel,
         messages: messages,
+        image_data: imageData,
+        image_mime_type: imageMimeType,
       }),
     });
 
