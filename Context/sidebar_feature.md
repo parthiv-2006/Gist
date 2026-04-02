@@ -1,63 +1,57 @@
-# Gist Sidebar Mode Feature implementation plan
+# Gist Sidebar Mode Feature (Implementation Details)
 
 ## Overview
-The **Sidebar Mode** is a new feature allowing users to undock the Gist interface from the extension popup into a persistent sidebar within the webpage they are currently viewing. This enables the user to view Gist's information side-by-side with the content they are reading or working on without the popup closing on outside clicks. 
+The **Sidebar Mode** is a core feature of the Gist extension that allows the UI to transition from a floating, draggable/resizable popover to a persistent, fixed-width side panel (400px) on the right side of the viewport. This mode is designed for long-form reading and continuous interaction without blocking the center of the page.
 
-## Instructions for LLM
-> [!IMPORTANT]  
-> **Git Branch Requirement:**
-> Before starting any code modifications or implementations, you MUST create and switch to a new branch called `feature/side-bar`. **DO NOT** make these changes on the `main` or `master` branch.
-> 
-> ```bash
-> git checkout -b feature/side-bar
-> ```
+## Technical Architecture
 
-## Feature Description
-1. **Activation:** The user opens the extension popup. Within the popup UI, they can click a new "Open in Sidebar" button (or toggle).
-2. **Communication:** The popup sends a message to the background script, which then forwards the request to the content script on the active tab context. Alternatively, it can send it straight to the content script if applicable.
-3. **Sidebar Rendering:** The content script injects a sidebar element. To avoid CSS conflicts with the existing page, the UI should be mounted into a Shadow DOM. If it's a completely functional clone of the popup, consider using an `iframe` pointing to a new or existing extension HTML page (e.g., `chrome-extension://<id>/sidebar.html` using the `sidePanel` API or an injected `iframe`).
-4. **State Management:** When the sidebar is active, opening the popup again should reflect this state or seamlessly connect to the same state.
-5. **Dismissal:** The sidebar should have a "Close" button or an option to return to the popup mode.
+### 1. Host Management (`shadow-host.ts`)
+- **Shadow DOM**: The entire Gist UI (Popover and Sidebar) is mounted inside a single Shadow DOM host attached to `document.body`. This prevents host-page CSS from bleeding into the extension.
+- **Layout States**:
+  - **Floating Mode (Default)**: The `shadowHost` occupies `0x0` space but has `pointer-events: none`. The child `Popover` is `fixed` and handles its own positioning.
+  - **Sidebar Mode**: The `shadowHost` is locked to `width: 400px`, `height: 100vh`, and `right: 0`. It uses `pointer-events: auto` to ensure the sidebar is interactive.
+- **State Persistence**: The `shadow-host.ts` module tracks `lastState` (e.g., `LOADING`, `STREAMING`, `DONE`). When toggling between modes, it re-renders the Popover with the previous state to ensure the UI doesn't disappear if it was mid-task or empty.
 
-## Context Files Required
-To implement this feature effectively, the following files will be modified or referenced. Please ensure you review them to understand the existing setup:
+### 2. Component Logic (`Popover.tsx`)
+- **Dual-Mode Component**: The `Popover` component accepts an `isSidebarMode` prop.
+- **Conditional Styling**:
+  - In **Sidebar Mode**, most inline positioning styles (left/top/width/height) are disabled or set to fixed values (top: 0, right: 0, width: 400px, height: 100vh).
+  - High-res CSS overrides are applied via the `.sidebar` class in `Popover.module.css`.
+- **TTS Integration**: The Header includes controls for Text-to-Speech (`Volume2`, `VolumeX`) and the Sidebar Toggle (`Layout`).
 
-### Popup UI
-- **`gist-extension/src/popup/App.tsx`**
-  - *Purpose:* Add the "Open in Sidebar" UI button/toggle here.
-- **`gist-extension/src/popup/index.html`** or related layout files.
-  - *Purpose:* For adding any structural needs to the popup.
+### 3. Styling (`Popover.module.css`)
+- **Modular CSS**: Styling is handled via CSS Modules with a custom "Carbon" theme (dark, high-contrast).
+- **Sidebar Overrides**: The `.sidebar` class removes border-radius and box-shadows to blend into the browser edge. It also adds specific padding (`16px 20px`) to align content professionally.
+- **Input Bar**: The input area is a fixed-height (`min-height: 56px`) flex item pinned to the bottom. It utilizes an `inputBarWrapper` to create a pill-shaped "search bar" aesthetic.
 
-### Messaging & Event Routing
-- **`gist-extension/src/background/index.ts`**
-  - *Purpose:* Act as a relay. Receives the `OPEN_SIDEBAR` intent from the popup and signals the specific active tab's content script to execute the actual injection.
+### 4. Messaging Protocol (`messages.ts`)
+- **Toggle Command**: `GIST_SIDEBAR_TOGGLE` is sent from the Popup (`App.tsx`) or triggered internally via the `Layout` icon in the Popover header.
+- **Routing**:
+  - `popup/App.tsx` -> `chrome.tabs.sendMessage` -> `content/index.ts` -> `shadow-host.ts:toggleSidebar()`.
 
-### DOM Injection (Content Scripts)
-- **`gist-extension/src/content/index.ts`**
-  - *Purpose:* Listens for messages from the background script. When the sidebar command is received, it triggers the injection mechanism on the host page.
-- **`gist-extension/src/content/shadow-host.ts`**
-  - *Purpose:* Current handling for shadow DOM injection. You might adapt this or create a new wrapper specifically to house the sidebar securely without CSS bleed.
-- **`gist-extension/src/content/components/`** (Directory)
-  - *Purpose:* Build the new React components (e.g., `<Sidebar />`) that will represent the sidebar's UI.
+---
 
-### Configurations
-- **`gist-extension/manifest.json`**
-  - *Purpose:* You may need to declare new permissions (such as the `sidePanel` permission if utilizing the native Chrome Side Panel API instead of a DOM-injected sidebar) or add elements to `web_accessible_resources` if injecting an extension-hosted `iframe` into the webpage. 
+## Instructions for LLM (Future Work)
 
-## Proposed Implementation Plan
+### Adding Features to the Sidebar
+- If you need to modify the Sidebar UI, always check if the change should apply to **both** modes or just the sidebar. Use the `isSidebarMode` flag in `Popover.tsx`.
+- Adjusting the sidebar width requires updates in both `shadow-host.ts` (host width) and `Popover.module.css` (component width).
 
-**Phase 1: Architecture & Prototyping**
-- Determine whether to use an **injected DOM/Shadow DOM element** (floating sidebar pushed onto the page layout) OR Chrome's native **`chrome.sidePanel` API**.
-  - *Note:* If using standard in-page DOM injection, adjust the page's `body` styling (e.g. `margin-right` or `width`) or float the panel over the page.
-  
-**Phase 2: UI Updates**
-- Update `popup/App.tsx` to include the action button.
-- Build the `Sidebar.tsx` component if injecting manually, ensuring the styling matches the existing Carbon UI aesthetic found in `gist-extension/src/popup/App.tsx`.
+### Layout & Clipping Issues
+- The Sidebar uses `height: 100vh` and `display: flex; flex-direction: column`. 
+- **CRITICAL**: The `chatHistory` div must have `flex: 1` and `overflow-y: auto` to ensure the `inputBar` at the bottom remains visible and is not pushed off-screen.
+- Use `box-sizing: border-box` for all new elements to prevent padding from breaking the `100vh` constraint.
 
-**Phase 3: Event Wiring**
-- Define strict message types for `OPEN_SIDEBAR` and `CLOSE_SIDEBAR`.
-- Setup listeners in `content/index.ts` and dispatchers in `background/index.ts`.
+### UI Consistency
+- Follow the **Carbon** design tokens defined in the `.popover` root of `Popover.module.css` (e.g., `--gist-border`, `--gist-bg-hover`).
+- Avoid adding manual hex colors; use the established variables for theme consistency.
 
-**Phase 4: Refinement & State**
-- Synchronize state between the Sidebar and the Background Service Worker so they share the same data context as the popup.
-- Ensure the sidebar animate-in correctly and accommodates responsive page designs.
+---
+
+## Context Files
+
+- **`src/content/shadow-host.ts`**: Core logic for DOM injection and layout state management.
+- **`src/content/components/Popover.tsx`**: Main UI entry point for both modes.
+- **`src/content/components/Popover.module.css`**: Styling definitions and layout constraints.
+- **`src/utils/messages.ts`**: Type definitions for cross-script communication.
+- **`src/popup/App.tsx`**: Implementation of the primary toggle button.
