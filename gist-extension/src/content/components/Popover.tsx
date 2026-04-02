@@ -28,6 +28,7 @@ export interface PopoverProps {
   mode?: ComplexityLevel;
   imageData?: string;
   isSidebarMode?: boolean;
+  isVisible?: boolean;
   onToggleSidebar?: () => void;
   onClose: () => void;
   onModeChange?: (mode: ComplexityLevel) => void;
@@ -43,6 +44,7 @@ export function Popover({
   mode = "standard",
   imageData,
   isSidebarMode = false,
+  isVisible = false,
   onToggleSidebar,
   onClose,
   onModeChange,
@@ -176,7 +178,7 @@ export function Popover({
     setTtsState("idle");
   };
 
-  if (state === "IDLE" && !isSidebarMode) return null;
+  if (state === "IDLE" && !isSidebarMode && !isVisible) return null;
 
   return (
     <div
@@ -266,7 +268,7 @@ export function Popover({
         {messages.length === 0 && state === "IDLE" && (
           <div className={styles.emptySidebar}>
             <div className={styles.emptyIcon}>✨</div>
-            <h3>Gist Sidebar Ready</h3>
+            <h3>{isSidebarMode ? "Gist Sidebar Ready" : "Gist Ready"}</h3>
             <p>Highlight any text on this page to get an explanation here, or start a manual query below.</p>
           </div>
         )}

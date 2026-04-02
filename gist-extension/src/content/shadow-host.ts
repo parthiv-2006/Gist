@@ -21,6 +21,7 @@ let currentMode: ComplexityLevel = "standard";
 let currentPosition: DOMRect | undefined = undefined;
 let currentImageData: string | undefined = undefined;
 let isSidebarMode = false;
+let isVisible = false;
 let lastState: PopoverState = "IDLE";
 
 // Callbacks set by content/index.ts
@@ -128,6 +129,7 @@ export function updatePopover(update: PopoverUpdate): void {
     if (update.mode) currentMode = update.mode;
     if (update.position) currentPosition = update.position;
     
+    isVisible = true;
     renderPopover({ state: "LOADING" });
     return;
   }
@@ -171,6 +173,7 @@ export function unmountPopover(): void {
       shadowHost.style.right = "auto";
     }
     isSidebarMode = false;
+    isVisible = false;
 
     renderPopover({ state: "IDLE" });
   }
@@ -182,6 +185,7 @@ export function toggleSidebar(): void {
   
   if (shadowHost) {
     if (isSidebarMode) {
+      isVisible = true;
       shadowHost.style.pointerEvents = "auto";
       shadowHost.style.width = "400px";
       shadowHost.style.left = "auto";
@@ -234,6 +238,7 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       mode: currentMode,
       imageData: currentImageData,
       isSidebarMode,
+      isVisible,
       onToggleSidebar: toggleSidebar,
       onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
