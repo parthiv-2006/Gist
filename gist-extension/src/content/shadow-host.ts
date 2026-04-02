@@ -5,8 +5,10 @@
 import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Popover, type PopoverState } from "./components/Popover";
+import { CaptureOverlay } from "./components/CaptureOverlay";
 import type { ComplexityLevel, ChatMessage } from "../utils/messages";
 import popoverStyles from "./components/Popover.module.css?inline";
+import overlayStyles from "./components/CaptureOverlay.module.css?inline";
 
 let shadowHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
@@ -17,17 +19,21 @@ let accumulatedText = "";
 let messages: ChatMessage[] = [];
 let currentMode: ComplexityLevel = "standard";
 let currentPosition: DOMRect | undefined = undefined;
+let currentImageData: string | undefined = undefined;
 
 // Callbacks set by content/index.ts
 let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
 let sendMessageCallback: ((query: string, history: ChatMessage[]) => void) | null = null;
+let captureFinalizedCallback: ((rect: { x: number; y: number; width: number; height: number }) => void) | null = null;
 
 export function setHandlers(
   onModeChange: (mode: ComplexityLevel) => void,
-  onSendMessage: (query: string, history: ChatMessage[]) => void
+  onSendMessage: (query: string, history: ChatMessage[]) => void,
+  onCaptureFinalized: (rect: { x: number; y: number; width: number; height: number }) => void
 ): void {
   modeChangeCallback = onModeChange;
   sendMessageCallback = onSendMessage;
+  captureFinalizedCallback = onCaptureFinalized;
 }
 
 export interface PopoverUpdate {
@@ -36,47 +42,71 @@ export interface PopoverUpdate {
   error?: string;
   position?: DOMRect;
   mode?: ComplexityLevel;
+  imageData?: string;
 }
 
 export function mountPopover(): void {
-  if (shadowHost) return; // already mounted
+  if (shadowHost) return;
+
+  // Wait for document.body if it's not ready
+  if (!document.body) {
+    window.addEventListener("DOMContentLoaded", () => mountPopover());
+    return;
+  }
 
   shadowHost = document.createElement("div");
   shadowHost.id = "gist-shadow-host";
-  shadowHost.style.cssText = "all: initial; position: fixed; z-index: 2147483647;";
+  // Cover full screen but allow click-through so we don't break the page
+  shadowHost.style.cssText = `
+    all: initial;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2147483647;
+    pointer-events: none;
+    display: block;
+  `;
   document.body.appendChild(shadowHost);
 
   shadowRoot = shadowHost.attachShadow({ mode: "open" });
 
-  // Inject Inter font as a <link> inside the shadow root
   const fontLink = document.createElement("link");
   fontLink.rel = "stylesheet";
-  fontLink.href =
-    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap";
+  fontLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
   shadowRoot.appendChild(fontLink);
 
-  // Inject the Popover stylesheet into the shadow root via a <style> element.
-  // Vite's `?inline` query returns the CSS as a plain string at build time —
-  // deterministic, refactor-safe, and immune to race conditions or host-page
-  // CSS variable collisions.
   const style = document.createElement("style");
-  style.textContent = popoverStyles;
+  style.textContent = popoverStyles + "\n" + overlayStyles;
   shadowRoot.appendChild(style);
 
-  // Stop mousedown events that originate inside the shadow DOM from reaching
-  // document-level listeners. The popover uses position:fixed inside a 0x0
-  // shadow host, so Chrome's hit-testing may not include the host in
-  // composedPath(). Stopping propagation at the host level is the reliable
-  // fix: inside clicks never reach the document handler, outside clicks do.
-  shadowHost.addEventListener("mousedown", (e) => {
-    e.stopPropagation();
-  });
-
   const mountPoint = document.createElement("div");
+  mountPoint.style.cssText = "pointer-events: none; width: 100%; height: 100%;";
   shadowRoot.appendChild(mountPoint);
 
   reactRoot = createRoot(mountPoint);
   renderPopover({ state: "IDLE" });
+}
+
+export function mountCaptureOverlay(): void {
+  console.log("[Gist ShadowHost] mountCaptureOverlay called");
+  if (!shadowHost) mountPopover();
+  if (!reactRoot) {
+    console.error("[Gist ShadowHost] reactRoot not initialized");
+    return;
+  }
+  
+  reactRoot.render(
+    React.createElement(CaptureOverlay, {
+      onCapture: (rect) => {
+        if (captureFinalizedCallback) captureFinalizedCallback(rect);
+      },
+      onCancel: () => {
+        renderPopover({ state: "IDLE" });
+      },
+    })
+  );
 }
 
 export function updatePopover(update: PopoverUpdate): void {
@@ -87,6 +117,7 @@ export function updatePopover(update: PopoverUpdate): void {
     if (!update.chunk) {
       messages = [];
       accumulatedText = "";
+      currentImageData = update.imageData;
     }
     if (update.mode) currentMode = update.mode;
     if (update.position) currentPosition = update.position;
@@ -124,14 +155,12 @@ export function unmountPopover(): void {
     accumulatedText = "";
     messages = [];
     currentMode = "standard";
+    currentImageData = undefined;
     renderPopover({ state: "IDLE" });
   }
 }
 
-// Stable references — defined once so React sees the same prop identity on every
-// render. This prevents the click-outside useEffect in Popover from re-firing on
-// each streaming chunk (which briefly removes/re-adds the mousedown listener and
-// creates a race-condition window where clicks incorrectly close the popover).
+// Stable references
 const stableOnClose = () => unmountPopover();
 const stableOnSendMessage = (query: string) => {
   messages.push({ role: "user", content: query });
@@ -158,6 +187,7 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       error,
       position: currentPosition,
       mode: currentMode,
+      imageData: currentImageData,
       onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
       onSendMessage: stableOnSendMessage,

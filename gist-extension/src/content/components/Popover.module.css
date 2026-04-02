@@ -57,8 +57,8 @@
   border-radius: var(--gist-radius);
   box-shadow: var(--gist-shadow);
   padding: var(--gist-padding);
-
   animation: gist-enter 120ms cubic-bezier(0, 0, 0.2, 1) both;
+  pointer-events: auto;
 }
 
 @keyframes gist-enter {
@@ -370,6 +370,41 @@
 @keyframes gist-blink {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
+}
+
+/* ─── Visual Context ────────────────────────────────────────────────────── */
+
+.visualContext {
+  position: relative;
+  margin: 12px 0 20px 0;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--gist-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  background: var(--gist-bg-hover);
+}
+
+.thumbnail {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+}
+
+.visualBadge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 /* ─── Error State ────────────────────────────────────────────── */

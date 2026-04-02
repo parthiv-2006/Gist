@@ -26,6 +26,7 @@ export interface PopoverProps {
   error?: string;
   position?: DOMRect;
   mode?: ComplexityLevel;
+  imageData?: string;
   onClose: () => void;
   onModeChange?: (mode: ComplexityLevel) => void;
   onSendMessage?: (query: string) => void;
@@ -38,6 +39,7 @@ export function Popover({
   error,
   position,
   mode = "standard",
+  imageData,
   onClose,
   onModeChange,
   onSendMessage,
@@ -241,6 +243,12 @@ export function Popover({
 
       {/* Chat history */}
       <div className={styles.chatHistory} ref={historyRef}>
+        {imageData && (
+          <div className={styles.visualContext}>
+            <img src={imageData} alt="Captured area" className={styles.thumbnail} />
+            <div className={styles.visualBadge}>Visual Context</div>
+          </div>
+        )}
         {messages.map((msg, idx) => (
           <div
             key={idx}
