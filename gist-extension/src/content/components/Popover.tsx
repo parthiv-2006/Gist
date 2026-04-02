@@ -15,6 +15,10 @@ const MODES: { value: ComplexityLevel; label: string }[] = [
   { value: "academic", label: "Academic" },
 ];
 
+const DEFAULT_WIDTH  = 340;
+const DEFAULT_HEIGHT = 380;
+const MARGIN         = 12;
+
 export interface PopoverProps {
   state: PopoverState;
   text: string;
@@ -41,34 +45,100 @@ export function Popover({
   const [inputValue, setInputValue] = useState("");
   const historyRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom of chat
+  // ─── Position & Size (drag / resize) ────────────────────────────
+  const [pos,  setPos]  = useState(() =>
+    position
+      ? { x: getPopoverLeft(position, DEFAULT_WIDTH), y: getPopoverTop(position, DEFAULT_HEIGHT) }
+      : { x: 20, y: 20 }
+  );
+  const [size, setSize] = useState({ width: DEFAULT_WIDTH, height: DEFAULT_HEIGHT });
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Keep refs in sync so event-handler closures always read the latest values.
+  const posRef  = useRef(pos);  posRef.current  = pos;
+  const sizeRef = useRef(size); sizeRef.current = size;
+
+  // Re-anchor whenever a new highlight arrives (position reference changes).
+  useEffect(() => {
+    if (position) {
+      setPos({
+        x: getPopoverLeft(position, sizeRef.current.width),
+        y: getPopoverTop(position, sizeRef.current.height),
+      });
+    }
+  }, [position]);
+
+  // ─── Auto-scroll chat ────────────────────────────────────────────
   useEffect(() => {
     if (historyRef.current) {
       historyRef.current.scrollTop = historyRef.current.scrollHeight;
     }
   }, [messages, text]);
 
-  // Close on Escape key
+  // ─── Close on Escape ─────────────────────────────────────────────
   useEffect(() => {
     if (state === "IDLE") return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [state, onClose]);
+
+  // ─── Close on outside click ──────────────────────────────────────
+  useEffect(() => {
+    if (state === "IDLE") return;
+    const onOutside = () => onClose();
+    document.addEventListener("mousedown", onOutside);
+    return () => document.removeEventListener("mousedown", onOutside);
+  }, [state, onClose]);
+
+  // ─── Drag ────────────────────────────────────────────────────────
+  const handleHeaderMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Ignore button clicks inside the header
+    if ((e.target as HTMLElement).closest("button")) return;
+    if (e.button !== 0) return;
+    e.preventDefault();
+
+    const originX = e.clientX - posRef.current.x;
+    const originY = e.clientY - posRef.current.y;
+    setIsDragging(true);
+
+    const onMove = (ev: MouseEvent) => {
+      setPos({ x: ev.clientX - originX, y: ev.clientY - originY });
     };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [state, onClose]);
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      setIsDragging(false);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup",   onUp);
+  };
 
-  // Close when the user clicks outside the popover.
-  // The shadow host has a mousedown listener that calls stopPropagation() for
-  // any click originating inside the shadow DOM — so if this document-level
-  // handler fires at all, the click was definitively outside the popover.
-  useEffect(() => {
-    if (state === "IDLE") return;
-    const handleClickOutside = () => onClose();
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [state, onClose]);
+  // ─── Resize ──────────────────────────────────────────────────────
+  const handleResizeMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    e.stopPropagation(); // don't trigger drag
 
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = sizeRef.current.width;
+    const startH = sizeRef.current.height;
+
+    const onMove = (ev: MouseEvent) => {
+      const w = Math.max(280, Math.min(640, startW + ev.clientX - startX));
+      const h = Math.max(220, Math.min(720, startH + ev.clientY - startY));
+      setSize({ width: w, height: h });
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup",   onUp);
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup",   onUp);
+  };
+
+  // ─── Send / TTS ──────────────────────────────────────────────────
   const handleSend = () => {
     if (!inputValue.trim() || !onSendMessage) return;
     onSendMessage(inputValue.trim());
@@ -78,10 +148,7 @@ export function Popover({
   const handleTTS = () => {
     const lastMessage = messages[messages.length - 1]?.content || text;
     if (!lastMessage) return;
-    
-    // Stop any current speech
     window.speechSynthesis.cancel();
-    
     const utterance = new SpeechSynthesisUtterance(lastMessage);
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
@@ -90,23 +157,24 @@ export function Popover({
 
   if (state === "IDLE") return null;
 
-  const style: React.CSSProperties = position
-    ? {
-        top: `${getPopoverTop(position)}px`,
-        left: `${getPopoverLeft(position)}px`,
-      }
-    : { top: "20px", left: "20px" };
-
   return (
     <div
       className={styles.popover}
       role="dialog"
       aria-label="Gist explanation"
       aria-live="polite"
-      style={style}
+      style={{
+        top:    `${pos.y}px`,
+        left:   `${pos.x}px`,
+        width:  `${size.width}px`,
+        height: `${size.height}px`,
+      }}
     >
-      {/* Header */}
-      <div className={styles.header}>
+      {/* Header — doubles as drag handle */}
+      <div
+        className={`${styles.header} ${isDragging ? styles.headerDragging : ""}`}
+        onMouseDown={handleHeaderMouseDown}
+      >
         <span className={styles.brand}>GIST</span>
         <div className={styles.headerActions}>
           <button
@@ -146,10 +214,13 @@ export function Popover({
         </div>
       )}
 
-      {/* Body: Chat History */}
+      {/* Chat history */}
       <div className={styles.chatHistory} ref={historyRef}>
         {messages.map((msg, idx) => (
-          <div key={idx} className={`${styles.message} ${msg.role === 'user' ? styles.userMessage : styles.modelMessage}`}>
+          <div
+            key={idx}
+            className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.modelMessage}`}
+          >
             <div className={styles.markdown}>
               <ReactMarkdown
                 components={{
@@ -158,11 +229,7 @@ export function Popover({
                     if (match && match[1] === "mermaid") {
                       return <Mermaid chart={String(children).replace(/\n$/, "")} />;
                     }
-                    return (
-                      <code className={className} {...props}>
-                        {children}
-                      </code>
-                    );
+                    return <code className={className} {...props}>{children}</code>;
                   },
                 }}
               >
@@ -172,7 +239,6 @@ export function Popover({
           </div>
         ))}
 
-        {/* Current Streaming / Loading Message */}
         {state === "LOADING" && (
           <div className={`${styles.message} ${styles.modelMessage}`}>
             <div className={styles.skeleton} data-testid="gist-skeleton">
@@ -186,9 +252,7 @@ export function Popover({
         {state === "STREAMING" && (
           <div className={`${styles.message} ${styles.modelMessage}`}>
             <div className={`${styles.markdown} ${styles.streaming}`}>
-              <ReactMarkdown>
-                {text}
-              </ReactMarkdown>
+              <ReactMarkdown>{text}</ReactMarkdown>
             </div>
           </div>
         )}
@@ -201,7 +265,7 @@ export function Popover({
         )}
       </div>
 
-      {/* Input Bar */}
+      {/* Input bar */}
       <div className={styles.inputBar}>
         <input
           type="text"
@@ -221,26 +285,29 @@ export function Popover({
           <Send size={16} />
         </button>
       </div>
+
+      {/* Resize handle — bottom-right corner */}
+      <div
+        className={styles.resizeHandle}
+        onMouseDown={handleResizeMouseDown}
+        aria-hidden="true"
+      />
     </div>
   );
 }
 
 // ─── Positioning helpers ─────────────────────────────────────────────────────
 
-const POPOVER_WIDTH = 320;
-const POPOVER_EST_HEIGHT = 200;
-const MARGIN = 12;
-
-function getPopoverTop(rect: DOMRect): number {
+function getPopoverTop(rect: DOMRect, height: number): number {
   const spaceBelow = window.innerHeight - rect.bottom;
-  if (spaceBelow < POPOVER_EST_HEIGHT + MARGIN) {
-    return rect.top + window.scrollY - POPOVER_EST_HEIGHT - MARGIN;
+  if (spaceBelow < height + MARGIN) {
+    return rect.top + window.scrollY - height - MARGIN;
   }
   return rect.bottom + window.scrollY + MARGIN;
 }
 
-function getPopoverLeft(rect: DOMRect): number {
-  const left = rect.left + window.scrollX;
-  const clamped = Math.min(left, window.innerWidth - POPOVER_WIDTH - MARGIN);
+function getPopoverLeft(rect: DOMRect, width: number): number {
+  const left    = rect.left + window.scrollX;
+  const clamped = Math.min(left, window.innerWidth - width - MARGIN);
   return Math.max(MARGIN, clamped);
 }
