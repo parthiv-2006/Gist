@@ -20,6 +20,7 @@ let messages: ChatMessage[] = [];
 let currentMode: ComplexityLevel = "standard";
 let currentPosition: DOMRect | undefined = undefined;
 let currentImageData: string | undefined = undefined;
+let isSidebarMode = false;
 
 // Callbacks set by content/index.ts
 let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
@@ -160,6 +161,27 @@ export function unmountPopover(): void {
   }
 }
 
+export function toggleSidebar(): void {
+  isSidebarMode = !isSidebarMode;
+  if (!shadowHost) mountPopover();
+  
+  if (shadowHost) {
+    if (isSidebarMode) {
+      shadowHost.style.pointerEvents = "auto";
+      shadowHost.style.width = "400px";
+      shadowHost.style.left = "auto";
+      shadowHost.style.right = "0";
+      // If we're entering sidebar mode, we probably want to ensure we're not idle if we have a state
+    } else {
+      shadowHost.style.pointerEvents = "none";
+      shadowHost.style.width = "100vw";
+      shadowHost.style.left = "0";
+      shadowHost.style.right = "auto";
+    }
+  }
+  renderPopover({ state: messages.length > 0 ? "DONE" : "IDLE" });
+}
+
 // Stable references
 const stableOnClose = () => unmountPopover();
 const stableOnSendMessage = (query: string) => {
@@ -188,6 +210,7 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       position: currentPosition,
       mode: currentMode,
       imageData: currentImageData,
+      isSidebarMode,
       onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
       onSendMessage: stableOnSendMessage,

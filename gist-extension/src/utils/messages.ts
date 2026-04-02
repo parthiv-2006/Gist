@@ -5,6 +5,7 @@ export type MessageType =
   | "GIST_SHORTCUT_TRIGGERED"
   | "GIST_CAPTURE_START"
   | "CAPTURE_VISIBLE_TAB"
+  | "GIST_SIDEBAR_TOGGLE"
   | "GIST_CHUNK"
   | "GIST_COMPLETE"
   | "GIST_ERROR";
@@ -57,6 +58,7 @@ export function isGistMessage(value: unknown): value is GistMessage {
     "GIST_SHORTCUT_TRIGGERED",
     "GIST_CAPTURE_START",
     "CAPTURE_VISIBLE_TAB",
+    "GIST_SIDEBAR_TOGGLE",
     "GIST_CHUNK",
     "GIST_COMPLETE",
     "GIST_ERROR",

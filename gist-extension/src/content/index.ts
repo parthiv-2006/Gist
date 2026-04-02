@@ -1,6 +1,6 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar } from "./shadow-host";
 import { RateLimiter } from "../utils/rate-limiter";
 
 const rateLimiter = new RateLimiter(5, 10_000);
@@ -57,6 +57,11 @@ if (!window.__gistMounted) {
 
       case "GIST_CAPTURE_START": {
         mountCaptureOverlay();
+        break;
+      }
+
+      case "GIST_SIDEBAR_TOGGLE": {
+        toggleSidebar();
         break;
       }
 

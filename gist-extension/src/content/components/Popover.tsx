@@ -27,6 +27,7 @@ export interface PopoverProps {
   position?: DOMRect;
   mode?: ComplexityLevel;
   imageData?: string;
+  isSidebarMode?: boolean;
   onClose: () => void;
   onModeChange?: (mode: ComplexityLevel) => void;
   onSendMessage?: (query: string) => void;
@@ -40,6 +41,7 @@ export function Popover({
   position,
   mode = "standard",
   imageData,
+  isSidebarMode = false,
   onClose,
   onModeChange,
   onSendMessage,
@@ -180,7 +182,15 @@ export function Popover({
       role="dialog"
       aria-label="Gist explanation"
       aria-live="polite"
-      style={{
+      style={isSidebarMode ? {
+        top: 0,
+        right: 0,
+        left: "auto",
+        width: "400px",
+        height: "100vh",
+        borderRadius: 0,
+        borderLeft: `1px solid rgba(255, 255, 255, 0.1)`,
+      } : {
         top:    `${pos.y}px`,
         left:   `${pos.x}px`,
         width:  `${size.width}px`,
@@ -322,11 +332,13 @@ export function Popover({
       </div>
 
       {/* Resize handle — bottom-right corner */}
-      <div
-        className={styles.resizeHandle}
-        onMouseDown={handleResizeMouseDown}
-        aria-hidden="true"
-      />
+      {!isSidebarMode && (
+        <div
+          className={styles.resizeHandle}
+          onMouseDown={handleResizeMouseDown}
+          aria-hidden="true"
+        />
+      )}
     </div>
   );
 }

@@ -169,6 +169,64 @@ function App() {
           </div>
         </button>
 
+        {/* Sidebar mode trigger */}
+        <button
+          onClick={() => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+              const tab = tabs[0];
+              if (tab?.id) {
+                chrome.tabs.sendMessage(tab.id, { type: "GIST_SIDEBAR_TOGGLE", payload: {} });
+                window.close();
+              }
+            });
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: c.bgCard,
+            border: `1px solid ${c.border}`,
+            borderRadius: "6px",
+            padding: "10px 12px",
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
+            transition: "all 150ms ease",
+            outline: "none",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = c.accent;
+            e.currentTarget.style.background = c.bg;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = c.border;
+            e.currentTarget.style.background = c.bgCard;
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "6px",
+              background: "rgba(16, 185, 129, 0.1)",
+              border: "1px solid rgba(16, 185, 129, 0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: c.accent,
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="15" y1="3" x2="15" y2="21" />
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: c.textPrimary }}>Sidebar Mode</div>
+              <div style={{ fontSize: "10px", color: c.textSecondary }}>Fixed persistent view</div>
+            </div>
+          </div>
+        </button>
+
         {/* Keyboard shortcut text */}
         <div style={{
           display: "flex",
