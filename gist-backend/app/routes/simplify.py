@@ -23,7 +23,7 @@ async def simplify(request: Request):
             return JSONResponse(
                 status_code=400,
                 content={
-                    "error": "selected_text is empty or whitespace-only.",
+                    "error": "The request must contain either selected_text or image_data.",
                     "code": "EMPTY_TEXT",
                 },
             )
@@ -61,7 +61,9 @@ async def simplify(request: Request):
             payload.selected_text,
             payload.page_context,
             payload.complexity_level,
-            [m.model_dump() for m in payload.messages] if payload.messages else None
+            [m.model_dump() for m in payload.messages] if payload.messages else None,
+            payload.image_data,
+            payload.image_mime_type
         )
         async for chunk in gen:
             first_chunk = chunk

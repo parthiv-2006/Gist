@@ -21,27 +21,35 @@ class ChatMessage(BaseModel):
 # ─── Request schema ───────────────────────────────────────────────────────────
 
 class SimplifyRequest(BaseModel):
-    selected_text: str
+    selected_text: Optional[str] = None
     page_context: str
     complexity_level: Literal["standard", "simple", "legal", "academic"] = "standard"
     messages: Optional[List[ChatMessage]] = None
+    image_data: Optional[str] = None  # Base64 encoded image
+    image_mime_type: Optional[str] = "image/png"
 
     @model_validator(mode="after")
-    def validate_selected_text(self) -> "SimplifyRequest":
+    def validate_request_content(self) -> "SimplifyRequest":
         # Follow-up turns supply messages containing the full conversation history.
-        # Validate total history size instead of the (empty) selected_text.
         if self.messages:
             total_chars = sum(len(m.content) for m in self.messages)
             if total_chars > MAX_HISTORY_TOTAL_LEN:
                 raise ValueError("HISTORY_TOO_LONG")
             return self
 
-        stripped = self.selected_text.strip()
-        if not stripped:
+        # Must have either text or an image
+        has_text = self.selected_text and self.selected_text.strip()
+        has_image = self.image_data and self.image_data.strip()
+
+        if not (has_text or has_image):
             raise ValueError("EMPTY_TEXT")
-        if len(stripped) > MAX_TEXT_LEN:
-            raise ValueError("TEXT_TOO_LONG")
-        self.selected_text = stripped
+
+        if has_text:
+            stripped = self.selected_text.strip()
+            if len(stripped) > MAX_TEXT_LEN:
+                raise ValueError("TEXT_TOO_LONG")
+            self.selected_text = stripped
+        
         return self
 
     @field_validator("page_context")

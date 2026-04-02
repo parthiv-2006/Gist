@@ -3,7 +3,7 @@ import os
 import asyncio
 import queue
 import threading
-from typing import AsyncGenerator
+from typing import AsyncGenerator, Optional
 
 from google import genai
 from google.genai import types as _genai_types  # noqa: F401 — kept for future use
@@ -59,40 +59,58 @@ def _sanitize_page_context(raw: str) -> str:
     return (raw.strip() or "Unknown page")[:_MAX_PAGE_CONTEXT_LEN]
 
 
-def build_prompt(selected_text: str, page_context: str, complexity_level: str = "standard") -> str:
+def build_prompt(
+    selected_text: Optional[str],
+    page_context: str,
+    complexity_level: str = "standard",
+    has_image: bool = False
+) -> str:
     """
     Build the full prompt string for the given complexity_level.
     Pure function — no side effects, easy to unit test.
     """
     instruction = _MODE_INSTRUCTIONS.get(complexity_level, _MODE_INSTRUCTIONS["standard"])
-    return _PROMPT_TEMPLATE.format(
-        page_context=_sanitize_page_context(page_context),
-        selected_text=selected_text,
-        mode_instruction=instruction,
+    
+    prompt = (
+        "You are a concise reading assistant.\n\n"
+        f"<task>{instruction}.</task>\n\n"
     )
+
+    if has_image:
+        prompt += "Context: An image from the page is provided below.\n"
+    
+    prompt += (
+        "Constraints:\n"
+        "- Be brief (2-4 sentences max).\n"
+        "- Do not repeat the original text.\n"
+        "- Just explain it.\n\n"
+        "Visual Analogies:\n"
+        "If the concept is complex, you ARE encouraged to use a small Mermaid.js diagram or an ASCII chart. "
+        "Format diagrams within a code block (e.g., ```mermaid ... ```).\n\n"
+        f"<page_title>{_sanitize_page_context(page_context)}</page_title>\n\n"
+    )
+
+    if selected_text:
+        prompt += f"<selected_text>{selected_text}</selected_text>"
+    elif has_image:
+        prompt += "<selected_text>User captured an area of the screen for explanation.</selected_text>"
+
+    return prompt
 
 
 # ─── Streaming ────────────────────────────────────────────────────────────────
 
 async def stream_explanation(
-    selected_text: str,
+    selected_text: Optional[str],
     page_context: str,
     complexity_level: str = "standard",
     messages: list[dict] | None = None,
+    image_data: Optional[str] = None,
+    image_mime_type: Optional[str] = "image/png"
 ) -> AsyncGenerator[str, None]:
     """
     Call the Gemini API with streaming enabled.
     Yields text chunks as they arrive from the model.
-    Raises RuntimeError if the API key is missing or Gemini returns an error.
-
-    NOTE: The google-generativeai SDK uses gRPC internally (not httpx).
-    In tests, patch 'app.services.gemini.genai' directly with unittest.mock.patch.
-    The SDK's generate_content(stream=True) returns a synchronous iterator, so
-    we run it in a thread pool to keep the FastAPI event loop unblocked.
-
-    Thread cancellation: a threading.Event is passed to the producer thread so
-    that if the client disconnects (the async generator is garbage-collected),
-    the thread can exit early rather than continuing to consume Gemini quota.
     """
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
@@ -100,12 +118,29 @@ async def stream_explanation(
 
     client = genai.Client(api_key=api_key)
 
-    # For the very first turn, build the initial prompt
+    # Construct contents
     if not messages:
-        contents = [build_prompt(selected_text, page_context, complexity_level)]
+        prompt = build_prompt(
+            selected_text,
+            page_context,
+            complexity_level,
+            has_image=bool(image_data)
+        )
+        
+        parts = [{"text": prompt}]
+        if image_data:
+            parts.append({
+                "inline_data": {
+                    "mime_type": image_mime_type,
+                    "data": image_data
+                }
+            })
+        
+        contents = [{"role": "user", "parts": parts}]
     else:
-        # Convert our ChatMessage list into the format the Gemini SDK expects
-        # { 'role': 'user'|'model', 'parts': [{'text': '...'}] }
+        # For follow-up turns, we reconstructed the history.
+        # Note: Gemini 1.5/2.x supports multimodality in history, 
+        # but for simplicity we'll focus on the first turn image context.
         contents = []
         for msg in messages:
             contents.append({
