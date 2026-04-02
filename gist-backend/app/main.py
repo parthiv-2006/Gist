@@ -1,17 +1,29 @@
 # app/main.py
 import os
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from app.routes.simplify import router
+from app.routes.simplify import router as simplify_router
+from app.routes.library import router as library_router
+from app.db import connect_db, disconnect_db
 
 load_dotenv()  # Load .env if present (local dev only)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await connect_db()
+    yield
+    await disconnect_db()
+
 
 app = FastAPI(
     title="Gist API",
     description="Plain-language explanation service for the Gist browser extension.",
     version="0.1.0",
+    lifespan=lifespan,
 )
 
 # ─── Security Headers Middleware ──────────────────────────────────────────────
@@ -46,7 +58,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(router)
+app.include_router(simplify_router)
+app.include_router(library_router)
 
 
 @app.get("/health")

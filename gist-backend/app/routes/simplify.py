@@ -1,13 +1,49 @@
 # app/routes/simplify.py
+import asyncio
 import json
+import logging
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import ValidationError
 
 from app.models.schemas import SimplifyRequest
 from app.services.gemini import stream_explanation
+from app.services.categorize import categorize_text
+from app.db import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+async def _save_gist(
+    original_text: str,
+    explanation: str,
+    mode: str,
+    url: str,
+) -> None:
+    """
+    Persist a completed gist to MongoDB.  Runs as a fire-and-forget task
+    so it never delays the streaming response.  Failures are logged only.
+    """
+    db = get_db()
+    if db is None:
+        return
+    try:
+        category = categorize_text(original_text)
+        doc = {
+            "original_text": original_text,
+            "explanation": explanation,
+            "mode": mode,
+            "url": url,
+            "category": category,
+            "created_at": datetime.now(timezone.utc),
+        }
+        await db["gists"].insert_one(doc)
+    except Exception as exc:
+        logger.warning("Failed to save gist to MongoDB: %s", exc)
 
 
 @router.post("/api/v1/simplify")
@@ -78,15 +114,32 @@ async def simplify(request: Request):
         )
 
     # 3. Define the SSE generator — yields the first chunk, then continues
-    #    the same generator without buffering the remainder.
+    #    the same generator. Buffers chunks to persist the full explanation.
     async def event_generator():
+        collected: list[str] = []
+
         if first_chunk:
+            collected.append(first_chunk)
             yield f"data: {json.dumps({'chunk': first_chunk})}\n\n"
 
         async for chunk in gen:
+            collected.append(chunk)
             yield f"data: {json.dumps({'chunk': chunk})}\n\n"
 
         yield "data: [DONE]\n\n"
+
+        # Fire-and-forget: save to MongoDB after the stream completes.
+        # Only save for first-turn requests (not follow-up chat turns).
+        if payload.selected_text and not payload.messages:
+            full_explanation = "".join(collected)
+            asyncio.create_task(
+                _save_gist(
+                    original_text=payload.selected_text,
+                    explanation=full_explanation,
+                    mode=payload.complexity_level,
+                    url=payload.page_context,
+                )
+            )
 
     # 4. Return as a streaming response
     return StreamingResponse(
