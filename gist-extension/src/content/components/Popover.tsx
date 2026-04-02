@@ -265,7 +265,9 @@ export function Popover({
           placeholder="Ask a follow-up..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") handleSend(); }}
+          onKeyUp={(e) => e.stopPropagation()}
+          onKeyPress={(e) => e.stopPropagation()}
           disabled={state === "LOADING" || state === "STREAMING"}
         />
         <button
