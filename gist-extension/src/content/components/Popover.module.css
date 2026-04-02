@@ -183,6 +183,13 @@
   min-height: 56px;
   width: 100%;
 }
+.inputBarDisabled {
+  filter: blur(1.5px) grayscale(0.5);
+  opacity: 0.6;
+  pointer-events: none;
+  cursor: not-allowed;
+  user-select: none;
+}
 
 .inputBarWrapper {
   flex: 1;

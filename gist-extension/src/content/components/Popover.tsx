@@ -324,7 +324,7 @@ export function Popover({
       </div>
 
       {/* Input bar */}
-      <div className={styles.inputBar}>
+      <div className={`${styles.inputBar} ${isInputDisabled ? styles.inputBarDisabled : ""}`}>
         <div className={styles.inputBarWrapper}>
           <input
             type="text"
