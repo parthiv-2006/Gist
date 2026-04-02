@@ -133,6 +133,60 @@
   outline-offset: 1px;
 }
 
+.inputBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--gist-bg-hover);
+  border: 1px solid var(--gist-border);
+  border-radius: var(--gist-radius-sm);
+  padding: 8px 12px;
+  margin-top: 10px;
+  flex-shrink: 0;
+  transition: border-color 150ms ease;
+}
+
+.inputBar:focus-within {
+  border-color: var(--gist-accent);
+}
+
+.inputField {
+  flex: 1;
+  background: transparent;
+  border: none;
+  font-family: var(--gist-font-family);
+  font-size: var(--gist-font-size-body);
+  color: var(--gist-text-primary);
+  outline: none;
+  padding: 0;
+}
+
+.inputField::placeholder {
+  color: var(--gist-text-secondary);
+  opacity: 0.7;
+}
+
+.sendButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--gist-text-secondary);
+  cursor: pointer;
+  transition: color 150ms ease;
+  padding: 0;
+}
+
+.sendButton:hover:not(:disabled) {
+  color: var(--gist-text-primary);
+}
+
+.sendButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
 /* ─── Mode Selector ──────────────────────────────────────────── */
 
 .modeSelector {
@@ -248,57 +302,7 @@
   padding: 4px 0;
 }
 
-/* ─── Input Bar ──────────────────────────────────────────────── */
 
-.inputBar {
-  display: flex;
-  gap: 8px;
-  padding-top: var(--gist-gap);
-  border-top: 1px solid var(--gist-border);
-  flex-shrink: 0;
-  align-items: center;
-}
-
-.inputField {
-  flex: 1;
-  background: transparent;
-  border: none;
-  padding: 6px 0;
-  color: var(--gist-text-primary);
-  font-family: var(--gist-font-family);
-  font-size: var(--gist-font-size-body);
-  outline: none;
-}
-
-.inputField::placeholder {
-  color: var(--gist-text-secondary);
-}
-
-.sendButton {
-  background: var(--gist-border);
-  border: 1px solid var(--gist-border-strong);
-  border-radius: var(--gist-radius-sm);
-  color: var(--gist-text-primary);
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 100ms ease;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-}
-
-.sendButton:hover:not(:disabled) {
-  background: var(--gist-border-strong);
-  border-color: var(--gist-accent);
-}
-
-.sendButton:disabled {
-  opacity: 0.3;
-  cursor: not-allowed;
-  box-shadow: none;
-}
 
 /* ─── Markdown Styles ────────────────────────────────────────── */
 

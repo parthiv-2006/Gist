@@ -333,7 +333,7 @@ export function Popover({
         <input
           type="text"
           className={styles.inputField}
-          placeholder="Ask a follow-up..."
+          placeholder={messages.length === 0 ? "Ask anything..." : "Ask a follow-up..."}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") handleSend(); }}
