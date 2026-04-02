@@ -1,7 +1,7 @@
 // src/content/components/Popover.tsx
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { X, Send, Volume2 } from "lucide-react";
+import { X, Send, Volume2, Pause, Square } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
 import type { ComplexityLevel, ChatMessage } from "../../utils/messages";
@@ -43,6 +43,7 @@ export function Popover({
   onSendMessage,
 }: PopoverProps) {
   const [inputValue, setInputValue] = useState("");
+  const [ttsState, setTtsState] = useState<"idle" | "playing" | "paused">("idle");
   const historyRef = useRef<HTMLDivElement>(null);
 
   // ─── Position & Size (drag / resize) ────────────────────────────
@@ -138,13 +139,35 @@ export function Popover({
   };
 
   const handleTTS = () => {
+    if (ttsState === "playing") {
+      window.speechSynthesis.pause();
+      return;
+    }
+    if (ttsState === "paused") {
+      window.speechSynthesis.resume();
+      return;
+    }
+
     const lastMessage = messages[messages.length - 1]?.content || text;
     if (!lastMessage) return;
+
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(lastMessage);
     utterance.rate = 1.0;
     utterance.pitch = 1.0;
+
+    utterance.onstart = () => setTtsState("playing");
+    utterance.onend = () => setTtsState("idle");
+    utterance.onerror = () => setTtsState("idle");
+    utterance.onpause = () => setTtsState("paused");
+    utterance.onresume = () => setTtsState("playing");
+
     window.speechSynthesis.speak(utterance);
+  };
+
+  const handleStopTTS = () => {
+    window.speechSynthesis.cancel();
+    setTtsState("idle");
   };
 
   if (state === "IDLE") return null;
@@ -169,14 +192,24 @@ export function Popover({
       >
         <span className={styles.brand}>GIST</span>
         <div className={styles.headerActions}>
+          {ttsState !== "idle" && (
+            <button
+              className={styles.closeButton}
+              onClick={handleStopTTS}
+              aria-label="Stop TTS"
+              title="Stop"
+            >
+              <Square size={14} fill="currentColor" />
+            </button>
+          )}
           <button
             className={styles.closeButton}
             onClick={handleTTS}
-            aria-label="Listen"
-            title="Listen to explanation"
+            aria-label={ttsState === "playing" ? "Pause" : "Listen"}
+            title={ttsState === "playing" ? "Pause" : "Listen"}
             disabled={!text && messages.length === 0}
           >
-            <Volume2 size={16} />
+            {ttsState === "playing" ? <Pause size={16} /> : <Volume2 size={16} />}
           </button>
           <button
             className={styles.closeButton}
@@ -190,7 +223,7 @@ export function Popover({
       </div>
 
       {/* Mode selector */}
-      {onModeChange && messages.length === 0 && (
+      {onModeChange && (
         <div className={styles.modeSelector}>
           {MODES.map(({ value, label }) => (
             <button
