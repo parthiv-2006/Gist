@@ -83,14 +83,6 @@ export function Popover({
     return () => document.removeEventListener("keydown", onKey);
   }, [state, onClose]);
 
-  // ─── Close on outside click ──────────────────────────────────────
-  useEffect(() => {
-    if (state === "IDLE") return;
-    const onOutside = () => onClose();
-    document.addEventListener("mousedown", onOutside);
-    return () => document.removeEventListener("mousedown", onOutside);
-  }, [state, onClose]);
-
   // ─── Drag ────────────────────────────────────────────────────────
   const handleHeaderMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     // Ignore button clicks inside the header
