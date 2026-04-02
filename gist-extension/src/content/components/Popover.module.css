@@ -449,6 +449,43 @@
   background-repeat: repeat;
 }
 
-.resizeHandle:hover {
-  opacity: 0.55;
+.resizeHandle span {
+  display: block;
+  width: 4px;
+  height: 4px;
+  background: var(--gist-text-secondary);
+  border-radius: 50%;
+}
+
+/* ─── Empty Sidebar ─────────────────────────────────────────── */
+
+.emptySidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--gist-text-secondary);
+  height: 100%;
+}
+
+.emptyIcon {
+  font-size: 32px;
+  margin-bottom: 16px;
+  opacity: 0.5;
+}
+
+.emptySidebar h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--gist-text-primary);
+  margin: 0 0 8px 0;
+}
+
+.emptySidebar p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+  max-width: 240px;
 }

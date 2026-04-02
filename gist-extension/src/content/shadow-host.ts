@@ -21,6 +21,7 @@ let currentMode: ComplexityLevel = "standard";
 let currentPosition: DOMRect | undefined = undefined;
 let currentImageData: string | undefined = undefined;
 let isSidebarMode = false;
+let lastState: PopoverState = "IDLE";
 
 // Callbacks set by content/index.ts
 let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
@@ -177,9 +178,16 @@ export function toggleSidebar(): void {
       shadowHost.style.width = "100vw";
       shadowHost.style.left = "0";
       shadowHost.style.right = "auto";
+      
+      // If we are undocking and the popover was idle, we might want to show it if it has content
+      // But if it's empty, it should stay hidden.
+      // However, if the user explicitly undocks, they might expect it to stay where it was.
+      if (!currentPosition) {
+        currentPosition = new DOMRect(window.innerWidth / 2 - 200, window.innerHeight / 2 - 150, 400, 300);
+      }
     }
   }
-  renderPopover({ state: messages.length > 0 ? "DONE" : "IDLE" });
+  renderPopover({ state: lastState });
 }
 
 // Stable references
@@ -200,6 +208,7 @@ interface RenderOptions {
 
 function renderPopover({ state, text = "", error }: RenderOptions): void {
   if (!reactRoot) return;
+  lastState = state;
 
   reactRoot.render(
     React.createElement(Popover, {
@@ -211,6 +220,7 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       mode: currentMode,
       imageData: currentImageData,
       isSidebarMode,
+      onToggleSidebar: toggleSidebar,
       onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
       onSendMessage: stableOnSendMessage,

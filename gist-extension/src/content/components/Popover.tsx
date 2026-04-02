@@ -1,7 +1,7 @@
 // src/content/components/Popover.tsx
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { X, Send, Volume2, Pause, Square } from "lucide-react";
+import { X, Send, Volume2, Pause, Square, PanelRight } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
 import type { ComplexityLevel, ChatMessage } from "../../utils/messages";
@@ -28,6 +28,7 @@ export interface PopoverProps {
   mode?: ComplexityLevel;
   imageData?: string;
   isSidebarMode?: boolean;
+  onToggleSidebar?: () => void;
   onClose: () => void;
   onModeChange?: (mode: ComplexityLevel) => void;
   onSendMessage?: (query: string) => void;
@@ -42,6 +43,7 @@ export function Popover({
   mode = "standard",
   imageData,
   isSidebarMode = false,
+  onToggleSidebar,
   onClose,
   onModeChange,
   onSendMessage,
@@ -174,7 +176,7 @@ export function Popover({
     setTtsState("idle");
   };
 
-  if (state === "IDLE") return null;
+  if (state === "IDLE" && !isSidebarMode) return null;
 
   return (
     <div
@@ -225,6 +227,14 @@ export function Popover({
           </button>
           <button
             className={styles.closeButton}
+            onClick={onToggleSidebar}
+            aria-label={isSidebarMode ? "Dock floating" : "Dock to sidebar"}
+            title={isSidebarMode ? "Dock floating" : "Dock to sidebar"}
+          >
+            <PanelRight size={16} />
+          </button>
+          <button
+            className={styles.closeButton}
             onClick={onClose}
             aria-label="Close"
             title="Close (Esc)"
@@ -259,6 +269,16 @@ export function Popover({
             <div className={styles.visualBadge}>Visual Context</div>
           </div>
         )}
+
+        {/* Empty state for sidebar */}
+        {messages.length === 0 && state === "IDLE" && (
+          <div className={styles.emptySidebar}>
+            <div className={styles.emptyIcon}>✨</div>
+            <h3>Gist Sidebar Ready</h3>
+            <p>Highlight any text on this page to get an explanation here, or start a manual query below.</p>
+          </div>
+        )}
+
         {messages.map((msg, idx) => (
           <div
             key={idx}
