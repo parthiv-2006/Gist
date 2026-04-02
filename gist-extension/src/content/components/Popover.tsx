@@ -329,7 +329,7 @@ export function Popover({
           <input
             type="text"
             className={styles.inputField}
-            placeholder={messages.length === 0 ? "Gist something to chat..." : "Ask a follow-up..."}
+            placeholder={isInputDisabled ? "Gist something to chat..." : "Ask a follow-up..."}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
