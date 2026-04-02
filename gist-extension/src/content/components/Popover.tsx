@@ -180,24 +180,16 @@ export function Popover({
 
   return (
     <div
-      className={styles.popover}
+      className={`${styles.popover} ${isSidebarMode ? styles.sidebar : ""}`}
       role="dialog"
       aria-label="Gist explanation"
       aria-live="polite"
-      style={isSidebarMode ? {
-        top: 0,
-        right: 0,
-        left: "auto",
-        width: "400px",
-        height: "100vh",
-        borderRadius: 0,
-        borderLeft: `1px solid rgba(255, 255, 255, 0.1)`,
-      } : {
+      style={!isSidebarMode ? {
         top:    `${pos.y}px`,
         left:   `${pos.x}px`,
         width:  `${size.width}px`,
         height: `${size.height}px`,
-      }}
+      } : {}}
     >
       {/* Header — doubles as drag handle */}
       <div
@@ -330,25 +322,27 @@ export function Popover({
 
       {/* Input bar */}
       <div className={styles.inputBar}>
-        <input
-          type="text"
-          className={styles.inputField}
-          placeholder={messages.length === 0 ? "Ask anything..." : "Ask a follow-up..."}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") handleSend(); }}
-          onKeyUp={(e) => e.stopPropagation()}
-          onKeyPress={(e) => e.stopPropagation()}
-          disabled={state === "LOADING" || state === "STREAMING"}
-        />
-        <button
-          className={styles.sendButton}
-          onClick={handleSend}
-          disabled={!inputValue.trim() || state === "LOADING" || state === "STREAMING"}
-          aria-label="Send"
-        >
-          <Send size={16} />
-        </button>
+        <div className={styles.inputBarWrapper}>
+          <input
+            type="text"
+            className={styles.inputField}
+            placeholder={messages.length === 0 ? "Ask anything..." : "Ask a follow-up..."}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") handleSend(); }}
+            onKeyUp={(e) => e.stopPropagation()}
+            onKeyPress={(e) => e.stopPropagation()}
+            disabled={state === "LOADING" || state === "STREAMING"}
+          />
+          <button
+            className={styles.sendButton}
+            onClick={handleSend}
+            disabled={!inputValue.trim() || state === "LOADING" || state === "STREAMING"}
+            aria-label="Send"
+          >
+            <Send size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Resize handle — bottom-right corner */}

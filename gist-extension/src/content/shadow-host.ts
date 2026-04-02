@@ -80,11 +80,15 @@ export function mountPopover(): void {
   shadowRoot.appendChild(fontLink);
 
   const style = document.createElement("style");
-  style.textContent = popoverStyles + "\n" + overlayStyles;
+  style.textContent = `
+    :host { all: initial; display: block; contain: content; }
+    * { box-sizing: border-box !important; }
+    #gist-mount { width: 100%; height: 100%; pointer-events: none; display: flex; align-items: flex-start; justify-content: flex-end; }
+  ` + popoverStyles + "\n" + overlayStyles;
   shadowRoot.appendChild(style);
 
   const mountPoint = document.createElement("div");
-  mountPoint.style.cssText = "pointer-events: none; width: 100%; height: 100%;";
+  mountPoint.id = "gist-mount";
   shadowRoot.appendChild(mountPoint);
 
   reactRoot = createRoot(mountPoint);
