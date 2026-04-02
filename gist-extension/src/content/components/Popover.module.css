@@ -238,6 +238,8 @@
   padding: 8px 12px;
   border-radius: var(--gist-radius-sm);
   margin-left: 20px;
+  width: fit-content;
+  max-width: calc(100% - 20px);
 }
 
 .modelMessage {
