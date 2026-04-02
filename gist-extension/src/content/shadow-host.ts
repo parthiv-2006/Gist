@@ -162,6 +162,16 @@ export function unmountPopover(): void {
     messages = [];
     currentMode = "standard";
     currentImageData = undefined;
+    
+    // Force reset sidebar mode if it was active
+    if (isSidebarMode && shadowHost) {
+      shadowHost.style.pointerEvents = "none";
+      shadowHost.style.width = "100vw";
+      shadowHost.style.left = "0";
+      shadowHost.style.right = "auto";
+    }
+    isSidebarMode = false;
+
     renderPopover({ state: "IDLE" });
   }
 }

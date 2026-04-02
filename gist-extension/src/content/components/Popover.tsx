@@ -84,11 +84,11 @@ export function Popover({
 
   // ─── Close on Escape ─────────────────────────────────────────────
   useEffect(() => {
-    if (state === "IDLE") return;
+    if (state === "IDLE" && !isSidebarMode) return;
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [state, onClose]);
+  }, [state, isSidebarMode, onClose]);
 
   // ─── Drag ────────────────────────────────────────────────────────
   const handleHeaderMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -329,7 +329,11 @@ export function Popover({
             placeholder={messages.length === 0 ? "Ask anything..." : "Ask a follow-up..."}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            onKeyDown={(e) => { e.stopPropagation(); if (e.key === "Enter") handleSend(); }}
+            onKeyDown={(e) => {
+              if (e.key !== "Escape") e.stopPropagation();
+              if (e.key === "Enter") handleSend();
+              if (e.key === "Escape") onClose();
+            }}
             onKeyUp={(e) => e.stopPropagation()}
             onKeyPress={(e) => e.stopPropagation()}
             disabled={state === "LOADING" || state === "STREAMING"}
