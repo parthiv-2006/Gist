@@ -96,7 +96,80 @@ function App() {
           Highlight any text on a webpage to get an instant AI&#8209;powered explanation — without leaving the page.
         </p>
 
-        {/* Keyboard shortcut */}
+        {/* Visual Capture trigger */}
+        <button
+          onClick={() => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+              const tab = tabs[0];
+              if (tab?.id) {
+                chrome.tabs.sendMessage(tab.id, { type: "GIST_CAPTURE_START", payload: {} });
+                window.close();
+              }
+            });
+          }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            background: c.bgCard,
+            border: `1px solid ${c.border}`,
+            borderRadius: "6px",
+            padding: "10px 12px",
+            cursor: "pointer",
+            textAlign: "left",
+            width: "100%",
+            transition: "all 150ms ease",
+            outline: "none",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.borderColor = c.accent;
+            e.currentTarget.style.background = c.bg;
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.borderColor = c.border;
+            e.currentTarget.style.background = c.bgCard;
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+            <div style={{
+              width: "32px",
+              height: "32px",
+              borderRadius: "6px",
+              background: "rgba(16, 185, 129, 0.1)",
+              border: "1px solid rgba(16, 185, 129, 0.2)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: c.accent,
+            }}>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M15 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h7" />
+                <polyline points="9 9 12 12 9 15" />
+                <path d="M12 12h9" />
+                <circle cx="18" cy="12" r="3" />
+              </svg>
+            </div>
+            <div>
+              <div style={{ fontSize: "11px", fontWeight: 700, color: c.textPrimary }}>Visual Gist</div>
+              <div style={{ fontSize: "10px", color: c.textSecondary }}>Capture and explain area</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "2px" }}>
+             {["Alt", "Shift", "G"].map(k => (
+               <kbd key={k} style={{
+                 background: "#1a1a1a",
+                 border: `1px solid ${c.borderStrong}`,
+                 borderRadius: "3px",
+                 padding: "1px 4px",
+                 fontSize: "9px",
+                 fontFamily: MONO,
+                 color: c.textSecondary
+               }}>{k}</kbd>
+             ))}
+          </div>
+        </button>
+
+        {/* Keyboard shortcut text */}
         <div style={{
           display: "flex",
           alignItems: "center",
@@ -107,7 +180,7 @@ function App() {
           padding: "9px 12px",
         }}>
           <span style={{ fontSize: "11px", color: c.textSecondary, fontWeight: 500 }}>
-            Quick trigger
+            Quick text trigger
           </span>
           <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
             {["Ctrl", "Shift", "E"].map((key, i) => (
@@ -156,7 +229,7 @@ function App() {
             <circle cx="9"  cy="12" r="1.2" fill="currentColor" />
           </svg>
           <p style={{ margin: 0, fontSize: "11px", color: c.textSecondary, lineHeight: 1.5 }}>
-            The explanation panel is <strong style={{ color: c.textPrimary, fontWeight: 600 }}>draggable</strong> and <strong style={{ color: c.textPrimary, fontWeight: 600 }}>resizable</strong> — drag the header to move it, drag the corner to resize.
+            The explanation panel is <strong style={{ color: c.textPrimary, fontWeight: 600 }}>draggable</strong> and <strong style={{ color: c.textPrimary, fontWeight: 600 }}>resizable</strong>.
           </p>
         </div>
 

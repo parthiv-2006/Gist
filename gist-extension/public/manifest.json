@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Gist",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Highlight any text and get an instant plain-language explanation.",
   "permissions": ["contextMenus", "scripting", "activeTab", "storage"],
   "background": {
@@ -35,6 +35,13 @@
         "mac": "Command+Shift+E"
       },
       "description": "Gist the current selection"
+    },
+    "capture-gist": {
+      "suggested_key": {
+        "default": "Alt+Shift+G",
+        "mac": "Alt+Shift+G"
+      },
+      "description": "Capture an area to Gist"
     }
   }
 }
