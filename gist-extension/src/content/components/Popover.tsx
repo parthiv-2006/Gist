@@ -53,6 +53,7 @@ export function Popover({
   const [inputValue, setInputValue] = useState("");
   const [ttsState, setTtsState] = useState<"idle" | "playing" | "paused">("idle");
   const historyRef = useRef<HTMLDivElement>(null);
+  const isInputDisabled = (state === "LOADING" || state === "STREAMING") || (state === "IDLE" && messages.length === 0);
 
   // ─── Position & Size (drag / resize) ────────────────────────────
   const [pos,  setPos]  = useState(() =>
@@ -269,7 +270,7 @@ export function Popover({
           <div className={styles.emptySidebar}>
             <div className={styles.emptyIcon}>✨</div>
             <h3>{isSidebarMode ? "Gist Sidebar Ready" : "Gist Ready"}</h3>
-            <p>Highlight any text on this page to get an explanation here, or start a manual query below.</p>
+            <p>Highlight any text on this page to get a concise explanation here.</p>
           </div>
         )}
 
@@ -328,7 +329,7 @@ export function Popover({
           <input
             type="text"
             className={styles.inputField}
-            placeholder={messages.length === 0 ? "Ask anything..." : "Ask a follow-up..."}
+            placeholder={messages.length === 0 ? "Gist something to chat..." : "Ask a follow-up..."}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={(e) => {
@@ -338,12 +339,12 @@ export function Popover({
             }}
             onKeyUp={(e) => e.stopPropagation()}
             onKeyPress={(e) => e.stopPropagation()}
-            disabled={state === "LOADING" || state === "STREAMING"}
+            disabled={isInputDisabled}
           />
           <button
             className={styles.sendButton}
             onClick={handleSend}
-            disabled={!inputValue.trim() || state === "LOADING" || state === "STREAMING"}
+            disabled={!inputValue.trim() || isInputDisabled}
             aria-label="Send"
           >
             <Send size={14} />
