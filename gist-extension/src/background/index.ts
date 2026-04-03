@@ -94,10 +94,9 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     console.log("[Gist BG] GIST_FOLLOW_UP received", { tabId, historyLength: messages?.length });
     streamFromBackend(tabId, "", pageContext ?? "", complexityLevel ?? "standard", messages);
   } else if (message.type === "OPEN_LIBRARY") {
-    // Open the extension popup so the user can see their Library tab.
-    chrome.action.openPopup().catch(() => {
-      // openPopup() requires user gesture on some Chrome versions — silently ignore.
-    });
+    // chrome.action.openPopup() requires a direct user gesture and silently fails
+    // when triggered from a content script message. Open as a tab instead.
+    chrome.tabs.create({ url: chrome.runtime.getURL("popup.html") + "#library" });
     sendResponse({ success: true });
     return true;
   } else if (message.type === "AUTOGIST_REQUEST") {

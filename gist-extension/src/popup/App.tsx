@@ -3,9 +3,19 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 
-const BACKEND_BASE = import.meta.env.DEV
-  ? "http://localhost:8000"
-  : "https://gist-vc8m.onrender.com";
+// Try the local dev server first (600 ms timeout); fall back to Render.
+// This means the popup works whether or not the user has a local backend running,
+// without needing separate dev/prod builds.
+const BACKEND_BASE: Promise<string> = (async () => {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 600);
+    const r = await fetch("http://localhost:8000/health", { signal: ctrl.signal });
+    clearTimeout(t);
+    if (r.ok) return "http://localhost:8000";
+  } catch { /* no local server */ }
+  return "https://gist-vc8m.onrender.com";
+})();
 
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const MONO = "'Space Mono', 'Fira Code', monospace";
@@ -142,16 +152,21 @@ function LibraryView() {
   const [srcExpanded, setSrcExpanded] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch(`${BACKEND_BASE}/library`)
-      .then((r) => {
-        if (!r.ok) throw new Error(r.status === 503 ? "Library unavailable — start the backend." : `Error ${r.status}`);
-        return r.json();
-      })
-      .then((data) => { setItems(data.items ?? []); setLoading(false); })
-      .catch((e)   => { setError(e.message); setLoading(false); });
+    let cancelled = false;
+    BACKEND_BASE.then((base) => {
+      if (cancelled) return;
+      fetch(`${base}/library`)
+        .then((r) => {
+          if (!r.ok) throw new Error(r.status === 503 ? "Library unavailable — start the backend." : `Error ${r.status}`);
+          return r.json();
+        })
+        .then((data) => { if (!cancelled) { setItems(data.items ?? []); setLoading(false); } })
+        .catch((e)   => { if (!cancelled) { setError(e.message); setLoading(false); } });
+    });
+    return () => { cancelled = true; };
   }, []);
 
-  const handleAsk = () => {
+  const handleAsk = async () => {
     const q = query.trim();
     if (!q || askState === "searching") return;
     setAskState("searching");
@@ -159,7 +174,8 @@ function LibraryView() {
     setAskError(null);
     setSrcExpanded(null);
 
-    fetch(`${BACKEND_BASE}/library/ask`, {
+    const base = await BACKEND_BASE;
+    fetch(`${base}/library/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: q }),
@@ -596,7 +612,9 @@ function CaptureView() {
 type Tab = "capture" | "library";
 
 function App() {
-  const [activeTab, setActiveTab] = useState<Tab>("capture");
+  const [activeTab, setActiveTab] = useState<Tab>(() =>
+    window.location.hash === "#library" ? "library" : "capture"
+  );
 
   return (
     <div style={{
