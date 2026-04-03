@@ -376,6 +376,20 @@ function LibraryView() {
 // ── Capture View (existing content) ────────────────────────────────────────
 
 function CaptureView() {
+  const [autoGistEnabled, setAutoGistEnabled] = useState(false);
+
+  useEffect(() => {
+    chrome.storage.local.get(["autoGistEnabled"], (result) => {
+      setAutoGistEnabled(result["autoGistEnabled"] === true);
+    });
+  }, []);
+
+  const handleAutoGistToggle = () => {
+    const next = !autoGistEnabled;
+    setAutoGistEnabled(next);
+    chrome.storage.local.set({ autoGistEnabled: next });
+  };
+
   return (
     <main style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: "14px" }}>
 
@@ -468,6 +482,54 @@ function CaptureView() {
           </div>
         </div>
       </button>
+
+      {/* AutoGist toggle */}
+      <div style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: c.bgCard, border: `1px solid ${autoGistEnabled ? "rgba(16,185,129,0.3)" : c.border}`,
+        borderRadius: "6px", padding: "10px 12px",
+        transition: "border-color 200ms ease",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div style={{
+            width: "32px", height: "32px", borderRadius: "6px",
+            background: autoGistEnabled ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.03)",
+            border: `1px solid ${autoGistEnabled ? "rgba(16,185,129,0.2)" : c.border}`,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            color: autoGistEnabled ? c.accent : c.textMuted,
+            transition: "all 200ms ease",
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+              <circle cx="12" cy="12" r="3"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: "11px", fontWeight: 700, color: c.textPrimary }}>AutoGist</div>
+            <div style={{ fontSize: "10px", color: c.textSecondary }}>Ambient scroll summary</div>
+          </div>
+        </div>
+        {/* Toggle switch */}
+        <button
+          onClick={handleAutoGistToggle}
+          aria-label={autoGistEnabled ? "Disable AutoGist" : "Enable AutoGist"}
+          style={{
+            width: "36px", height: "20px", borderRadius: "10px",
+            background: autoGistEnabled ? c.accent : "#252525",
+            border: "none", cursor: "pointer", position: "relative",
+            transition: "background 200ms ease", flexShrink: 0, padding: 0,
+            outline: "none",
+          }}
+        >
+          <div style={{
+            position: "absolute", top: "2px",
+            left: autoGistEnabled ? "18px" : "2px",
+            width: "16px", height: "16px", borderRadius: "50%",
+            background: "#fff", transition: "left 200ms ease",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
+          }} />
+        </button>
+      </div>
 
       {/* Keyboard shortcut */}
       <div style={{

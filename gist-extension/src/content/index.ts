@@ -1,6 +1,6 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled } from "./shadow-host";
 import { startObserver } from "./observer";
 import { RateLimiter } from "../utils/rate-limiter";
 
@@ -16,14 +16,46 @@ if (!window.__gistMounted) {
 
   mountPopover();
 
-  // Start the ambient scroll observer — sends AUTOGIST_REQUEST to background
-  // whenever the user settles on a section of readable content.
-  startObserver((text) => {
-    setWidgetLoading();
-    chrome.runtime.sendMessage({
-      type: "AUTOGIST_REQUEST",
-      payload: { textChunk: text, url: document.title },
+  // ── AutoGist observer management ─────────────────────────────────────────
+  // Observer only runs when the user has opted in via the popup toggle.
+  // The enabled state is persisted in chrome.storage.local.
+  let stopObserver: (() => void) | null = null;
+
+  function startAutoGist(): void {
+    if (stopObserver) return; // already running
+    setWidgetEnabled(true);
+    stopObserver = startObserver((text) => {
+      setWidgetLoading();
+      chrome.runtime.sendMessage({
+        type: "AUTOGIST_REQUEST",
+        payload: { textChunk: text, url: document.title },
+      });
     });
+  }
+
+  function stopAutoGist(): void {
+    if (stopObserver) {
+      stopObserver();
+      stopObserver = null;
+    }
+    setWidgetEnabled(false);
+  }
+
+  // Read initial storage value
+  chrome.storage.local.get(["autoGistEnabled"], (result) => {
+    if (result["autoGistEnabled"] === true) {
+      startAutoGist();
+    }
+  });
+
+  // React to toggle changes from the popup in real time
+  chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== "local" || !changes["autoGistEnabled"]) return;
+    if (changes["autoGistEnabled"].newValue === true) {
+      startAutoGist();
+    } else {
+      stopAutoGist();
+    }
   });
 
   setHandlers(
@@ -93,7 +125,11 @@ if (!window.__gistMounted) {
 
       case "AUTOGIST_RESPONSE": {
         const takeaways = msg.payload.takeaways ?? [];
-        if (takeaways.length > 0) updateWidget(takeaways);
+        if (takeaways.length > 0) {
+          updateWidget(takeaways);
+        } else {
+          setWidgetIdle();
+        }
         break;
       }
     }

@@ -21,6 +21,7 @@ let widgetReactRoot: Root | null = null;
 let widgetState: WidgetState = "idle";
 let widgetTakeaways: string[] = [];
 let widgetDismissed = false;
+let widgetEnabled = false; // off by default — user must opt in via popup toggle
 
 // Internal accumulated text (builds up as STREAMING chunks arrive)
 let accumulatedText = "";
@@ -238,14 +239,32 @@ const stableOnOpenLibrary = () => {
 
 // ── AutoGist widget exports ───────────────────────────────────────────────────
 
+export function setWidgetEnabled(enabled: boolean): void {
+  widgetEnabled = enabled;
+  if (enabled) {
+    // Reset dismissed state so the widget reappears when re-enabled
+    widgetDismissed = false;
+    widgetState = "idle";
+    widgetTakeaways = [];
+  }
+  renderWidget();
+}
+
 export function setWidgetLoading(): void {
-  if (widgetDismissed) return;
+  if (!widgetEnabled || widgetDismissed) return;
   widgetState = "loading";
   renderWidget();
 }
 
+export function setWidgetIdle(): void {
+  if (!widgetEnabled || widgetDismissed) return;
+  widgetState = "idle";
+  widgetTakeaways = [];
+  renderWidget();
+}
+
 export function updateWidget(takeaways: string[]): void {
-  if (widgetDismissed) return;
+  if (!widgetEnabled || widgetDismissed) return;
   widgetTakeaways = takeaways;
   widgetState = "ready";
   renderWidget();
@@ -253,7 +272,7 @@ export function updateWidget(takeaways: string[]): void {
 
 function renderWidget(): void {
   if (!widgetReactRoot) return;
-  if (widgetDismissed) {
+  if (!widgetEnabled || widgetDismissed) {
     widgetReactRoot.render(React.createElement(React.Fragment, null));
     return;
   }
