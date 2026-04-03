@@ -8,7 +8,10 @@ export type MessageType =
   | "GIST_SIDEBAR_TOGGLE"
   | "GIST_CHUNK"
   | "GIST_COMPLETE"
-  | "GIST_ERROR";
+  | "GIST_ERROR"
+  | "OPEN_LIBRARY"
+  | "AUTOGIST_REQUEST"
+  | "AUTOGIST_RESPONSE";
 
 export type ComplexityLevel = "standard" | "simple" | "legal" | "academic";
 
@@ -29,6 +32,10 @@ export interface GistMessage {
     error?: string;
     imageData?: string;
     imageMimeType?: string;
+    // AutoGist fields
+    textChunk?: string;
+    url?: string;
+    takeaways?: string[];
   };
 }
 
@@ -62,6 +69,9 @@ export function isGistMessage(value: unknown): value is GistMessage {
     "GIST_CHUNK",
     "GIST_COMPLETE",
     "GIST_ERROR",
+    "OPEN_LIBRARY",
+    "AUTOGIST_REQUEST",
+    "AUTOGIST_RESPONSE",
   ];
   return VALID_TYPES.includes(type);
 }
