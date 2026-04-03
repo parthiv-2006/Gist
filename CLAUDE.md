@@ -23,7 +23,7 @@ receive a plain-language AI explanation in a floating popover — without leavin
 Backend is a Python/FastAPI service that proxies calls to Google Gemini and streams the response
 via SSE back to the extension.
 
-26: **Current Status:** Phase 5 complete. Gist Library (Personal Knowledge Base) implemented with MongoDB.
+26: **Current Status:** Phase 5 complete (Library & MongoDB). All core features deployed and committed.
 27: 
 28: ---
 29: 
