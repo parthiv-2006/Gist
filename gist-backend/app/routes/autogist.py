@@ -93,12 +93,23 @@ def _extract_json_array(raw: str) -> list[str]:
     raise ValueError(f"Could not extract JSON array from model response: {text[:200]!r}")
 
 
+_MOCK_LLM: bool = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
+_MOCK_TAKEAWAYS = [
+    "Mock takeaway one — no Gemini API call was made.",
+    "Mock takeaway two — set MOCK_LLM=false to use the real model.",
+    "Mock takeaway three — safe for testing without quota consumption.",
+]
+
+
 async def _generate_takeaways(text: str) -> list[str]:
     """
     Call Gemini and return a list of 3 takeaway strings.
     Uses run_in_executor so the synchronous SDK call doesn't block the event loop.
     Parses JSON robustly — tolerates markdown fences and surrounding text.
     """
+    if _MOCK_LLM:
+        return _MOCK_TAKEAWAYS
+
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set")

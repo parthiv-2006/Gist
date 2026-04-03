@@ -15,6 +15,24 @@ from google.genai import types as _genai_types  # noqa: F401 — kept for future
 # gemini-2.5-flash is the current default; update here if the project migrates.
 GEMINI_MODEL = "gemini-2.5-flash"
 
+# ─── Mock Mode ────────────────────────────────────────────────────────────────
+# Set MOCK_LLM=true in your .env to skip all Gemini API calls during development.
+# Responses are instant and deterministic — no quota consumed.
+_MOCK_LLM: bool = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
+
+_MOCK_EXPLANATION = (
+    "This is a mock explanation generated locally — no Gemini API call was made. "
+    "Set MOCK_LLM=false (or remove it) to use the real model."
+)
+_MOCK_EMBEDDING_DIM = 768
+
+
+async def _mock_stream_explanation() -> AsyncGenerator[str, None]:
+    """Yield a fake explanation word-by-word to simulate SSE streaming."""
+    for word in _MOCK_EXPLANATION.split():
+        await asyncio.sleep(0.03)
+        yield word + " "
+
 # ─── Mode Instructions ────────────────────────────────────────────────────────
 
 _MODE_INSTRUCTIONS: dict[str, str] = {
@@ -109,6 +127,9 @@ async def embed_text(text: str) -> list[float]:
     Generate a 768-dimensional embedding for the given text using text-embedding-004.
     Runs the synchronous SDK call in a thread executor to avoid blocking the event loop.
     """
+    if _MOCK_LLM:
+        return [0.0] * _MOCK_EMBEDDING_DIM
+
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set")
@@ -141,6 +162,11 @@ async def stream_explanation(
     Call the Gemini API with streaming enabled.
     Yields text chunks as they arrive from the model.
     """
+    if _MOCK_LLM:
+        async for chunk in _mock_stream_explanation():
+            yield chunk
+        return
+
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set")
