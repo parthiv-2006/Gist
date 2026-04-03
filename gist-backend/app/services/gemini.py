@@ -98,6 +98,35 @@ def build_prompt(
     return prompt
 
 
+# ─── Embedding ────────────────────────────────────────────────────────────────
+
+EMBEDDING_MODEL = "text-embedding-004"
+_EMBED_MAX_CHARS = 8000  # safety truncation before sending to the API
+
+
+async def embed_text(text: str) -> list[float]:
+    """
+    Generate a 768-dimensional embedding for the given text using text-embedding-004.
+    Runs the synchronous SDK call in a thread executor to avoid blocking the event loop.
+    """
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise RuntimeError("GEMINI_API_KEY is not set")
+
+    client = genai.Client(api_key=api_key)
+    truncated = text[:_EMBED_MAX_CHARS]
+
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(
+        None,
+        lambda: client.models.embed_content(
+            model=EMBEDDING_MODEL,
+            contents=truncated,
+        ),
+    )
+    return result.embeddings[0].values
+
+
 # ─── Streaming ────────────────────────────────────────────────────────────────
 
 async def stream_explanation(
