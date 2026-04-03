@@ -43,15 +43,99 @@ interface GistItem {
   url:           string;
   category:      string;
   created_at:    string;
+  score?:        number;
+}
+
+interface AskResult {
+  answer:  string;
+  sources: GistItem[];
+}
+
+// ── Gist Card (shared between library list and search results) ─────────────
+
+function GistCard({ item, index, expanded, onToggle }: {
+  item: GistItem;
+  index: number;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  const color = CATEGORY_COLORS[item.category] ?? c.textMuted;
+  const date  = new Date(item.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  return (
+    <div
+      onClick={onToggle}
+      style={{
+        background: c.bgCard,
+        border: `1px solid ${expanded ? c.borderStrong : c.border}`,
+        borderRadius: "6px",
+        padding: "10px 11px",
+        cursor: "pointer",
+        transition: "border-color 120ms ease",
+      }}
+      onMouseEnter={(e) => { if (!expanded) e.currentTarget.style.borderColor = c.borderStrong; }}
+      onMouseLeave={(e) => { if (!expanded) e.currentTarget.style.borderColor = c.border; }}
+    >
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{
+            fontSize: "9px", fontWeight: 700, letterSpacing: "0.06em",
+            textTransform: "uppercase" as const, color,
+            background: `${color}18`, border: `1px solid ${color}40`,
+            borderRadius: "3px", padding: "1px 5px",
+          }}>
+            {item.category}
+          </span>
+          <span style={{ fontSize: "9px", color: c.textMuted, fontFamily: MONO }}>{item.mode}</span>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <span style={{ fontSize: "9px", color: c.textMuted }}>{date}</span>
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
+            style={{ color: c.textMuted, transition: "transform 120ms ease", transform: expanded ? "rotate(180deg)" : "none" }}>
+            <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </div>
+      </div>
+      <p style={{
+        margin: 0, fontSize: "11px", color: c.textSecondary, lineHeight: 1.45,
+        overflow: "hidden", display: "-webkit-box",
+        WebkitLineClamp: expanded ? undefined : 2,
+        WebkitBoxOrient: "vertical" as const,
+      }}>
+        {item.original_text}
+      </p>
+      {expanded && (
+        <div style={{ marginTop: "10px", borderTop: `1px solid ${c.border}`, paddingTop: "10px" }}>
+          <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: c.textPrimary, lineHeight: 1.6 }}>
+            {item.explanation}
+          </p>
+          {item.url && item.url !== "Unknown page" && (
+            <p style={{ margin: 0, fontSize: "10px", color: c.textMuted, fontFamily: MONO, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {item.url}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // ── Library View ───────────────────────────────────────────────────────────
 
+type AskState = "idle" | "searching" | "done" | "error";
+
 function LibraryView() {
-  const [items, setItems]     = useState<GistItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError]     = useState<string | null>(null);
-  const [expanded, setExpanded] = useState<number | null>(null);
+  const [items, setItems]         = useState<GistItem[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState<string | null>(null);
+  const [expanded, setExpanded]   = useState<number | null>(null);
+
+  // Search / Ask state
+  const [query, setQuery]         = useState("");
+  const [askState, setAskState]   = useState<AskState>("idle");
+  const [askResult, setAskResult] = useState<AskResult | null>(null);
+  const [askError, setAskError]   = useState<string | null>(null);
+  const [srcExpanded, setSrcExpanded] = useState<number | null>(null);
 
   useEffect(() => {
     fetch("http://127.0.0.1:8000/library")
@@ -63,27 +147,195 @@ function LibraryView() {
       .catch((e)   => { setError(e.message); setLoading(false); });
   }, []);
 
+  const handleAsk = () => {
+    const q = query.trim();
+    if (!q || askState === "searching") return;
+    setAskState("searching");
+    setAskResult(null);
+    setAskError(null);
+    setSrcExpanded(null);
+
+    fetch("http://127.0.0.1:8000/library/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ query: q }),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`Error ${r.status}`);
+        return r.json();
+      })
+      .then((data: AskResult) => { setAskResult(data); setAskState("done"); })
+      .catch((e) => { setAskError(e.message); setAskState("error"); });
+  };
+
+  const handleClearAsk = () => {
+    setQuery("");
+    setAskState("idle");
+    setAskResult(null);
+    setAskError(null);
+  };
+
+  // ── Search bar (always visible at top) ──────────────────────────────────
+  const searchBar = (
+    <div style={{ padding: "10px 12px 0" }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: "6px",
+        background: c.bgCard,
+        border: `1px solid ${askState === "searching" ? c.accent : c.border}`,
+        borderRadius: "7px",
+        padding: "6px 9px",
+        transition: "border-color 200ms ease",
+        boxShadow: askState === "searching" ? `0 0 0 2px ${c.accentGlow}` : "none",
+      }}>
+        {/* Search icon */}
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+          strokeLinecap="round" strokeLinejoin="round"
+          style={{ color: askState === "searching" ? c.accent : c.textMuted, flexShrink: 0, transition: "color 200ms ease" }}>
+          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+        </svg>
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleAsk(); }}
+          placeholder="Ask your library…"
+          style={{
+            flex: 1, background: "none", border: "none", outline: "none",
+            fontSize: "11px", color: c.textPrimary, fontFamily: FONT,
+          }}
+        />
+        {/* Pulse indicator while searching */}
+        {askState === "searching" && (
+          <div style={{
+            width: "7px", height: "7px", borderRadius: "50%",
+            background: c.accent, flexShrink: 0,
+            animation: "gist-pulse 1s ease-in-out infinite",
+          }} />
+        )}
+        {/* Clear button when results are shown */}
+        {(askState === "done" || askState === "error") && (
+          <button onClick={handleClearAsk} style={{
+            background: "none", border: "none", cursor: "pointer",
+            color: c.textMuted, padding: "0", display: "flex", alignItems: "center",
+          }}>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+              strokeLinecap="round">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
+        {/* Ask button */}
+        {askState === "idle" && query.trim() && (
+          <button onClick={handleAsk} style={{
+            background: c.accent, border: "none", borderRadius: "4px",
+            color: "#000", fontSize: "9px", fontWeight: 700, fontFamily: FONT,
+            padding: "3px 7px", cursor: "pointer", flexShrink: 0,
+            letterSpacing: "0.04em",
+          }}>
+            ASK
+          </button>
+        )}
+      </div>
+      {/* Pulse keyframe injected once */}
+      <style>{`@keyframes gist-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
+    </div>
+  );
+
+  // ── Ask results view ─────────────────────────────────────────────────────
+  if (askState === "done" && askResult) {
+    return (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {searchBar}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px 12px" }}>
+          {/* Glassmorphism answer card */}
+          <div style={{
+            background: "rgba(16, 185, 129, 0.06)",
+            border: "1px solid rgba(16, 185, 129, 0.28)",
+            borderRadius: "8px",
+            padding: "11px 13px",
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "7px" }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.accent} strokeWidth="2" strokeLinecap="round">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: c.accent }}>
+                Gist Answer
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: "11px", color: c.textPrimary, lineHeight: 1.65 }}>
+              {askResult.answer}
+            </p>
+          </div>
+
+          {/* Source gists */}
+          {askResult.sources.length > 0 && (
+            <div>
+              <p style={{ margin: "0 0 5px 0", fontSize: "9px", fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase" as const, color: c.textMuted }}>
+                Sources ({askResult.sources.length})
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
+                {askResult.sources.map((src, i) => (
+                  <GistCard
+                    key={i}
+                    item={src}
+                    index={i}
+                    expanded={srcExpanded === i}
+                    onToggle={() => setSrcExpanded(srcExpanded === i ? null : i)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {askResult.sources.length === 0 && (
+            <div style={{ textAlign: "center", padding: "12px 0", fontSize: "11px", color: c.textMuted }}>
+              No matching gists found — try gisting more content.
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (askState === "error") {
+    return (
+      <div style={{ display: "flex", flexDirection: "column" }}>
+        {searchBar}
+        <div style={{ padding: "10px 12px" }}>
+          <div style={{
+            background: "rgba(248, 113, 113, 0.08)", border: "1px solid rgba(248, 113, 113, 0.25)",
+            borderRadius: "6px", padding: "10px 12px", fontSize: "11px", color: "#f87171",
+          }}>
+            {askError ?? "Search failed. Is the backend running?"}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Standard library list view ───────────────────────────────────────────
   if (loading) {
     return (
-      <div style={{ padding: "32px 16px", textAlign: "center", color: c.textMuted, fontSize: "12px" }}>
-        Loading library…
+      <div>
+        {searchBar}
+        <div style={{ padding: "32px 16px", textAlign: "center", color: c.textMuted, fontSize: "12px" }}>
+          Loading library…
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div style={{ padding: "20px 16px" }}>
-        <div style={{
-          background: "rgba(248, 113, 113, 0.08)",
-          border: "1px solid rgba(248, 113, 113, 0.25)",
-          borderRadius: "6px",
-          padding: "12px",
-          fontSize: "12px",
-          color: "#f87171",
-          lineHeight: 1.5,
-        }}>
-          {error}
+      <div>
+        {searchBar}
+        <div style={{ padding: "10px 12px" }}>
+          <div style={{
+            background: "rgba(248, 113, 113, 0.08)", border: "1px solid rgba(248, 113, 113, 0.25)",
+            borderRadius: "6px", padding: "12px", fontSize: "12px", color: "#f87171", lineHeight: 1.5,
+          }}>
+            {error}
+          </div>
         </div>
       </div>
     );
@@ -91,96 +343,32 @@ function LibraryView() {
 
   if (items.length === 0) {
     return (
-      <div style={{ padding: "32px 16px", textAlign: "center" }}>
-        <div style={{ fontSize: "24px", marginBottom: "8px" }}>📚</div>
-        <div style={{ fontSize: "12px", color: c.textMuted, lineHeight: 1.6 }}>
-          Your library is empty.<br />Highlight text on any page to save your first gist.
+      <div>
+        {searchBar}
+        <div style={{ padding: "24px 16px", textAlign: "center" }}>
+          <div style={{ fontSize: "24px", marginBottom: "8px" }}>📚</div>
+          <div style={{ fontSize: "12px", color: c.textMuted, lineHeight: 1.6 }}>
+            Your library is empty.<br />Highlight text on any page to save your first gist.
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "10px 12px" }}>
-      {items.map((item, i) => {
-        const isOpen = expanded === i;
-        const color  = CATEGORY_COLORS[item.category] ?? c.textMuted;
-        const date   = new Date(item.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
-
-        return (
-          <div
+    <div style={{ display: "flex", flexDirection: "column" }}>
+      {searchBar}
+      <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "10px 12px" }}>
+        {items.map((item, i) => (
+          <GistCard
             key={i}
-            onClick={() => setExpanded(isOpen ? null : i)}
-            style={{
-              background: c.bgCard,
-              border: `1px solid ${isOpen ? c.borderStrong : c.border}`,
-              borderRadius: "6px",
-              padding: "10px 11px",
-              cursor: "pointer",
-              transition: "border-color 120ms ease",
-            }}
-            onMouseEnter={(e) => { if (!isOpen) e.currentTarget.style.borderColor = c.borderStrong; }}
-            onMouseLeave={(e) => { if (!isOpen) e.currentTarget.style.borderColor = c.border; }}
-          >
-            {/* Row: category badge + date + chevron */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{
-                  fontSize: "9px",
-                  fontWeight: 700,
-                  letterSpacing: "0.06em",
-                  textTransform: "uppercase" as const,
-                  color,
-                  background: `${color}18`,
-                  border: `1px solid ${color}40`,
-                  borderRadius: "3px",
-                  padding: "1px 5px",
-                }}>
-                  {item.category}
-                </span>
-                <span style={{ fontSize: "9px", color: c.textMuted, fontFamily: MONO }}>{item.mode}</span>
-              </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                <span style={{ fontSize: "9px", color: c.textMuted }}>{date}</span>
-                <svg
-                  width="10" height="10" viewBox="0 0 10 10" fill="none"
-                  style={{ color: c.textMuted, transition: "transform 120ms ease", transform: isOpen ? "rotate(180deg)" : "none" }}
-                >
-                  <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Original text snippet */}
-            <p style={{
-              margin: 0,
-              fontSize: "11px",
-              color: c.textSecondary,
-              lineHeight: 1.45,
-              overflow: "hidden",
-              display: "-webkit-box",
-              WebkitLineClamp: isOpen ? undefined : 2,
-              WebkitBoxOrient: "vertical" as const,
-            }}>
-              {item.original_text}
-            </p>
-
-            {/* Expanded: explanation + source URL */}
-            {isOpen && (
-              <div style={{ marginTop: "10px", borderTop: `1px solid ${c.border}`, paddingTop: "10px" }}>
-                <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: c.textPrimary, lineHeight: 1.6 }}>
-                  {item.explanation}
-                </p>
-                {item.url && item.url !== "Unknown page" && (
-                  <p style={{ margin: 0, fontSize: "10px", color: c.textMuted, fontFamily: MONO, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {item.url}
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        );
-      })}
+            item={item}
+            index={i}
+            expanded={expanded === i}
+            onToggle={() => setExpanded(expanded === i ? null : i)}
+          />
+        ))}
+      </div>
     </div>
   );
 }
