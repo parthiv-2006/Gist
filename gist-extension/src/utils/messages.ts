@@ -11,7 +11,8 @@ export type MessageType =
   | "GIST_ERROR"
   | "OPEN_LIBRARY"
   | "AUTOGIST_REQUEST"
-  | "AUTOGIST_RESPONSE";
+  | "AUTOGIST_RESPONSE"
+  | "AUTOGIST_ERROR";
 
 export type ComplexityLevel = "standard" | "simple" | "legal" | "academic";
 
@@ -72,6 +73,7 @@ export function isGistMessage(value: unknown): value is GistMessage {
     "OPEN_LIBRARY",
     "AUTOGIST_REQUEST",
     "AUTOGIST_RESPONSE",
+    "AUTOGIST_ERROR",
   ];
   return VALID_TYPES.includes(type);
 }

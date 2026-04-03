@@ -282,6 +282,7 @@ function renderWidget(): void {
       takeaways: widgetTakeaways,
       onDismiss: () => {
         widgetDismissed = true;
+        chrome.storage.local.set({ autoGistEnabled: false });
         renderWidget();
       },
     })

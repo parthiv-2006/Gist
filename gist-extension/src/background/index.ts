@@ -219,6 +219,7 @@ async function fetchAutoGist(tabId: number, textChunk: string, url: string): Pro
 
     if (!response.ok) {
       console.warn("[Gist BG] AutoGist non-OK:", response.status);
+      chrome.tabs.sendMessage(tabId, { type: "AUTOGIST_ERROR", payload: {} });
       return;
     }
 
@@ -231,8 +232,9 @@ async function fetchAutoGist(tabId: number, textChunk: string, url: string): Pro
     };
     chrome.tabs.sendMessage(tabId, msg);
   } catch (err) {
-    // AutoGist is best-effort — silently fail so it never disrupts the user
+    // AutoGist is best-effort — silently fail so it never disrupts the user, but tell UI to reset
     console.warn("[Gist BG] AutoGist fetch error:", err);
+    chrome.tabs.sendMessage(tabId, { type: "AUTOGIST_ERROR", payload: {} });
   }
 }
 

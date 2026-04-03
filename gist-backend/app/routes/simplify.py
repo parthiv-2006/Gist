@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+# Keep strong references to fire-and-forget tasks so the GC cannot cancel them
+# before they complete.  Each task removes itself from the set when done.
+_background_tasks: set = set()
+
 
 async def _save_gist(
     original_text: str,
@@ -141,7 +145,7 @@ async def simplify(request: Request):
         # Only save for first-turn requests (not follow-up chat turns).
         if payload.selected_text and not payload.messages:
             full_explanation = "".join(collected)
-            asyncio.create_task(
+            task = asyncio.create_task(
                 _save_gist(
                     original_text=payload.selected_text,
                     explanation=full_explanation,
@@ -149,6 +153,8 @@ async def simplify(request: Request):
                     url=payload.page_context,
                 )
             )
+            _background_tasks.add(task)
+            task.add_done_callback(_background_tasks.discard)
 
     # 4. Return as a streaming response
     return StreamingResponse(

@@ -164,3 +164,12 @@ via SSE back to the extension.
 164: 3. Write tests first (Red).
 165: 4. Implement until tests pass (Green).
 
+
+---
+
+## After You Write Any Code
+
+After completing any code changes, always commit and push to the GitHub repository:
+1. Stage only the relevant source files (never `__pycache__`, `.pyc`, or generated build artifacts).
+2. Write a conventional commit message (`fix:`, `feat:`, `refactor:`, etc.).
+3. Push to `origin main`.
