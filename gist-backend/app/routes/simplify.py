@@ -9,7 +9,7 @@ from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import ValidationError
 
 from app.models.schemas import SimplifyRequest
-from app.services.gemini import stream_explanation
+from app.services.gemini import stream_explanation, embed_text
 from app.services.categorize import categorize_text
 from app.db import get_db
 
@@ -33,6 +33,13 @@ async def _save_gist(
         return
     try:
         category = categorize_text(original_text)
+        # Generate embedding for semantic search (best-effort; save without if it fails).
+        embedding = None
+        try:
+            embedding = await embed_text(f"{original_text} {explanation}")
+        except Exception as exc:
+            logger.warning("Embedding generation failed — saving without embedding: %s", exc)
+
         doc = {
             "original_text": original_text,
             "explanation": explanation,
@@ -41,6 +48,8 @@ async def _save_gist(
             "category": category,
             "created_at": datetime.now(timezone.utc),
         }
+        if embedding is not None:
+            doc["embedding"] = embedding
         await db["gists"].insert_one(doc)
     except Exception as exc:
         logger.warning("Failed to save gist to MongoDB: %s", exc)
