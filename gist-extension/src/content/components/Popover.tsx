@@ -1,7 +1,7 @@
 // src/content/components/Popover.tsx
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { X, Send, Volume2, Pause, Square, PanelRight } from "lucide-react";
+import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
 import type { ComplexityLevel, ChatMessage } from "../../utils/messages";
@@ -30,6 +30,7 @@ export interface PopoverProps {
   isSidebarMode?: boolean;
   isVisible?: boolean;
   onToggleSidebar?: () => void;
+  onOpenLibrary?: () => void;
   onClose: () => void;
   onModeChange?: (mode: ComplexityLevel) => void;
   onSendMessage?: (query: string) => void;
@@ -46,6 +47,7 @@ export function Popover({
   isSidebarMode = false,
   isVisible = false,
   onToggleSidebar,
+  onOpenLibrary,
   onClose,
   onModeChange,
   onSendMessage,
@@ -219,6 +221,14 @@ export function Popover({
             disabled={!text && messages.length === 0}
           >
             {ttsState === "playing" ? <Pause size={16} /> : <Volume2 size={16} />}
+          </button>
+          <button
+            className={styles.closeButton}
+            onClick={onOpenLibrary}
+            aria-label="Open Library"
+            title="Library (📚)"
+          >
+            <BookOpen size={16} />
           </button>
           <button
             className={styles.closeButton}

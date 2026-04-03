@@ -103,7 +103,7 @@ export function mountCaptureOverlay(): void {
     console.error("[Gist ShadowHost] reactRoot not initialized");
     return;
   }
-  
+
   reactRoot.render(
     React.createElement(CaptureOverlay, {
       onCapture: (rect) => {
@@ -128,7 +128,7 @@ export function updatePopover(update: PopoverUpdate): void {
     }
     if (update.mode) currentMode = update.mode;
     if (update.position) currentPosition = update.position;
-    
+
     isVisible = true;
     renderPopover({ state: "LOADING" });
     return;
@@ -164,7 +164,7 @@ export function unmountPopover(): void {
     messages = [];
     currentMode = "standard";
     currentImageData = undefined;
-    
+
     // Force reset sidebar mode if it was active
     if (isSidebarMode && shadowHost) {
       shadowHost.style.pointerEvents = "none";
@@ -182,7 +182,7 @@ export function unmountPopover(): void {
 export function toggleSidebar(): void {
   isSidebarMode = !isSidebarMode;
   if (!shadowHost) mountPopover();
-  
+
   if (shadowHost) {
     if (isSidebarMode) {
       isVisible = true;
@@ -190,16 +190,12 @@ export function toggleSidebar(): void {
       shadowHost.style.width = "400px";
       shadowHost.style.left = "auto";
       shadowHost.style.right = "0";
-      // If we're entering sidebar mode, we probably want to ensure we're not idle if we have a state
     } else {
       shadowHost.style.pointerEvents = "none";
       shadowHost.style.width = "100vw";
       shadowHost.style.left = "0";
       shadowHost.style.right = "auto";
-      
-      // If we are undocking and the popover was idle, we might want to show it if it has content
-      // But if it's empty, it should stay hidden.
-      // However, if the user explicitly undocks, they might expect it to stay where it was.
+
       if (!currentPosition) {
         currentPosition = new DOMRect(window.innerWidth / 2 - 200, window.innerHeight / 2 - 150, 400, 300);
       }
@@ -216,6 +212,13 @@ const stableOnSendMessage = (query: string) => {
   if (sendMessageCallback) {
     sendMessageCallback(query, messages);
   }
+};
+const stableOnOpenLibrary = () => {
+  chrome.runtime.sendMessage({ type: "OPEN_LIBRARY" }, (response) => {
+    if (response?.success) {
+      console.log("[Gist] Library opened");
+    }
+  });
 };
 
 interface RenderOptions {
@@ -240,6 +243,7 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       isSidebarMode,
       isVisible,
       onToggleSidebar: toggleSidebar,
+      onOpenLibrary: stableOnOpenLibrary,
       onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
       onSendMessage: stableOnSendMessage,
