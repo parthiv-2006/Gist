@@ -2,10 +2,14 @@
 """
 GET /library — returns the user's saved gist history, newest first.
 """
+import logging
+
 from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 
 from app.db import get_db
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -23,13 +27,20 @@ async def get_library():
             content={"error": "Library unavailable — database not connected.", "code": "DB_UNAVAILABLE"},
         )
 
-    cursor = db["gists"].find(
-        {},
-        # Exclude the internal ObjectId; serialize created_at as ISO string below.
-        {"_id": 0, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "created_at": 1},
-    ).sort("created_at", -1).limit(100)
+    try:
+        cursor = db["gists"].find(
+            {},
+            # Exclude the internal ObjectId; serialize created_at as ISO string below.
+            {"_id": 0, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "created_at": 1},
+        ).sort("created_at", -1).limit(100)
 
-    raw_items = await cursor.to_list(length=100)
+        raw_items = await cursor.to_list(length=100)
+    except Exception as exc:
+        logger.error("Library query failed: %s", exc, exc_info=True)
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Library unavailable — database query failed.", "code": "DB_ERROR"},
+        )
 
     # Convert datetime objects to ISO-8601 strings for JSON serialization.
     items = []

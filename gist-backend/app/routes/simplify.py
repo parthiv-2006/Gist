@@ -94,7 +94,7 @@ async def simplify(request: Request):
             )
         return JSONResponse(
             status_code=400,
-            content={"error": str(e), "code": "VALIDATION_ERROR"},
+            content={"error": "Invalid request parameters.", "code": "VALIDATION_ERROR"},
         )
     except Exception:
         return JSONResponse(

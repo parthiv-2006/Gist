@@ -1,9 +1,13 @@
 # app/main.py
+import logging
 import os
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+
+logger = logging.getLogger(__name__)
 
 from app.routes.simplify import router as simplify_router
 from app.routes.library import router as library_router
@@ -64,6 +68,15 @@ app.include_router(simplify_router)
 app.include_router(library_router)
 app.include_router(search_router)
 app.include_router(autogist_router)
+
+
+@app.exception_handler(Exception)
+async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+    return JSONResponse(
+        status_code=500,
+        content={"error": "An unexpected server error occurred.", "code": "INTERNAL_ERROR"},
+    )
 
 
 @app.get("/health")

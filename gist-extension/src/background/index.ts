@@ -143,11 +143,23 @@ async function streamFromBackend(
     console.log("[Gist BG] fetch response status:", response.status);
 
     if (!response.ok) {
-      const err = await response.json().catch(() => ({ error: "Request failed" }));
-      console.warn("[Gist BG] non-OK response:", err);
+      const err = await response.json().catch(() => ({ error: null, code: null }));
+      console.warn("[Gist BG] non-OK response:", response.status, err);
+      let userMessage: string;
+      if (err.error) {
+        userMessage = err.error;
+      } else if (response.status === 400) {
+        userMessage = "Invalid request. Try selecting different text.";
+      } else if (response.status === 429) {
+        userMessage = "Too many requests — please wait a moment before trying again.";
+      } else if (response.status === 503) {
+        userMessage = "AI service is temporarily unavailable. Try again shortly.";
+      } else {
+        userMessage = `Something went wrong (${response.status}). Please try again.`;
+      }
       const errorMsg: GistMessage = {
         type: "GIST_ERROR",
-        payload: { error: err.error ?? "Something went wrong. Please try again." },
+        payload: { error: userMessage },
       };
       chrome.tabs.sendMessage(tabId, errorMsg);
       return;

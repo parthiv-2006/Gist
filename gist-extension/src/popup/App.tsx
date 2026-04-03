@@ -143,6 +143,7 @@ function LibraryView() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState<string | null>(null);
   const [expanded, setExpanded]   = useState<number | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   // Search / Ask state
   const [query, setQuery]         = useState("");
@@ -153,18 +154,25 @@ function LibraryView() {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(null);
     BACKEND_BASE.then((base) => {
       if (cancelled) return;
       fetch(`${base}/library`)
-        .then((r) => {
-          if (!r.ok) throw new Error(r.status === 503 ? "Library unavailable — start the backend." : `Error ${r.status}`);
+        .then(async (r) => {
+          if (!r.ok) {
+            const body = await r.json().catch(() => ({})) as { error?: string };
+            throw new Error(body.error ?? (r.status === 503
+              ? "Library unavailable — is the backend running?"
+              : `Failed to load library (${r.status}).`));
+          }
           return r.json();
         })
         .then((data) => { if (!cancelled) { setItems(data.items ?? []); setLoading(false); } })
-        .catch((e)   => { if (!cancelled) { setError(e.message); setLoading(false); } });
+        .catch((e: Error) => { if (!cancelled) { setError(e.message); setLoading(false); } });
     });
     return () => { cancelled = true; };
-  }, []);
+  }, [retryCount]);
 
   const handleAsk = async () => {
     const q = query.trim();
@@ -180,12 +188,17 @@ function LibraryView() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: q }),
     })
-      .then((r) => {
-        if (!r.ok) throw new Error(`Error ${r.status}`);
+      .then(async (r) => {
+        if (!r.ok) {
+          const body = await r.json().catch(() => ({})) as { error?: string };
+          throw new Error(body.error ?? (r.status === 503
+            ? "Search unavailable — is the backend running?"
+            : `Search failed (${r.status}).`));
+        }
         return r.json();
       })
       .then((data: AskResult) => { setAskResult(data); setAskState("done"); })
-      .catch((e) => { setAskError(e.message); setAskState("error"); });
+      .catch((e: Error) => { setAskError(e.message); setAskState("error"); });
   };
 
   const handleClearAsk = () => {
@@ -354,7 +367,18 @@ function LibraryView() {
             background: "rgba(248, 113, 113, 0.08)", border: "1px solid rgba(248, 113, 113, 0.25)",
             borderRadius: "6px", padding: "12px", fontSize: "12px", color: "#f87171", lineHeight: 1.5,
           }}>
-            {error}
+            <div>{error}</div>
+            <button
+              onClick={() => setRetryCount((n) => n + 1)}
+              style={{
+                marginTop: "10px", background: "none",
+                border: "1px solid rgba(248, 113, 113, 0.4)", borderRadius: "4px",
+                color: "#f87171", fontSize: "11px", padding: "4px 10px",
+                cursor: "pointer", fontFamily: FONT,
+              }}
+            >
+              Try again
+            </button>
           </div>
         </div>
       </div>
