@@ -1,6 +1,7 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget } from "./shadow-host";
+import { startObserver } from "./observer";
 import { RateLimiter } from "../utils/rate-limiter";
 
 const rateLimiter = new RateLimiter(5, 10_000);
@@ -14,6 +15,16 @@ if (!window.__gistMounted) {
   window.__gistMounted = true;
 
   mountPopover();
+
+  // Start the ambient scroll observer — sends AUTOGIST_REQUEST to background
+  // whenever the user settles on a section of readable content.
+  startObserver((text) => {
+    setWidgetLoading();
+    chrome.runtime.sendMessage({
+      type: "AUTOGIST_REQUEST",
+      payload: { textChunk: text, url: document.title },
+    });
+  });
 
   setHandlers(
     (mode) => {
@@ -77,6 +88,12 @@ if (!window.__gistMounted) {
 
       case "GIST_ERROR": {
         updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong." });
+        break;
+      }
+
+      case "AUTOGIST_RESPONSE": {
+        const takeaways = msg.payload.takeaways ?? [];
+        if (takeaways.length > 0) updateWidget(takeaways);
         break;
       }
     }

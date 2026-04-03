@@ -6,13 +6,21 @@ import React from "react";
 import { createRoot, type Root } from "react-dom/client";
 import { Popover, type PopoverState } from "./components/Popover";
 import { CaptureOverlay } from "./components/CaptureOverlay";
+import { AutoGistWidget, type WidgetState } from "./components/AutoGistWidget";
 import type { ComplexityLevel, ChatMessage } from "../utils/messages";
 import popoverStyles from "./components/Popover.module.css?inline";
 import overlayStyles from "./components/CaptureOverlay.module.css?inline";
+import widgetStyles from "./components/AutoGistWidget.module.css?inline";
 
 let shadowHost: HTMLElement | null = null;
 let shadowRoot: ShadowRoot | null = null;
 let reactRoot: Root | null = null;
+
+// ── AutoGist widget (separate React root) ────────────────────────────────────
+let widgetReactRoot: Root | null = null;
+let widgetState: WidgetState = "idle";
+let widgetTakeaways: string[] = [];
+let widgetDismissed = false;
 
 // Internal accumulated text (builds up as STREAMING chunks arrive)
 let accumulatedText = "";
@@ -85,15 +93,22 @@ export function mountPopover(): void {
     :host { all: initial; display: block; contain: content; }
     * { box-sizing: border-box !important; }
     #gist-mount { width: 100%; height: 100%; pointer-events: none; display: flex; align-items: flex-start; justify-content: flex-end; }
-  ` + popoverStyles + "\n" + overlayStyles;
+    #gist-widget-mount { position: fixed; bottom: 0; right: 0; pointer-events: none; z-index: 2147483646; }
+  ` + popoverStyles + "\n" + overlayStyles + "\n" + widgetStyles;
   shadowRoot.appendChild(style);
 
   const mountPoint = document.createElement("div");
   mountPoint.id = "gist-mount";
   shadowRoot.appendChild(mountPoint);
 
+  const widgetMountPoint = document.createElement("div");
+  widgetMountPoint.id = "gist-widget-mount";
+  shadowRoot.appendChild(widgetMountPoint);
+
   reactRoot = createRoot(mountPoint);
+  widgetReactRoot = createRoot(widgetMountPoint);
   renderPopover({ state: "IDLE" });
+  renderWidget();
 }
 
 export function mountCaptureOverlay(): void {
@@ -220,6 +235,41 @@ const stableOnOpenLibrary = () => {
     }
   });
 };
+
+// ── AutoGist widget exports ───────────────────────────────────────────────────
+
+export function setWidgetLoading(): void {
+  if (widgetDismissed) return;
+  widgetState = "loading";
+  renderWidget();
+}
+
+export function updateWidget(takeaways: string[]): void {
+  if (widgetDismissed) return;
+  widgetTakeaways = takeaways;
+  widgetState = "ready";
+  renderWidget();
+}
+
+function renderWidget(): void {
+  if (!widgetReactRoot) return;
+  if (widgetDismissed) {
+    widgetReactRoot.render(React.createElement(React.Fragment, null));
+    return;
+  }
+  widgetReactRoot.render(
+    React.createElement(AutoGistWidget, {
+      state: widgetState,
+      takeaways: widgetTakeaways,
+      onDismiss: () => {
+        widgetDismissed = true;
+        renderWidget();
+      },
+    })
+  );
+}
+
+// ── Popover render helpers ────────────────────────────────────────────────────
 
 interface RenderOptions {
   state: PopoverState;

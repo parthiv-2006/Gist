@@ -7,6 +7,14 @@ const BACKEND_URL = import.meta.env.DEV
   ? "http://localhost:8000/api/v1/simplify"
   : "https://gist-vc8m.onrender.com/api/v1/simplify";
 
+const AUTOGIST_URL = import.meta.env.DEV
+  ? "http://localhost:8000/autogist"
+  : "https://gist-vc8m.onrender.com/autogist";
+
+// Per-tab rate limit: at most 1 auto-gist request every 8 seconds.
+const _lastAutoGistTime = new Map<number, number>();
+const AUTOGIST_COOLDOWN_MS = 8_000;
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "gist-this",
@@ -85,6 +93,27 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     const { pageContext, messages, complexityLevel } = message.payload;
     console.log("[Gist BG] GIST_FOLLOW_UP received", { tabId, historyLength: messages?.length });
     streamFromBackend(tabId, "", pageContext ?? "", complexityLevel ?? "standard", messages);
+  } else if (message.type === "OPEN_LIBRARY") {
+    // Open the extension popup so the user can see their Library tab.
+    chrome.action.openPopup().catch(() => {
+      // openPopup() requires user gesture on some Chrome versions — silently ignore.
+    });
+    sendResponse({ success: true });
+    return true;
+  } else if (message.type === "AUTOGIST_REQUEST") {
+    const { textChunk, url } = message.payload;
+    if (!textChunk) return;
+
+    const now = Date.now();
+    const last = _lastAutoGistTime.get(tabId) ?? 0;
+    if (now - last < AUTOGIST_COOLDOWN_MS) {
+      console.log("[Gist BG] AUTOGIST_REQUEST rate-limited for tab", tabId);
+      return;
+    }
+    _lastAutoGistTime.set(tabId, now);
+
+    console.log("[Gist BG] AUTOGIST_REQUEST", { tabId, chars: textChunk.length });
+    fetchAutoGist(tabId, textChunk, url ?? "");
   }
 });
 
@@ -177,6 +206,33 @@ async function streamFromBackend(
       payload: { error: "Network error. Check your connection and try again." },
     };
     chrome.tabs.sendMessage(tabId, errorMsg);
+  }
+}
+
+async function fetchAutoGist(tabId: number, textChunk: string, url: string): Promise<void> {
+  try {
+    const response = await fetch(AUTOGIST_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text_chunk: textChunk, url }),
+    });
+
+    if (!response.ok) {
+      console.warn("[Gist BG] AutoGist non-OK:", response.status);
+      return;
+    }
+
+    const data = await response.json() as { takeaways?: string[] };
+    if (!Array.isArray(data.takeaways) || data.takeaways.length === 0) return;
+
+    const msg: GistMessage = {
+      type: "AUTOGIST_RESPONSE",
+      payload: { takeaways: data.takeaways },
+    };
+    chrome.tabs.sendMessage(tabId, msg);
+  } catch (err) {
+    // AutoGist is best-effort — silently fail so it never disrupts the user
+    console.warn("[Gist BG] AutoGist fetch error:", err);
   }
 }
 
