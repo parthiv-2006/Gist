@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 from app.routes.simplify import router as simplify_router
 from app.routes.library import router as library_router
+from app.routes.search import router as search_router
 from app.db import connect_db, disconnect_db
 
 load_dotenv()  # Load .env if present (local dev only)
@@ -60,6 +61,7 @@ app.add_middleware(
 
 app.include_router(simplify_router)
 app.include_router(library_router)
+app.include_router(search_router)
 
 
 @app.get("/health")
