@@ -3,6 +3,10 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 
+const BACKEND_BASE = import.meta.env.DEV
+  ? "http://localhost:8000"
+  : "https://gist-vc8m.onrender.com";
+
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const MONO = "'Space Mono', 'Fira Code', monospace";
 
@@ -138,7 +142,7 @@ function LibraryView() {
   const [srcExpanded, setSrcExpanded] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch("http://127.0.0.1:8000/library")
+    fetch(`${BACKEND_BASE}/library`)
       .then((r) => {
         if (!r.ok) throw new Error(r.status === 503 ? "Library unavailable — start the backend." : `Error ${r.status}`);
         return r.json();
@@ -155,7 +159,7 @@ function LibraryView() {
     setAskError(null);
     setSrcExpanded(null);
 
-    fetch("http://127.0.0.1:8000/library/ask", {
+    fetch(`${BACKEND_BASE}/library/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ query: q }),
