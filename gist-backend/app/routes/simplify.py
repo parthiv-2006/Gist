@@ -142,12 +142,12 @@ async def simplify(request: Request):
         yield "data: [DONE]\n\n"
 
         # Fire-and-forget: save to MongoDB after the stream completes.
-        # Only save for first-turn requests (not follow-up chat turns).
-        if payload.selected_text and not payload.messages:
+        # Save for first-turn requests (text or visual gist, not follow-up chat turns).
+        if (payload.selected_text or payload.image_data) and not payload.messages:
             full_explanation = "".join(collected)
             task = asyncio.create_task(
                 _save_gist(
-                    original_text=payload.selected_text,
+                    original_text=payload.selected_text or "[Visual capture]",
                     explanation=full_explanation,
                     mode=payload.complexity_level,
                     url=payload.page_context,

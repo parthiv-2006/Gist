@@ -20,16 +20,17 @@ GEMINI_MODEL = "gemini-2.5-flash"
 # Responses are instant and deterministic — no quota consumed.
 _MOCK_LLM: bool = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
 
-_MOCK_EXPLANATION = (
-    "This is a mock explanation generated locally — no Gemini API call was made. "
-    "Set MOCK_LLM=false (or remove it) to use the real model."
-)
+_MOCK_EXPLANATIONS: dict[str, str] = {
+    "text":   "✓ Text gist working — mock mode active. No Gemini API call was made.",
+    "visual": "✓ Visual gist working — mock mode active. No Gemini API call was made.",
+}
 _MOCK_EMBEDDING_DIM = 768
 
 
-async def _mock_stream_explanation() -> AsyncGenerator[str, None]:
-    """Yield a fake explanation word-by-word to simulate SSE streaming."""
-    for word in _MOCK_EXPLANATION.split():
+async def _mock_stream_explanation(feature_type: str = "text") -> AsyncGenerator[str, None]:
+    """Yield a feature-specific fake explanation to simulate SSE streaming."""
+    msg = _MOCK_EXPLANATIONS.get(feature_type, _MOCK_EXPLANATIONS["text"])
+    for word in msg.split():
         await asyncio.sleep(0.03)
         yield word + " "
 
@@ -163,7 +164,8 @@ async def stream_explanation(
     Yields text chunks as they arrive from the model.
     """
     if _MOCK_LLM:
-        async for chunk in _mock_stream_explanation():
+        feature_type = "visual" if image_data else "text"
+        async for chunk in _mock_stream_explanation(feature_type):
             yield chunk
         return
 

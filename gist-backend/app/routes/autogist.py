@@ -95,9 +95,9 @@ def _extract_json_array(raw: str) -> list[str]:
 
 _MOCK_LLM: bool = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
 _MOCK_TAKEAWAYS = [
-    "Mock takeaway one — no Gemini API call was made.",
-    "Mock takeaway two — set MOCK_LLM=false to use the real model.",
-    "Mock takeaway three — safe for testing without quota consumption.",
+    "✓ AutoGist working — mock mode active.",
+    "No Gemini API call was made.",
+    "Set MOCK_LLM=false to use the real model.",
 ]
 
 
