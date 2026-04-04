@@ -230,7 +230,7 @@ const stableOnSendMessage = (query: string) => {
   }
 };
 const stableOnOpenLibrary = () => {
-  chrome.runtime.sendMessage({ type: "OPEN_LIBRARY" }, (response) => {
+  chrome.runtime.sendMessage({ type: "OPEN_LIBRARY", payload: {} }, (response) => {
     if (response?.success) {
       console.log("[Gist] Library opened");
     }
