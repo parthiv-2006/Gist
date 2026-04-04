@@ -1,7 +1,7 @@
 // src/content/components/Popover.tsx
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen } from "lucide-react";
+import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
 import type { ComplexityLevel, ChatMessage } from "../../utils/messages";
@@ -54,6 +54,7 @@ export function Popover({
 }: PopoverProps) {
   const [inputValue, setInputValue] = useState("");
   const [ttsState, setTtsState] = useState<"idle" | "playing" | "paused">("idle");
+  const [minimized, setMinimized] = useState(false);
   const historyRef = useRef<HTMLDivElement>(null);
   const isInputDisabled = (state === "LOADING" || state === "STREAMING") || (state === "IDLE" && messages.length === 0);
 
@@ -70,13 +71,14 @@ export function Popover({
   const posRef  = useRef(pos);  posRef.current  = pos;
   const sizeRef = useRef(size); sizeRef.current = size;
 
-  // Re-anchor whenever a new highlight arrives (position reference changes).
+  // Re-anchor and restore whenever a new highlight arrives (position reference changes).
   useEffect(() => {
     if (position) {
       setPos({
         x: getPopoverLeft(position, sizeRef.current.width),
         y: getPopoverTop(position, sizeRef.current.height),
       });
+      setMinimized(false);
     }
   }, [position]);
 
@@ -183,6 +185,24 @@ export function Popover({
 
   if (state === "IDLE" && !isSidebarMode && !isVisible) return null;
 
+  // Minimized: render a small floating icon anchored to last known position
+  if (minimized) {
+    const minimizedStyle = isSidebarMode
+      ? { bottom: "24px", right: "16px" }
+      : { top: `${pos.y}px`, left: `${pos.x}px` };
+    return (
+      <button
+        className={styles.minimizedIcon}
+        style={minimizedStyle}
+        onClick={() => setMinimized(false)}
+        aria-label="Restore Gist"
+        title="Restore Gist"
+      >
+        <span className={styles.minimizedDot} />
+      </button>
+    );
+  }
+
   return (
     <div
       className={`${styles.popover} ${isSidebarMode ? styles.sidebar : ""}`}
@@ -237,6 +257,14 @@ export function Popover({
             title={isSidebarMode ? "Dock floating" : "Dock to sidebar"}
           >
             <PanelRight size={16} />
+          </button>
+          <button
+            className={styles.closeButton}
+            onClick={() => setMinimized(true)}
+            aria-label="Minimize"
+            title="Minimize"
+          >
+            <Minus size={14} />
           </button>
           <button
             className={styles.closeButton}
