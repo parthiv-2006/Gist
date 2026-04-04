@@ -3,9 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 
-// Try the local dev server first (600 ms timeout); fall back to Render.
-// This means the popup works whether or not the user has a local backend running,
-// without needing separate dev/prod builds.
+// Try local dev server first (600 ms timeout); fall back to Render.
 const BACKEND_BASE: Promise<string> = (async () => {
   try {
     const ctrl = new AbortController();
@@ -20,24 +18,23 @@ const BACKEND_BASE: Promise<string> = (async () => {
 const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
 const MONO = "'Space Mono', 'Fira Code', monospace";
 
-const c = {
-  bg:           "#0a0a0a",
-  bgCard:       "#141414",
-  border:       "#2a2a2a",
-  borderStrong: "#3a3a3a",
-  textPrimary:  "#ededed",
-  textSecondary:"#888888",
-  textMuted:    "#555555",
+// ── Design Tokens ──────────────────────────────────────────────────────────────
+const T = {
+  bg:           "#080808",
+  bgElevated:   "#0f0f0f",
+  bgHover:      "#161616",
+  bgActive:     "#1d1d1d",
+  border:       "#1e1e1e",
+  borderMid:    "#2a2a2a",
+  borderStrong: "#353535",
+  text:         "#f0f0f0",
+  textSub:      "#888888",
+  textMuted:    "#484848",
   accent:       "#10b981",
-  accentGlow:   "rgba(16, 185, 129, 0.35)",
+  accentDim:    "rgba(16,185,129,0.09)",
+  accentBorder: "rgba(16,185,129,0.20)",
+  accentGlow:   "rgba(16,185,129,0.30)",
 };
-
-const MODES = [
-  { label: "Standard", desc: "Clear, balanced explanation" },
-  { label: "ELI5",     desc: "Simple, everyday language"  },
-  { label: "Legal",    desc: "Precise legal analysis"     },
-  { label: "Academic", desc: "Scholarly depth & citations" },
-];
 
 const CATEGORY_COLORS: Record<string, string> = {
   Code:    "#60a5fa",
@@ -45,10 +42,91 @@ const CATEGORY_COLORS: Record<string, string> = {
   Medical: "#f87171",
   Finance: "#a78bfa",
   Science: "#34d399",
-  General: "#888888",
+  General: "#666666",
 };
 
-// ── Types ──────────────────────────────────────────────────────────────────
+// ── SVG Icon Components ────────────────────────────────────────────────────────
+
+const IconCapture = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 7V5a2 2 0 0 1 2-2h2" /><path d="M17 3h2a2 2 0 0 1 2 2v2" />
+    <path d="M21 17v2a2 2 0 0 1-2 2h-2" /><path d="M7 21H5a2 2 0 0 1-2-2v-2" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const IconSidebar = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="3" y="3" width="18" height="18" rx="2.5" />
+    <path d="M15 3v18" />
+  </svg>
+);
+
+const IconEye = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7-10-7-10-7z" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const IconCaptureTab = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+    <circle cx="12" cy="12" r="3" />
+  </svg>
+);
+
+const IconLibraryTab = () => (
+  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
+const IconSearch = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+  </svg>
+);
+
+const IconX = () => (
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+  </svg>
+);
+
+const IconChevron = ({ open }: { open: boolean }) => (
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+    strokeLinecap="round" strokeLinejoin="round"
+    style={{ display: "block", transition: "transform 150ms ease", transform: open ? "rotate(180deg)" : "none" }}>
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+const IconEmptyLibrary = () => (
+  <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+);
+
+const IconSparkle = () => (
+  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z" />
+  </svg>
+);
+
+const IconGrip = () => (
+  <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
+    {([3, 7] as const).map(cx =>
+      ([2, 5.5, 9] as const).map(cy => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r="1.1" fill="currentColor" />
+      ))
+    )}
+  </svg>
+);
+
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 interface GistItem {
   original_text: string;
@@ -65,66 +143,89 @@ interface AskResult {
   sources: GistItem[];
 }
 
-// ── Gist Card (shared between library list and search results) ─────────────
+// ── GistCard ───────────────────────────────────────────────────────────────────
 
-function GistCard({ item, index, expanded, onToggle }: {
+function GistCard({
+  item,
+  expanded,
+  onToggle,
+}: {
   item: GistItem;
-  index: number;
   expanded: boolean;
   onToggle: () => void;
 }) {
-  const color = CATEGORY_COLORS[item.category] ?? c.textMuted;
+  const [hovered, setHovered] = useState(false);
+  const color = CATEGORY_COLORS[item.category] ?? T.textMuted;
   const date  = new Date(item.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+
+  const bg     = expanded ? T.bgHover : hovered ? "#131313" : T.bgElevated;
+  const border = expanded ? T.borderMid : hovered ? T.border : "#191919";
 
   return (
     <div
       onClick={onToggle}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
       style={{
-        background: c.bgCard,
-        border: `1px solid ${expanded ? c.borderStrong : c.border}`,
-        borderRadius: "6px",
-        padding: "10px 11px",
+        background: bg,
+        border: `1px solid ${border}`,
+        borderRadius: "8px",
+        padding: "10px 12px",
         cursor: "pointer",
-        transition: "border-color 120ms ease",
+        transition: "border-color 120ms ease, background 120ms ease",
       }}
-      onMouseEnter={(e) => { if (!expanded) e.currentTarget.style.borderColor = c.borderStrong; }}
-      onMouseLeave={(e) => { if (!expanded) e.currentTarget.style.borderColor = c.border; }}
     >
-      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "5px" }}>
+      {/* Top row */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "6px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
           <span style={{
-            fontSize: "9px", fontWeight: 700, letterSpacing: "0.06em",
-            textTransform: "uppercase" as const, color,
-            background: `${color}18`, border: `1px solid ${color}40`,
-            borderRadius: "3px", padding: "1px 5px",
+            fontSize: "9px", fontWeight: 700, letterSpacing: "0.07em",
+            textTransform: "uppercase" as const,
+            color,
+            background: `${color}14`,
+            border: `1px solid ${color}32`,
+            borderRadius: "4px",
+            padding: "1.5px 5px",
           }}>
             {item.category}
           </span>
-          <span style={{ fontSize: "9px", color: c.textMuted, fontFamily: MONO }}>{item.mode}</span>
+          <span style={{ fontSize: "9.5px", color: T.textMuted, fontFamily: MONO, letterSpacing: "0.02em" }}>
+            {item.mode}
+          </span>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <span style={{ fontSize: "9px", color: c.textMuted }}>{date}</span>
-          <svg width="10" height="10" viewBox="0 0 10 10" fill="none"
-            style={{ color: c.textMuted, transition: "transform 120ms ease", transform: expanded ? "rotate(180deg)" : "none" }}>
-            <path d="M2 3.5L5 6.5L8 3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+        <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
+          <span style={{ fontSize: "9.5px", color: T.textMuted }}>{date}</span>
+          <span style={{ color: T.textMuted, display: "flex" }}>
+            <IconChevron open={expanded} />
+          </span>
         </div>
       </div>
+
+      {/* Preview */}
       <p style={{
-        margin: 0, fontSize: "11px", color: c.textSecondary, lineHeight: 1.45,
-        overflow: "hidden", display: "-webkit-box",
+        margin: 0,
+        fontSize: "11.5px",
+        color: T.textSub,
+        lineHeight: 1.5,
+        overflow: "hidden",
+        display: "-webkit-box",
         WebkitLineClamp: expanded ? undefined : 2,
         WebkitBoxOrient: "vertical" as const,
       }}>
         {item.original_text}
       </p>
+
+      {/* Expanded */}
       {expanded && (
-        <div style={{ marginTop: "10px", borderTop: `1px solid ${c.border}`, paddingTop: "10px" }}>
-          <p style={{ margin: "0 0 8px 0", fontSize: "11px", color: c.textPrimary, lineHeight: 1.6 }}>
+        <div style={{ marginTop: "10px", paddingTop: "10px", borderTop: `1px solid ${T.border}` }}>
+          <p style={{ margin: "0 0 8px", fontSize: "12px", color: T.text, lineHeight: 1.65 }}>
             {item.explanation}
           </p>
           {item.url && item.url !== "Unknown page" && (
-            <p style={{ margin: 0, fontSize: "10px", color: c.textMuted, fontFamily: MONO, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <p style={{
+              margin: 0, fontSize: "10px", color: T.textMuted,
+              fontFamily: MONO, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+            }}>
               {item.url}
             </p>
           )}
@@ -134,7 +235,7 @@ function GistCard({ item, index, expanded, onToggle }: {
   );
 }
 
-// ── Library View ───────────────────────────────────────────────────────────
+// ── Library View ───────────────────────────────────────────────────────────────
 
 type AskState = "idle" | "searching" | "done" | "error";
 
@@ -145,7 +246,6 @@ function LibraryView() {
   const [expanded, setExpanded]   = useState<number | null>(null);
   const [retryCount, setRetryCount] = useState(0);
 
-  // Search / Ask state
   const [query, setQuery]         = useState("");
   const [askState, setAskState]   = useState<AskState>("idle");
   const [askResult, setAskResult] = useState<AskResult | null>(null);
@@ -181,7 +281,6 @@ function LibraryView() {
     setAskResult(null);
     setAskError(null);
     setSrcExpanded(null);
-
     const base = await BACKEND_BASE;
     fetch(`${base}/library/ask`, {
       method: "POST",
@@ -191,9 +290,7 @@ function LibraryView() {
       .then(async (r) => {
         if (!r.ok) {
           const body = await r.json().catch(() => ({})) as { error?: string };
-          throw new Error(body.error ?? (r.status === 503
-            ? "Search unavailable — is the backend running?"
-            : `Search failed (${r.status}).`));
+          throw new Error(body.error ?? `Search failed (${r.status}).`);
         }
         return r.json();
       })
@@ -208,24 +305,20 @@ function LibraryView() {
     setAskError(null);
   };
 
-  // ── Search bar (always visible at top) ──────────────────────────────────
   const searchBar = (
-    <div style={{ padding: "10px 12px 0" }}>
+    <div style={{ padding: "12px 14px 0" }}>
       <div style={{
-        display: "flex", alignItems: "center", gap: "6px",
-        background: c.bgCard,
-        border: `1px solid ${askState === "searching" ? c.accent : c.border}`,
-        borderRadius: "7px",
-        padding: "6px 9px",
-        transition: "border-color 200ms ease",
-        boxShadow: askState === "searching" ? `0 0 0 2px ${c.accentGlow}` : "none",
+        display: "flex", alignItems: "center", gap: "8px",
+        background: T.bgElevated,
+        border: `1px solid ${askState === "searching" ? T.accentBorder : T.border}`,
+        borderRadius: "8px",
+        padding: "8px 10px",
+        transition: "border-color 200ms ease, box-shadow 200ms ease",
+        boxShadow: askState === "searching" ? `0 0 0 3px ${T.accentDim}` : "none",
       }}>
-        {/* Search icon */}
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-          strokeLinecap="round" strokeLinejoin="round"
-          style={{ color: askState === "searching" ? c.accent : c.textMuted, flexShrink: 0, transition: "color 200ms ease" }}>
-          <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
-        </svg>
+        <span style={{ color: askState === "searching" ? T.accent : T.textMuted, display: "flex", flexShrink: 0, transition: "color 200ms ease" }}>
+          <IconSearch />
+        </span>
         <input
           type="text"
           value={query}
@@ -234,96 +327,81 @@ function LibraryView() {
           placeholder="Ask your library…"
           style={{
             flex: 1, background: "none", border: "none", outline: "none",
-            fontSize: "11px", color: c.textPrimary, fontFamily: FONT,
+            fontSize: "12px", color: T.text, fontFamily: FONT, padding: 0,
           }}
         />
-        {/* Pulse indicator while searching */}
         {askState === "searching" && (
           <div style={{
-            width: "7px", height: "7px", borderRadius: "50%",
-            background: c.accent, flexShrink: 0,
-            animation: "gist-pulse 1s ease-in-out infinite",
+            width: "6px", height: "6px", borderRadius: "50%",
+            background: T.accent, flexShrink: 0,
+            animation: "gistPulse 1s ease-in-out infinite",
           }} />
         )}
-        {/* Clear button when results are shown */}
         {(askState === "done" || askState === "error") && (
-          <button onClick={handleClearAsk} style={{
-            background: "none", border: "none", cursor: "pointer",
-            color: c.textMuted, padding: "0", display: "flex", alignItems: "center",
-          }}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-              strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
+          <button
+            onClick={handleClearAsk}
+            style={{ background: "none", border: "none", cursor: "pointer", color: T.textMuted, padding: 0, display: "flex" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = T.textSub; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = T.textMuted; }}
+          >
+            <IconX />
           </button>
         )}
-        {/* Ask button */}
         {askState === "idle" && query.trim() && (
           <button onClick={handleAsk} style={{
-            background: c.accent, border: "none", borderRadius: "4px",
+            background: T.accent, border: "none", borderRadius: "5px",
             color: "#000", fontSize: "9px", fontWeight: 700, fontFamily: FONT,
             padding: "3px 7px", cursor: "pointer", flexShrink: 0,
-            letterSpacing: "0.04em",
+            letterSpacing: "0.06em", textTransform: "uppercase" as const,
           }}>
             ASK
           </button>
         )}
       </div>
-      {/* Pulse keyframe injected once */}
-      <style>{`@keyframes gist-pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
+      <style>{`@keyframes gistPulse{0%,100%{opacity:1}50%{opacity:0.25}}`}</style>
     </div>
   );
 
-  // ── Ask results view ─────────────────────────────────────────────────────
+  // Ask results
   if (askState === "done" && askResult) {
     return (
       <div style={{ display: "flex", flexDirection: "column" }}>
         {searchBar}
-        <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px 12px" }}>
-          {/* Glassmorphism answer card */}
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px 14px" }}>
           <div style={{
-            background: "rgba(16, 185, 129, 0.06)",
-            border: "1px solid rgba(16, 185, 129, 0.28)",
+            background: T.accentDim,
+            border: `1px solid ${T.accentBorder}`,
             borderRadius: "8px",
-            padding: "11px 13px",
+            padding: "12px 14px",
           }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "7px" }}>
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={c.accent} strokeWidth="2" strokeLinecap="round">
-                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-              </svg>
-              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: c.accent }}>
-                Gist Answer
+            <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
+              <span style={{ color: T.accent, display: "flex" }}><IconSparkle /></span>
+              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase" as const, color: T.accent }}>
+                Answer
               </span>
             </div>
-            <p style={{ margin: 0, fontSize: "11px", color: c.textPrimary, lineHeight: 1.65 }}>
+            <p style={{ margin: 0, fontSize: "12px", color: T.text, lineHeight: 1.65 }}>
               {askResult.answer}
             </p>
           </div>
 
-          {/* Source gists */}
           {askResult.sources.length > 0 && (
             <div>
-              <p style={{ margin: "0 0 5px 0", fontSize: "9px", fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase" as const, color: c.textMuted }}>
-                Sources ({askResult.sources.length})
+              <p style={{ margin: "0 0 6px", fontSize: "9px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: T.textMuted }}>
+                Sources · {askResult.sources.length}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
                 {askResult.sources.map((src, i) => (
-                  <GistCard
-                    key={i}
-                    item={src}
-                    index={i}
-                    expanded={srcExpanded === i}
-                    onToggle={() => setSrcExpanded(srcExpanded === i ? null : i)}
-                  />
+                  <GistCard key={i} item={src} expanded={srcExpanded === i} onToggle={() => setSrcExpanded(srcExpanded === i ? null : i)} />
                 ))}
               </div>
             </div>
           )}
 
           {askResult.sources.length === 0 && (
-            <div style={{ textAlign: "center", padding: "12px 0", fontSize: "11px", color: c.textMuted }}>
-              No matching gists found — try gisting more content.
-            </div>
+            <p style={{ textAlign: "center", padding: "10px 0", fontSize: "11.5px", color: T.textMuted, margin: 0 }}>
+              No matching gists — save more content to build your library.
+            </p>
           )}
         </div>
       </div>
@@ -332,27 +410,27 @@ function LibraryView() {
 
   if (askState === "error") {
     return (
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      <div>
         {searchBar}
-        <div style={{ padding: "10px 12px" }}>
+        <div style={{ padding: "10px 14px" }}>
           <div style={{
-            background: "rgba(248, 113, 113, 0.08)", border: "1px solid rgba(248, 113, 113, 0.25)",
-            borderRadius: "6px", padding: "10px 12px", fontSize: "11px", color: "#f87171",
+            background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.18)",
+            borderLeft: "2px solid #f87171", borderRadius: "7px",
+            padding: "10px 12px", fontSize: "12px", color: "#f87171", lineHeight: 1.5,
           }}>
-            {askError ?? "Search failed. Is the backend running?"}
+            {askError ?? "Search failed."}
           </div>
         </div>
       </div>
     );
   }
 
-  // ── Standard library list view ───────────────────────────────────────────
   if (loading) {
     return (
       <div>
         {searchBar}
-        <div style={{ padding: "32px 16px", textAlign: "center", color: c.textMuted, fontSize: "12px" }}>
-          Loading library…
+        <div style={{ padding: "40px 16px", textAlign: "center", color: T.textMuted, fontSize: "12px" }}>
+          Loading…
         </div>
       </div>
     );
@@ -362,22 +440,22 @@ function LibraryView() {
     return (
       <div>
         {searchBar}
-        <div style={{ padding: "10px 12px" }}>
+        <div style={{ padding: "10px 14px" }}>
           <div style={{
-            background: "rgba(248, 113, 113, 0.08)", border: "1px solid rgba(248, 113, 113, 0.25)",
-            borderRadius: "6px", padding: "12px", fontSize: "12px", color: "#f87171", lineHeight: 1.5,
+            background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.18)",
+            borderLeft: "2px solid #f87171", borderRadius: "7px",
+            padding: "12px 14px", fontSize: "12px", color: "#f87171", lineHeight: 1.5,
           }}>
-            <div>{error}</div>
+            <div style={{ marginBottom: "10px" }}>{error}</div>
             <button
               onClick={() => setRetryCount((n) => n + 1)}
               style={{
-                marginTop: "10px", background: "none",
-                border: "1px solid rgba(248, 113, 113, 0.4)", borderRadius: "4px",
-                color: "#f87171", fontSize: "11px", padding: "4px 10px",
-                cursor: "pointer", fontFamily: FONT,
+                background: "none", border: "1px solid rgba(248,113,113,0.35)",
+                borderRadius: "5px", color: "#f87171", fontSize: "11px",
+                padding: "4px 10px", cursor: "pointer", fontFamily: FONT,
               }}
             >
-              Try again
+              Retry
             </button>
           </div>
         </div>
@@ -389,10 +467,14 @@ function LibraryView() {
     return (
       <div>
         {searchBar}
-        <div style={{ padding: "24px 16px", textAlign: "center" }}>
-          <div style={{ fontSize: "24px", marginBottom: "8px" }}>📚</div>
-          <div style={{ fontSize: "12px", color: c.textMuted, lineHeight: 1.6 }}>
-            Your library is empty.<br />Highlight text on any page to save your first gist.
+        <div style={{ padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
+          <span style={{ color: T.textMuted, opacity: 0.45, display: "flex" }}>
+            <IconEmptyLibrary />
+          </span>
+          <div style={{ fontSize: "12px", color: T.textMuted, lineHeight: 1.7 }}>
+            Your library is empty.
+            <br />
+            <span style={{ color: T.textSub }}>Highlight text on any page to save your first gist.</span>
           </div>
         </div>
       </div>
@@ -402,22 +484,88 @@ function LibraryView() {
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       {searchBar}
-      <div style={{ display: "flex", flexDirection: "column", gap: "6px", padding: "10px 12px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "5px", padding: "10px 14px" }}>
         {items.map((item, i) => (
-          <GistCard
-            key={i}
-            item={item}
-            index={i}
-            expanded={expanded === i}
-            onToggle={() => setExpanded(expanded === i ? null : i)}
-          />
+          <GistCard key={i} item={item} expanded={expanded === i} onToggle={() => setExpanded(expanded === i ? null : i)} />
         ))}
       </div>
     </div>
   );
 }
 
-// ── Capture View (existing content) ────────────────────────────────────────
+// ── Feature Card ───────────────────────────────────────────────────────────────
+
+function FeatureCard({
+  icon,
+  title,
+  subtitle,
+  rightSlot,
+  onClick,
+  accent = false,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  rightSlot?: React.ReactNode;
+  onClick?: () => void;
+  accent?: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  const isClickable = !!onClick;
+
+  const border = accent
+    ? T.accentBorder
+    : hovered && isClickable ? T.borderMid : T.border;
+
+  const iconBg = accent
+    ? T.accentDim
+    : hovered && isClickable ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.015)";
+
+  const iconBorder = accent ? T.accentBorder : T.border;
+  const iconColor  = accent ? T.accent : hovered && isClickable ? T.textSub : T.textMuted;
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        background: T.bgElevated,
+        border: `1px solid ${border}`,
+        borderRadius: "8px",
+        padding: "10px 12px",
+        cursor: isClickable ? "pointer" : "default",
+        transition: "border-color 150ms ease",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: "11px" }}>
+        <div style={{
+          width: "30px", height: "30px", borderRadius: "7px",
+          background: iconBg,
+          border: `1px solid ${iconBorder}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          color: iconColor,
+          transition: "all 150ms ease",
+          flexShrink: 0,
+        }}>
+          {icon}
+        </div>
+        <div>
+          <div style={{ fontSize: "12px", fontWeight: 600, color: T.text, lineHeight: 1.2, marginBottom: "2px" }}>
+            {title}
+          </div>
+          <div style={{ fontSize: "10.5px", color: T.textSub, lineHeight: 1.3 }}>
+            {subtitle}
+          </div>
+        </div>
+      </div>
+      {rightSlot && <div style={{ flexShrink: 0 }}>{rightSlot}</div>}
+    </div>
+  );
+}
+
+// ── Capture View ───────────────────────────────────────────────────────────────
 
 function CaptureView() {
   const [autoGistEnabled, setAutoGistEnabled] = useState(false);
@@ -434,16 +582,63 @@ function CaptureView() {
     chrome.storage.local.set({ autoGistEnabled: next });
   };
 
-  return (
-    <main style={{ padding: "14px 16px", display: "flex", flexDirection: "column", gap: "14px" }}>
+  const Toggle = () => (
+    <button
+      onClick={(e) => { e.stopPropagation(); handleAutoGistToggle(); }}
+      aria-label={autoGistEnabled ? "Disable AutoGist" : "Enable AutoGist"}
+      style={{
+        width: "34px", height: "19px", borderRadius: "10px",
+        background: autoGistEnabled ? T.accent : T.bgActive,
+        border: `1px solid ${autoGistEnabled ? T.accent : T.borderMid}`,
+        cursor: "pointer", position: "relative",
+        transition: "all 200ms ease", padding: 0, outline: "none",
+      }}
+    >
+      <div style={{
+        position: "absolute", top: "2px",
+        left: autoGistEnabled ? "15px" : "2px",
+        width: "13px", height: "13px", borderRadius: "50%",
+        background: "#fff", transition: "left 200ms ease",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
+      }} />
+    </button>
+  );
 
-      {/* Description */}
-      <p style={{ margin: 0, fontSize: "13px", color: "#b0b0b0", lineHeight: 1.55 }}>
-        Highlight any text on a webpage to get an instant AI&#8209;powered explanation — without leaving the page.
+  const KbdSet = ({ keys }: { keys: string[] }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+      {keys.map((key, i) => (
+        <React.Fragment key={key}>
+          {i > 0 && <span style={{ fontSize: "9px", color: T.textMuted, margin: "0 1px" }}>+</span>}
+          <kbd style={{
+            background: T.bgActive,
+            border: `1px solid ${T.borderStrong}`,
+            borderBottomWidth: "2px",
+            borderRadius: "4px",
+            padding: "2px 5px",
+            fontSize: "10px",
+            fontFamily: MONO,
+            color: T.text,
+            fontWeight: 600,
+            lineHeight: 1.5,
+            display: "inline-block",
+          }}>{key}</kbd>
+        </React.Fragment>
+      ))}
+    </div>
+  );
+
+  return (
+    <main style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: "7px" }}>
+
+      <p style={{ margin: "0 0 5px", fontSize: "12px", color: T.textSub, lineHeight: 1.6 }}>
+        Highlight text on any page for an instant AI&#8209;powered explanation.
       </p>
 
-      {/* Visual Capture trigger */}
-      <button
+      <FeatureCard
+        icon={<IconCapture />}
+        title="Visual Capture"
+        subtitle="Drag to select any area"
+        rightSlot={<KbdSet keys={["Alt", "⇧", "G"]} />}
         onClick={() => {
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const tab = tabs[0];
@@ -453,44 +648,12 @@ function CaptureView() {
             }
           });
         }}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: "6px",
-          padding: "10px 12px", cursor: "pointer", textAlign: "left", width: "100%",
-          transition: "all 150ms ease", outline: "none",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.accent; e.currentTarget.style.background = c.bg; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgCard; }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "6px",
-            background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center", color: c.accent,
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 12V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h7" />
-              <polyline points="9 9 12 12 9 15" />
-              <path d="M12 12h9" /><circle cx="18" cy="12" r="3" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: c.textPrimary }}>Visual Gist</div>
-            <div style={{ fontSize: "10px", color: c.textSecondary }}>Capture and explain area</div>
-          </div>
-        </div>
-        <div style={{ display: "flex", gap: "2px" }}>
-          {["Alt", "Shift", "G"].map(k => (
-            <kbd key={k} style={{
-              background: "#1a1a1a", border: `1px solid ${c.borderStrong}`, borderRadius: "3px",
-              padding: "1px 4px", fontSize: "9px", fontFamily: MONO, color: c.textSecondary,
-            }}>{k}</kbd>
-          ))}
-        </div>
-      </button>
+      />
 
-      {/* Sidebar mode trigger */}
-      <button
+      <FeatureCard
+        icon={<IconSidebar />}
+        title="Sidebar Mode"
+        subtitle="Persistent panel on the right"
         onClick={() => {
           chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const tab = tabs[0];
@@ -500,231 +663,166 @@ function CaptureView() {
             }
           });
         }}
-        style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: "6px",
-          padding: "10px 12px", cursor: "pointer", textAlign: "left", width: "100%",
-          transition: "all 150ms ease", outline: "none",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.borderColor = c.accent; e.currentTarget.style.background = c.bg; }}
-        onMouseLeave={(e) => { e.currentTarget.style.borderColor = c.border; e.currentTarget.style.background = c.bgCard; }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "6px",
-            background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center", color: c.accent,
-          }}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-              <line x1="15" y1="3" x2="15" y2="21" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: c.textPrimary }}>Sidebar Mode</div>
-            <div style={{ fontSize: "10px", color: c.textSecondary }}>Fixed persistent view</div>
-          </div>
-        </div>
-      </button>
+      />
 
-      {/* AutoGist toggle */}
-      <div style={{
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: c.bgCard, border: `1px solid ${autoGistEnabled ? "rgba(16,185,129,0.3)" : c.border}`,
-        borderRadius: "6px", padding: "10px 12px",
-        transition: "border-color 200ms ease",
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <div style={{
-            width: "32px", height: "32px", borderRadius: "6px",
-            background: autoGistEnabled ? "rgba(16,185,129,0.1)" : "rgba(255,255,255,0.03)",
-            border: `1px solid ${autoGistEnabled ? "rgba(16,185,129,0.2)" : c.border}`,
-            display: "flex", alignItems: "center", justifyContent: "center",
-            color: autoGistEnabled ? c.accent : c.textMuted,
-            transition: "all 200ms ease",
-          }}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: "11px", fontWeight: 700, color: c.textPrimary }}>AutoGist</div>
-            <div style={{ fontSize: "10px", color: c.textSecondary }}>Ambient scroll summary</div>
-          </div>
-        </div>
-        {/* Toggle switch */}
-        <button
-          onClick={handleAutoGistToggle}
-          aria-label={autoGistEnabled ? "Disable AutoGist" : "Enable AutoGist"}
-          style={{
-            width: "36px", height: "20px", borderRadius: "10px",
-            background: autoGistEnabled ? c.accent : "#252525",
-            border: "none", cursor: "pointer", position: "relative",
-            transition: "background 200ms ease", flexShrink: 0, padding: 0,
-            outline: "none",
-          }}
-        >
-          <div style={{
-            position: "absolute", top: "2px",
-            left: autoGistEnabled ? "18px" : "2px",
-            width: "16px", height: "16px", borderRadius: "50%",
-            background: "#fff", transition: "left 200ms ease",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.35)",
-          }} />
-        </button>
-      </div>
+      <FeatureCard
+        icon={<IconEye />}
+        title="AutoGist"
+        subtitle="Ambient scroll summary"
+        accent={autoGistEnabled}
+        rightSlot={<Toggle />}
+      />
 
       {/* Keyboard shortcut */}
       <div style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: "6px", padding: "9px 12px",
+        background: T.bgElevated, border: `1px solid ${T.border}`,
+        borderRadius: "8px", padding: "9px 12px",
       }}>
-        <span style={{ fontSize: "11px", color: c.textSecondary, fontWeight: 500 }}>Quick text trigger</span>
-        <div style={{ display: "flex", alignItems: "center", gap: "3px" }}>
-          {["Ctrl", "Shift", "E"].map((key, i) => (
-            <React.Fragment key={key}>
-              {i > 0 && <span style={{ fontSize: "9px", color: c.textMuted, margin: "0 1px" }}>+</span>}
-              <kbd style={{
-                background: "#1a1a1a", border: `1px solid ${c.borderStrong}`, borderBottomWidth: "2px",
-                borderRadius: "4px", padding: "2px 6px", fontSize: "10px", fontFamily: MONO,
-                color: c.textPrimary, fontWeight: 600, lineHeight: 1.6, display: "inline-block",
-              }}>{key}</kbd>
-            </React.Fragment>
-          ))}
-        </div>
+        <span style={{ fontSize: "11.5px", color: T.textSub, fontWeight: 500 }}>Quick text gist</span>
+        <KbdSet keys={["Ctrl", "⇧", "E"]} />
       </div>
 
-      {/* Tip: drag & resize */}
+      {/* Tip */}
       <div style={{
-        display: "flex", alignItems: "flex-start", gap: "8px",
-        background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: "6px", padding: "9px 12px",
+        display: "flex", alignItems: "flex-start", gap: "9px",
+        background: T.bgElevated, border: `1px solid ${T.border}`,
+        borderRadius: "8px", padding: "9px 12px",
       }}>
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0, marginTop: "1px", color: c.textMuted }}>
-          <circle cx="5"  cy="2"  r="1.2" fill="currentColor" />
-          <circle cx="9"  cy="2"  r="1.2" fill="currentColor" />
-          <circle cx="5"  cy="7"  r="1.2" fill="currentColor" />
-          <circle cx="9"  cy="7"  r="1.2" fill="currentColor" />
-          <circle cx="5"  cy="12" r="1.2" fill="currentColor" />
-          <circle cx="9"  cy="12" r="1.2" fill="currentColor" />
-        </svg>
-        <p style={{ margin: 0, fontSize: "11px", color: c.textSecondary, lineHeight: 1.5 }}>
-          The explanation panel is <strong style={{ color: c.textPrimary, fontWeight: 600 }}>draggable</strong> and <strong style={{ color: c.textPrimary, fontWeight: 600 }}>resizable</strong>.
+        <span style={{ color: T.textMuted, display: "flex", flexShrink: 0, marginTop: "1px" }}>
+          <IconGrip />
+        </span>
+        <p style={{ margin: 0, fontSize: "11.5px", color: T.textSub, lineHeight: 1.55 }}>
+          The panel is <strong style={{ color: T.text, fontWeight: 600 }}>draggable</strong> and{" "}
+          <strong style={{ color: T.text, fontWeight: 600 }}>resizable</strong> — grab the header or corner.
         </p>
       </div>
 
-      {/* Explanation modes */}
-      <div>
-        <p style={{ margin: "0 0 8px 0", fontSize: "10px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: c.textMuted }}>
-          Explanation Modes
-        </p>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-          {MODES.map(({ label, desc }) => (
-            <div key={label} style={{ background: c.bgCard, border: `1px solid ${c.border}`, borderRadius: "5px", padding: "8px 10px" }}>
-              <div style={{ fontSize: "11px", fontWeight: 600, color: c.textPrimary, marginBottom: "3px" }}>{label}</div>
-              <div style={{ fontSize: "10px", color: c.textSecondary, lineHeight: 1.4 }}>{desc}</div>
-            </div>
-          ))}
-        </div>
-      </div>
     </main>
   );
 }
 
-// ── App Shell ──────────────────────────────────────────────────────────────
+// ── App Shell ──────────────────────────────────────────────────────────────────
 
 type Tab = "capture" | "library";
+
+function GistLogo() {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+      <div style={{
+        width: "22px", height: "22px",
+        borderRadius: "6px",
+        background: T.accentDim,
+        border: `1px solid ${T.accentBorder}`,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        flexShrink: 0,
+      }}>
+        {/* Text-distillation mark: three lines of descending width */}
+        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
+          <rect x="0" y="0"   width="12" height="2" rx="1" fill={T.accent} opacity="0.45" />
+          <rect x="0" y="4"   width="9"  height="2" rx="1" fill={T.accent} />
+          <rect x="0" y="8"   width="6"  height="2" rx="1" fill={T.accent} opacity="0.45" />
+        </svg>
+      </div>
+      <span style={{
+        fontSize: "13px", fontWeight: 700, letterSpacing: "0.01em", color: T.text,
+      }}>
+        Gist
+      </span>
+    </div>
+  );
+}
 
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>(() =>
     window.location.hash === "#library" ? "library" : "capture"
   );
 
+  const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
+    { id: "capture", label: "Capture", icon: <IconCaptureTab /> },
+    { id: "library", label: "Library", icon: <IconLibraryTab /> },
+  ];
+
   return (
     <div style={{
       fontFamily: FONT,
-      background: c.bg,
-      color: c.textPrimary,
-      width: "300px",
+      background: T.bg,
+      color: T.text,
+      width: "340px",
       display: "flex",
       flexDirection: "column",
       margin: 0,
       boxSizing: "border-box",
     }}>
 
-      {/* ── Header ──────────────────────────────────────────── */}
+      {/* Header */}
       <header style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        padding: "13px 16px",
-        borderBottom: `1px solid ${c.border}`,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "12px 14px",
+        borderBottom: `1px solid ${T.border}`,
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <span style={{
-            width: "7px", height: "7px", borderRadius: "50%",
-            background: c.accent, boxShadow: `0 0 7px ${c.accentGlow}`,
-            display: "inline-block", flexShrink: 0,
-          }} />
-          <span style={{ fontSize: "12px", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase" as const, color: "#ffffff" }}>
-            Gist
-          </span>
-        </div>
-
+        <GistLogo />
         <span style={{
-          fontSize: "10px", color: c.textMuted, fontFamily: MONO, fontWeight: 500,
-          padding: "2px 7px", background: c.bgCard, border: `1px solid ${c.border}`,
-          borderRadius: "4px", letterSpacing: "0.02em",
+          fontSize: "10px", color: T.textMuted, fontFamily: MONO,
+          padding: "2px 6px",
+          background: T.bgElevated,
+          border: `1px solid ${T.border}`,
+          borderRadius: "4px",
+          letterSpacing: "0.03em",
         }}>
-          v1.0.0
+          v1.0
         </span>
       </header>
 
-      {/* ── Tab bar ─────────────────────────────────────────── */}
-      <div style={{
-        display: "flex",
-        borderBottom: `1px solid ${c.border}`,
-      }}>
-        {(["capture", "library"] as Tab[]).map((tab) => {
-          const active = activeTab === tab;
+      {/* Tabs */}
+      <div style={{ display: "flex", borderBottom: `1px solid ${T.border}` }}>
+        {tabs.map(({ id, label, icon }) => {
+          const active = activeTab === id;
           return (
             <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
+              key={id}
+              onClick={() => setActiveTab(id)}
               style={{
                 flex: 1,
-                background: "none",
-                border: "none",
-                borderBottom: active ? `2px solid ${c.accent}` : "2px solid transparent",
+                display: "flex", alignItems: "center", justifyContent: "center", gap: "5px",
+                background: "none", border: "none",
+                borderBottom: active ? `2px solid ${T.accent}` : "2px solid transparent",
                 padding: "8px 0",
-                fontSize: "11px",
-                fontWeight: active ? 700 : 500,
-                color: active ? c.accent : c.textMuted,
+                fontSize: "11.5px",
+                fontWeight: active ? 600 : 500,
+                color: active ? T.text : T.textMuted,
                 cursor: "pointer",
-                letterSpacing: "0.04em",
-                textTransform: "capitalize" as const,
                 transition: "color 120ms ease",
                 fontFamily: FONT,
+                letterSpacing: "0.01em",
               }}
             >
-              {tab === "library" ? "📚 Library" : "Capture"}
+              <span style={{
+                color: active ? T.accent : T.textMuted,
+                display: "flex",
+                transition: "color 120ms ease",
+              }}>
+                {icon}
+              </span>
+              {label}
             </button>
           );
         })}
       </div>
 
-      {/* ── Body ────────────────────────────────────────────── */}
-      <div style={{ overflowY: "auto", maxHeight: "460px" }}>
+      {/* Body */}
+      <div style={{ overflowY: "auto", maxHeight: "500px" }}>
         {activeTab === "capture" ? <CaptureView /> : <LibraryView />}
       </div>
 
-      {/* ── Footer ──────────────────────────────────────────── */}
+      {/* Footer */}
       <footer style={{
-        padding: "10px 16px",
-        borderTop: `1px solid ${c.border}`,
-        fontSize: "11px",
-        color: c.textMuted,
+        padding: "9px 14px",
+        borderTop: `1px solid ${T.border}`,
+        fontSize: "10.5px",
+        color: T.textMuted,
         textAlign: "center" as const,
+        letterSpacing: "0.01em",
       }}>
         {activeTab === "capture" ? "Select text on any page to begin" : "Your personal knowledge base"}
       </footer>
@@ -735,7 +833,7 @@ function App() {
 const root = document.getElementById("root");
 if (root) {
   document.body.style.margin = "0";
-  document.body.style.background = c.bg;
+  document.body.style.background = T.bg;
   ReactDOM.createRoot(root).render(
     <React.StrictMode>
       <App />

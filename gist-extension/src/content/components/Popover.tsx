@@ -221,7 +221,10 @@ export function Popover({
         className={`${styles.header} ${isDragging ? styles.headerDragging : ""}`}
         onMouseDown={handleHeaderMouseDown}
       >
-        <span className={styles.brand}>GIST</span>
+        <div className={styles.brand}>
+          <span className={styles.brandDot} />
+          Gist
+        </div>
         <div className={styles.headerActions}>
           {ttsState !== "idle" && (
             <button
@@ -306,9 +309,16 @@ export function Popover({
         {/* Empty state for sidebar */}
         {messages.length === 0 && state === "IDLE" && (
           <div className={styles.emptySidebar}>
-            <div className={styles.emptyIcon}>✨</div>
-            <h3>{isSidebarMode ? "Gist Sidebar Ready" : "Gist Ready"}</h3>
-            <p>Highlight any text on this page to get a concise explanation here.</p>
+            <div className={styles.emptyIcon}>
+              <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="3" />
+                <line x1="7" y1="8"  x2="17" y2="8"  />
+                <line x1="7" y1="12" x2="14" y2="12" />
+                <line x1="7" y1="16" x2="16" y2="16" />
+              </svg>
+            </div>
+            <h3>{isSidebarMode ? "Gist Sidebar" : "Ready to Gist"}</h3>
+            <p>Highlight any text on this page for an instant AI-powered explanation.</p>
           </div>
         )}
 

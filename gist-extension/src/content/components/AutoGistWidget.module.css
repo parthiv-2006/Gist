@@ -1,20 +1,19 @@
 /* AutoGistWidget.module.css
-   Ghost UI — invisible until hovered, then expands with a premium dark card.
-   All styles are scoped inside Shadow DOM so they never bleed into the host page. */
+   Ghost UI — nearly invisible at rest, reveals on hover. */
 
 .widget {
   position: fixed;
   bottom: 20px;
   right: 20px;
-  width: 224px;
+  width: 228px;
   pointer-events: auto;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   user-select: none;
-  /* Ghost by default — barely visible */
-  opacity: 0.13;
-  transform: scale(0.96) translateY(3px);
-  transition: opacity 350ms cubic-bezier(0.4, 0, 0.2, 1),
-              transform 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.12;
+  transform: scale(0.96) translateY(4px);
+  transition:
+    opacity 350ms cubic-bezier(0.4, 0, 0.2, 1),
+    transform 350ms cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 2147483646;
 }
 
@@ -23,25 +22,24 @@
   transform: scale(1) translateY(0);
 }
 
-/* Force full opacity when actively loading so user knows it's working */
 .widget.loading {
-  opacity: 0.25;
+  opacity: 0.22;
   transform: scale(0.97) translateY(2px);
 }
 
 .card {
-  background: rgba(12, 12, 12, 0.94);
-  border: 1px solid rgba(42, 42, 42, 0.95);
+  background: rgba(10, 10, 10, 0.96);
+  border: 1px solid rgba(32, 32, 32, 0.98);
   border-radius: 10px;
-  padding: 10px 12px;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  padding: 10px 13px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.5),
-    0 0 0 0.5px rgba(255, 255, 255, 0.04) inset;
+    0 10px 36px rgba(0, 0, 0, 0.55),
+    0 0 0 0.5px rgba(255, 255, 255, 0.035) inset;
 }
 
-/* ── Header ────────────────────────────────────────────────────────────────── */
+/* ── Header ────────────────────────────────────────────────────── */
 
 .header {
   display: flex;
@@ -53,7 +51,7 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
 }
 
 .dot {
@@ -61,18 +59,18 @@
   height: 6px;
   border-radius: 50%;
   background: #10b981;
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.55);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
   flex-shrink: 0;
   transition: box-shadow 300ms ease;
 }
 
 .dot.pulsing {
-  animation: widgetPulse 1.2s ease-in-out infinite;
+  animation: widgetPulse 1.3s ease-in-out infinite;
 }
 
 @keyframes widgetPulse {
-  0%, 100% { opacity: 1;   transform: scale(1);    box-shadow: 0 0 6px rgba(16,185,129,0.55); }
-  50%       { opacity: 0.4; transform: scale(0.8);  box-shadow: 0 0 2px rgba(16,185,129,0.2);  }
+  0%, 100% { opacity: 1;   transform: scale(1);   box-shadow: 0 0 6px rgba(16,185,129,0.5); }
+  50%       { opacity: 0.4; transform: scale(0.8); box-shadow: 0 0 2px rgba(16,185,129,0.2); }
 }
 
 .label {
@@ -87,7 +85,7 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: #484848;
+  color: #404040;
   padding: 0;
   display: flex;
   align-items: center;
@@ -96,15 +94,15 @@
 }
 
 .closeBtn:hover {
-  color: #888;
+  color: #707070;
 }
 
-/* ── Content ───────────────────────────────────────────────────────────────── */
+/* ── Content ───────────────────────────────────────────────────── */
 
 .hint {
   margin: 0;
   font-size: 10px;
-  color: #3a3a3a;
+  color: #606060;
   text-align: center;
   padding: 2px 0 1px;
   line-height: 1.4;
@@ -133,7 +131,7 @@
 
 .takeawayText {
   font-size: 10.5px;
-  color: #c0c0c0;
+  color: #b8b8b8;
   line-height: 1.55;
   margin: 0;
 }
