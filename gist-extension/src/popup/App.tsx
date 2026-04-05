@@ -733,10 +733,40 @@ function GistLogo() {
   );
 }
 
+// True when popup.html is opened as a full browser tab (e.g. via "Open Library")
+const IS_TAB_MODE = window.outerWidth > 500;
+
 function App() {
   const [activeTab, setActiveTab] = useState<Tab>(() =>
     window.location.hash === "#library" ? "library" : "capture"
   );
+
+  // ── Full-page library layout (tab mode) ──────────────────────────────────
+  if (IS_TAB_MODE) {
+    return (
+      <div style={{ fontFamily: FONT, background: T.bg, color: T.text, minHeight: "100vh" }}>
+        {/* Sticky top bar */}
+        <header style={{
+          display: "flex", alignItems: "center", justifyContent: "space-between",
+          padding: "13px 32px",
+          borderBottom: `1px solid ${T.border}`,
+          position: "sticky", top: 0,
+          background: T.bg,
+          zIndex: 10,
+        }}>
+          <GistLogo />
+          <span style={{ fontSize: "11px", color: T.textMuted, letterSpacing: "0.01em" }}>
+            Personal knowledge base
+          </span>
+        </header>
+
+        {/* Centered content column */}
+        <div style={{ maxWidth: "680px", margin: "0 auto", padding: "28px 24px 60px" }}>
+          <LibraryView />
+        </div>
+      </div>
+    );
+  }
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "capture", label: "Capture", icon: <IconCaptureTab /> },

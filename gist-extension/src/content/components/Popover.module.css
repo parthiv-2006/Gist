@@ -573,8 +573,9 @@
   width: 9px;
   height: 9px;
   border-radius: 50%;
-  background: var(--gist-accent);
-  box-shadow: 0 0 8px var(--gist-accent-glow);
+  /* Hardcoded — .minimizedIcon renders outside .popover so CSS vars are unavailable */
+  background: #10b981;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.35);
   display: block;
 }
 

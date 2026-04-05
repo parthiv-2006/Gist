@@ -189,16 +189,47 @@ export function Popover({
 
   if (state === "IDLE" && !isSidebarMode && !isVisible) return null;
 
-  // Minimized: render a small floating icon anchored to last known position
+  // Minimized: draggable floating dot — click restores, drag repositions
   if (minimized) {
     const minimizedStyle = isSidebarMode
       ? { bottom: "24px", right: "16px" }
       : { top: `${pos.y}px`, left: `${pos.x}px` };
+
+    const handleMinimizedMouseDown = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (e.button !== 0) return;
+      e.preventDefault();
+
+      const startX  = e.clientX;
+      const startY  = e.clientY;
+      const originX = e.clientX - posRef.current.x;
+      const originY = e.clientY - posRef.current.y;
+      const ICON_D  = 36; // icon diameter
+      let moved = false;
+
+      const onMove = (ev: MouseEvent) => {
+        if (!moved && (Math.abs(ev.clientX - startX) > 4 || Math.abs(ev.clientY - startY) > 4)) {
+          moved = true;
+        }
+        if (moved) {
+          const nx = Math.max(MARGIN, Math.min(window.innerWidth  - ICON_D - MARGIN, ev.clientX - originX));
+          const ny = Math.max(MARGIN, Math.min(window.innerHeight - ICON_D - MARGIN, ev.clientY - originY));
+          setPos({ x: nx, y: ny });
+        }
+      };
+      const onUp = () => {
+        document.removeEventListener("mousemove", onMove);
+        document.removeEventListener("mouseup",   onUp);
+        if (!moved) setMinimized(false); // treat as click → restore
+      };
+      document.addEventListener("mousemove", onMove);
+      document.addEventListener("mouseup",   onUp);
+    };
+
     return (
       <button
         className={styles.minimizedIcon}
         style={minimizedStyle}
-        onClick={() => setMinimized(false)}
+        onMouseDown={handleMinimizedMouseDown}
         aria-label="Restore Gist"
         title="Restore Gist"
       >

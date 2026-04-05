@@ -6,6 +6,9 @@ import { RateLimiter } from "../utils/rate-limiter";
 
 const rateLimiter = new RateLimiter(5, 10_000);
 
+// Remembered so mode-change re-triggers work even after selection is cleared
+let lastGistedText = "";
+
 declare global {
   interface Window { __gistMounted?: boolean }
 }
@@ -60,9 +63,9 @@ if (!window.__gistMounted) {
 
   setHandlers(
     (mode) => {
-      // Re-trigger with same text but new mode
+      // Use the stored text — selection is typically cleared by the time user switches modes
       const selection = window.getSelection();
-      const text = extractSelectedText(selection);
+      const text = extractSelectedText(selection) || lastGistedText;
       if (text) {
         updatePopover({ state: "LOADING", mode });
         chrome.runtime.sendMessage(buildGistRequest(text, document.title, mode));
@@ -164,6 +167,7 @@ function handleTrigger(): void {
     : null;
   updatePopover({ state: "LOADING", position: selectionRect ?? undefined });
 
+  lastGistedText = text;
   const pageContext = document.title;
   chrome.runtime.sendMessage(buildGistRequest(text, pageContext));
 }
