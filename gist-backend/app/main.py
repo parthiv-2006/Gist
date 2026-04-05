@@ -14,6 +14,7 @@ from app.routes.library import router as library_router
 from app.routes.search import router as search_router
 from app.routes.autogist import router as autogist_router
 from app.routes.scan import router as scan_router
+from app.routes.nested import router as nested_router
 from app.db import connect_db, disconnect_db
 
 load_dotenv()  # Load .env if present (local dev only)
@@ -70,6 +71,7 @@ app.include_router(library_router)
 app.include_router(search_router)
 app.include_router(autogist_router)
 app.include_router(scan_router)
+app.include_router(nested_router)
 
 
 @app.exception_handler(Exception)
