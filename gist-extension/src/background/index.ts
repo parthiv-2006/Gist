@@ -1,23 +1,23 @@
 import { buildGistRequest, isGistMessage, type GistMessage, type ChatMessage } from "../utils/messages";
 
-// Backend URL is selected automatically by Vite at build time.
-// `vite build` (production) → Render URL
-// `vite build --watch` / `vite` (dev) → localhost
-const BACKEND_URL = import.meta.env.DEV
-  ? "http://localhost:8000/api/v1/simplify"
-  : "https://gist-vc8m.onrender.com/api/v1/simplify";
+const LOCAL_BASE  = "http://localhost:8000";
+const RENDER_BASE = "https://gist-vc8m.onrender.com";
 
-const LIBRARY_SAVE_URL = import.meta.env.DEV
-  ? "http://localhost:8000/library/save"
-  : "https://gist-vc8m.onrender.com/library/save";
-
-const AUTOGIST_URL = import.meta.env.DEV
-  ? "http://localhost:8000/autogist"
-  : "https://gist-vc8m.onrender.com/autogist";
-
-const LENS_SCAN_URL = import.meta.env.DEV
-  ? "http://localhost:8000/api/v1/scan-terms"
-  : "https://gist-vc8m.onrender.com/api/v1/scan-terms";
+// Resolve the backend base URL once at startup: try localhost (600 ms timeout),
+// fall back to Render. Result is cached for the lifetime of the service worker.
+let _resolvedBase: string | null = null;
+async function resolveBase(): Promise<string> {
+  if (_resolvedBase) return _resolvedBase;
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 600);
+    const r = await fetch(`${LOCAL_BASE}/health`, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (r.ok) { _resolvedBase = LOCAL_BASE; return LOCAL_BASE; }
+  } catch { /* local server not running */ }
+  _resolvedBase = RENDER_BASE;
+  return RENDER_BASE;
+}
 
 // Per-tab rate limit: at most 1 auto-gist request every 8 seconds.
 const _lastAutoGistTime = new Map<number, number>();
@@ -30,8 +30,8 @@ chrome.runtime.onInstalled.addListener(() => {
     contexts: ["selection"],
   });
 
-  // Warm up the backend
-  fetch(`${BACKEND_URL.replace("/api/v1/simplify", "/health")}`).catch(() => {});
+  // Warm up the backend (also seeds the _resolvedBase cache)
+  resolveBase().then(base => fetch(`${base}/health`).catch(() => {}));
 });
 
 chrome.contextMenus.onClicked.addListener(async (info, tab) => {
@@ -143,9 +143,11 @@ async function streamFromBackend(
   imageData?: string,
   imageMimeType?: string
 ) {
-  console.log("[Gist BG] fetch →", BACKEND_URL);
+  const base = await resolveBase();
+  const url = `${base}/api/v1/simplify`;
+  console.log("[Gist BG] fetch →", url);
   try {
-    const response = await fetch(BACKEND_URL, {
+    const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -245,8 +247,9 @@ async function saveGistToLibrary(
   mode: string,
   url: string
 ): Promise<void> {
+  const base = await resolveBase();
   try {
-    const response = await fetch(LIBRARY_SAVE_URL, {
+    const response = await fetch(`${base}/library/save`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ original_text: selectedText, explanation, mode, url }),
@@ -261,8 +264,9 @@ async function saveGistToLibrary(
 }
 
 async function fetchAutoGist(tabId: number, textChunk: string, url: string): Promise<void> {
+  const base = await resolveBase();
   try {
-    const response = await fetch(AUTOGIST_URL, {
+    const response = await fetch(`${base}/autogist`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text_chunk: textChunk, url }),
@@ -290,8 +294,9 @@ async function fetchAutoGist(tabId: number, textChunk: string, url: string): Pro
 }
 
 async function fetchLensTerms(tabId: number, textChunk: string, pageContext: string): Promise<void> {
+  const base = await resolveBase();
   try {
-    const response = await fetch(LENS_SCAN_URL, {
+    const response = await fetch(`${base}/api/v1/scan-terms`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text_content: textChunk, page_context: pageContext }),

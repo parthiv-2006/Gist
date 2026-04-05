@@ -74,6 +74,9 @@ if (!window.__gistMounted) {
   // ── Gist Lens mode ────────────────────────────────────────────────────────
   let lensActive = false;
   let lensIdleCallbackId: ReturnType<typeof requestIdleCallback> | null = null;
+  let lensUrlPollInterval: ReturnType<typeof setInterval> | null = null;
+  let lensRescanTimer: ReturnType<typeof setTimeout> | null = null;
+  let lensLastUrl = location.href;
 
   function injectLensStyles(): void {
     if (document.getElementById("gist-lens-styles")) return;
@@ -124,20 +127,42 @@ if (!window.__gistMounted) {
     }
   }
 
+  function scheduleLensScan(delayMs = 0): void {
+    if (lensIdleCallbackId !== null) { cancelIdleCallback(lensIdleCallbackId); lensIdleCallbackId = null; }
+    if (delayMs > 0) {
+      if (lensRescanTimer !== null) clearTimeout(lensRescanTimer);
+      lensRescanTimer = setTimeout(() => {
+        if (lensActive) lensIdleCallbackId = requestIdleCallback(() => scanPageForTerms(), { timeout: 5000 });
+      }, delayMs);
+    } else {
+      lensIdleCallbackId = requestIdleCallback(() => scanPageForTerms(), { timeout: 5000 });
+    }
+  }
+
   function startLensMode(): void {
     if (lensActive) return;
     lensActive = true;
+    lensLastUrl = location.href;
     injectLensStyles();
-    lensIdleCallbackId = requestIdleCallback(() => scanPageForTerms(), { timeout: 5000 });
+    scheduleLensScan();
+
+    // Poll for URL changes every 800 ms to catch SPA navigation (pushState / replaceState / hash changes)
+    lensUrlPollInterval = setInterval(() => {
+      if (location.href !== lensLastUrl) {
+        lensLastUrl = location.href;
+        removeLensHighlights(document.body);
+        // Wait 1.5 s for the SPA to finish rendering new content before rescanning
+        scheduleLensScan(1500);
+      }
+    }, 800);
   }
 
   function stopLensMode(): void {
     if (!lensActive) return;
     lensActive = false;
-    if (lensIdleCallbackId !== null) {
-      cancelIdleCallback(lensIdleCallbackId);
-      lensIdleCallbackId = null;
-    }
+    if (lensIdleCallbackId !== null) { cancelIdleCallback(lensIdleCallbackId); lensIdleCallbackId = null; }
+    if (lensRescanTimer !== null) { clearTimeout(lensRescanTimer); lensRescanTimer = null; }
+    if (lensUrlPollInterval !== null) { clearInterval(lensUrlPollInterval); lensUrlPollInterval = null; }
     removeLensHighlights(document.body);
     document.getElementById("gist-lens-styles")?.remove();
   }
