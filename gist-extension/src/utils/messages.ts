@@ -17,7 +17,10 @@ export type MessageType =
   | "AUTOGIST_ERROR"
   | "LENS_SCAN_REQUEST"
   | "LENS_SCAN_RESPONSE"
-  | "LENS_SCAN_ERROR";
+  | "LENS_SCAN_ERROR"
+  | "NESTED_GIST_REQUEST"
+  | "NESTED_GIST_RESPONSE"
+  | "NESTED_GIST_ERROR";
 
 export type ComplexityLevel = "standard" | "simple" | "legal" | "academic";
 
@@ -52,6 +55,10 @@ export interface GistMessage {
     success?: boolean;
     // Gist Lens fields
     terms?: LensTerm[];
+    // Nested Gist (Progressive Disclosure) fields
+    term?: string;
+    parentContext?: string;
+    definition?: string;
   };
 }
 
@@ -94,6 +101,9 @@ export function isGistMessage(value: unknown): value is GistMessage {
     "LENS_SCAN_REQUEST",
     "LENS_SCAN_RESPONSE",
     "LENS_SCAN_ERROR",
+    "NESTED_GIST_REQUEST",
+    "NESTED_GIST_RESPONSE",
+    "NESTED_GIST_ERROR",
   ];
   return VALID_TYPES.includes(type);
 }

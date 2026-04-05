@@ -19,6 +19,11 @@ const DEFAULT_WIDTH  = 340;
 const DEFAULT_HEIGHT = 380;
 const MARGIN         = 12;
 
+export interface DrillingLevel {
+  term: string;
+  level: number;
+}
+
 export interface PopoverProps {
   state: PopoverState;
   text: string;
@@ -30,12 +35,15 @@ export interface PopoverProps {
   isSidebarMode?: boolean;
   isVisible?: boolean;
   saveStatus?: "unsaved" | "saving" | "saved" | "error";
+  drillingStack?: DrillingLevel[];
   onToggleSidebar?: () => void;
   onOpenLibrary?: () => void;
   onClose: () => void;
   onModeChange?: (mode: ComplexityLevel) => void;
   onSendMessage?: (query: string) => void;
   onSaveGist?: (explanation: string) => void;
+  onDrill?: (term: string) => void;
+  onJumpToDrillingLevel?: (levelIndex: number) => void;
 }
 
 export function Popover({
@@ -49,12 +57,15 @@ export function Popover({
   isSidebarMode = false,
   isVisible = false,
   saveStatus = "unsaved",
+  drillingStack = [],
   onToggleSidebar,
   onOpenLibrary,
   onClose,
   onModeChange,
   onSendMessage,
   onSaveGist,
+  onDrill,
+  onJumpToDrillingLevel,
 }: PopoverProps) {
   const [inputValue, setInputValue] = useState("");
   const [ttsState, setTtsState] = useState<"idle" | "playing" | "paused">("idle");
@@ -75,7 +86,14 @@ export function Popover({
   const posRef  = useRef(pos);  posRef.current  = pos;
   const sizeRef = useRef(size); sizeRef.current = size;
 
-  // Re-anchor and restore whenever a new highlight arrives (position reference changes).
+  // ─── Double-click word drilling ────────────────────────────────────────────
+  const handleDoubleClickWord = (word: string) => {
+    if (!onDrill || !word.trim()) return;
+    if (drillingStack.length >= 10) return; // cap depth
+    onDrill(word.trim());
+  };
+
+  // ─── Re-anchor and restore whenever a new highlight arrives ────────────────────
   useEffect(() => {
     if (position) {
       setPos({
@@ -336,6 +354,66 @@ export function Popover({
         </div>
       )}
 
+      {/* Breadcrumb trail for drilling */}
+      {drillingStack.length > 0 && (
+        <div style={{
+          fontSize: "11px",
+          color: "#888888",
+          padding: "6px 12px",
+          borderBottom: "1px solid #2a2a2a",
+          overflow: "auto",
+          whiteSpace: "nowrap",
+          display: "flex",
+          gap: "4px",
+          alignItems: "center",
+        }}>
+          <button
+            onClick={() => onJumpToDrillingLevel?.(-1)}
+            style={{
+              background: "none",
+              border: "none",
+              color: "#10b981",
+              cursor: "pointer",
+              fontSize: "11px",
+              padding: "2px 6px",
+              borderRadius: "3px",
+              transition: "background 120ms",
+            }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#1d1d1d"; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
+            title="Back to root explanation"
+          >
+            ← Root
+          </button>
+          {drillingStack.map((level, idx) => (
+            <React.Fragment key={idx}>
+              <span style={{ opacity: 0.5 }}>›</span>
+              <button
+                onClick={() => onJumpToDrillingLevel?.(idx)}
+                style={{
+                  background: "none",
+                  border: "none",
+                  color: "#10b981",
+                  cursor: "pointer",
+                  fontSize: "11px",
+                  padding: "2px 6px",
+                  borderRadius: "3px",
+                  maxWidth: "120px",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  transition: "background 120ms",
+                }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#1d1d1d"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
+                title={level.term}
+              >
+                {level.term}
+              </button>
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+
       {/* Chat history */}
       <div className={styles.chatHistory} ref={historyRef}>
         {imageData && (
@@ -368,7 +446,16 @@ export function Popover({
               key={idx}
               className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.modelMessage}`}
             >
-              <div className={styles.markdown}>
+              <div
+                className={styles.markdown}
+                onDoubleClick={(e) => {
+                  const selection = window.getSelection();
+                  if (selection && selection.toString().length > 0) {
+                    handleDoubleClickWord(selection.toString());
+                  }
+                }}
+                style={{ cursor: "default", userSelect: "text" }}
+              >
                 <ReactMarkdown
                   components={{
                     code({ node, className, children, ...props }) {

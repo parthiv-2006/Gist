@@ -131,6 +131,11 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     if (!textChunk) return;
     console.log("[Gist BG] LENS_SCAN_REQUEST", { tabId, chars: textChunk.length });
     fetchLensTerms(tabId, textChunk, pageContext ?? "");
+  } else if (message.type === "NESTED_GIST_REQUEST") {
+    const { term, parentContext } = message.payload;
+    if (!term) return;
+    console.log("[Gist BG] NESTED_GIST_REQUEST", { tabId, term });
+    fetchNestedGist(tabId, term, parentContext ?? "");
   }
 });
 
@@ -319,6 +324,38 @@ async function fetchLensTerms(tabId: number, textChunk: string, pageContext: str
   } catch (err) {
     console.warn("[Gist BG] LensScan fetch error:", err);
     chrome.tabs.sendMessage(tabId, { type: "LENS_SCAN_ERROR", payload: {} });
+  }
+}
+
+async function fetchNestedGist(tabId: number, term: string, parentContext: string): Promise<void> {
+  const base = await resolveBase();
+  try {
+    const response = await fetch(`${base}/api/v1/nested-gist`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ term, parent_context: parentContext }),
+    });
+
+    if (!response.ok) {
+      console.warn("[Gist BG] NestedGist non-OK:", response.status);
+      chrome.tabs.sendMessage(tabId, { type: "NESTED_GIST_ERROR", payload: {} });
+      return;
+    }
+
+    const data = await response.json() as { definition?: string };
+    if (!data.definition) {
+      chrome.tabs.sendMessage(tabId, { type: "NESTED_GIST_ERROR", payload: {} });
+      return;
+    }
+
+    const msg: GistMessage = {
+      type: "NESTED_GIST_RESPONSE",
+      payload: { term, definition: data.definition },
+    };
+    chrome.tabs.sendMessage(tabId, msg);
+  } catch (err) {
+    console.warn("[Gist BG] NestedGist fetch error:", err);
+    chrome.tabs.sendMessage(tabId, { type: "NESTED_GIST_ERROR", payload: {} });
   }
 }
 

@@ -36,6 +36,15 @@ let isVisible = false;
 let lastState: PopoverState = "IDLE";
 let saveStatus: "unsaved" | "saving" | "saved" | "error" = "unsaved";
 
+// Progressive Disclosure: drilling stack for nested gists (breadcrumb trail)
+interface DrillLevel {
+  term: string;
+  definition: string;
+  level: number;
+}
+let drillingStack: DrillLevel[] = [];
+const MAX_DRILLING_DEPTH = 10;
+
 // Callbacks set by content/index.ts
 let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
 let sendMessageCallback: ((query: string, history: ChatMessage[]) => void) | null = null;
@@ -199,6 +208,62 @@ export function showLensDefinition(term: string, definition: string, rect: DOMRe
   renderPopover({ state: "DONE" });
 }
 
+/**
+ * Drill into a nested gist (progressive disclosure).
+ * Pushes the term onto the drilling stack and shows breadcrumbs.
+ */
+export function drillIntoGist(term: string, definition: string): void {
+  if (!reactRoot) return;
+
+  // Cap drilling depth to prevent infinite loops
+  if (drillingStack.length >= MAX_DRILLING_DEPTH) return;
+
+  const level: DrillLevel = {
+    term,
+    definition,
+    level: drillingStack.length + 1,
+  };
+  drillingStack.push(level);
+
+  accumulatedText = "";
+  messages = [{ role: "model", content: definition }];
+  currentOriginalText = term;
+  saveStatus = "unsaved";
+  isVisible = true;
+  renderPopover({ state: "DONE" });
+}
+
+/**
+ * Jump back to a specific drilling level via breadcrumb click.
+ */
+export function jumpToDrillingLevel(levelIndex: number): void {
+  if (levelIndex < 0 || levelIndex >= drillingStack.length) return;
+
+  const level = drillingStack[levelIndex];
+  accumulatedText = "";
+  messages = [{ role: "model", content: level.definition }];
+  currentOriginalText = level.term;
+  drillingStack = drillingStack.slice(0, levelIndex + 1);
+  saveStatus = "unsaved";
+  renderPopover({ state: "DONE" });
+}
+
+/**
+ * Clear the drilling stack (return to root explanation).
+ */
+export function clearDrillingStack(): void {
+  drillingStack = [];
+  messages = [];
+  accumulatedText = "";
+  currentOriginalText = "";
+  saveStatus = "unsaved";
+  renderPopover({ state: "IDLE" });
+}
+
+export function getDrillingStack(): DrillLevel[] {
+  return drillingStack;
+}
+
 export function unmountPopover(): void {
   if (reactRoot) {
     accumulatedText = "";
@@ -357,12 +422,32 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       isSidebarMode,
       isVisible,
       saveStatus,
+      drillingStack: drillingStack.map((level) => ({ term: level.term, level: level.level })),
       onToggleSidebar: toggleSidebar,
       onOpenLibrary: stableOnOpenLibrary,
       onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
       onSendMessage: stableOnSendMessage,
       onSaveGist: stableOnSaveGist,
+      onDrill: (term: string) => {
+        if (drillingStack.length >= MAX_DRILLING_DEPTH) return;
+        // Content script will send NESTED_GIST_REQUEST to background
+        chrome.runtime.sendMessage({
+          type: "NESTED_GIST_REQUEST",
+          payload: { term, parentContext: currentOriginalText || currentPageContext },
+        });
+      },
+      onJumpToDrillingLevel: (levelIndex: number) => {
+        if (levelIndex === -1) {
+          drillingStack = [];
+          messages = [];
+          accumulatedText = "";
+          currentOriginalText = "";
+          renderPopover({ state: "IDLE" });
+        } else if (levelIndex >= 0 && levelIndex < drillingStack.length) {
+          jumpToDrillingLevel(levelIndex);
+        }
+      },
     })
   );
 }

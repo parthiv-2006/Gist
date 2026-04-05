@@ -1,6 +1,6 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled, updateSaveResult, showLensDefinition } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled, updateSaveResult, showLensDefinition, drillIntoGist, jumpToDrillingLevel, getDrillingStack } from "./shadow-host";
 import { highlightTerms, removeLensHighlights, LENS_CLASS } from "../utils/dom-walker";
 import { startObserver } from "./observer";
 import { RateLimiter } from "../utils/rate-limiter";
@@ -279,6 +279,15 @@ if (!window.__gistMounted) {
         }
         break;
       }
+
+      case "NESTED_GIST_RESPONSE": {
+        const term = msg.payload.term ?? "";
+        const definition = msg.payload.definition ?? "";
+        if (term && definition) {
+          drillIntoNestedGist(term, definition);
+        }
+        break;
+      }
     }
   });
 }
@@ -314,6 +323,11 @@ function handleTrigger(): void {
 
   lastGistedText = text;
   chrome.runtime.sendMessage(buildGistRequest(text, pageContext));
+}
+
+function drillIntoNestedGist(term: string, definition: string): void {
+  // Push onto drilling stack and show breadcrumbs
+  drillIntoGist(term, definition);
 }
 
 async function handleCapture(rect: { x: number; y: number; width: number; height: number }): Promise<void> {
