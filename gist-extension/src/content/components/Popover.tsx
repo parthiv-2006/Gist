@@ -108,8 +108,12 @@ export function Popover({
     const originY = e.clientY - posRef.current.y;
     setIsDragging(true);
 
+    const HEADER_H = 44; // keep the header reachable within the viewport
     const onMove = (ev: MouseEvent) => {
-      setPos({ x: ev.clientX - originX, y: ev.clientY - originY });
+      const w = sizeRef.current.width;
+      const newX = Math.max(MARGIN, Math.min(window.innerWidth  - w - MARGIN, ev.clientX - originX));
+      const newY = Math.max(MARGIN, Math.min(window.innerHeight - HEADER_H,   ev.clientY - originY));
+      setPos({ x: newX, y: newY });
     };
     const onUp = () => {
       document.removeEventListener("mousemove", onMove);
@@ -415,15 +419,16 @@ export function Popover({
 // ─── Positioning helpers ─────────────────────────────────────────────────────
 
 function getPopoverTop(rect: DOMRect, height: number): number {
+  // rect coords are viewport-relative; popover is position:fixed — no scroll offset needed.
   const spaceBelow = window.innerHeight - rect.bottom;
   if (spaceBelow < height + MARGIN) {
-    return rect.top + window.scrollY - height - MARGIN;
+    return Math.max(MARGIN, rect.top - height - MARGIN);
   }
-  return rect.bottom + window.scrollY + MARGIN;
+  return Math.min(rect.bottom + MARGIN, window.innerHeight - height - MARGIN);
 }
 
 function getPopoverLeft(rect: DOMRect, width: number): number {
-  const left    = rect.left + window.scrollX;
-  const clamped = Math.min(left, window.innerWidth - width - MARGIN);
+  // rect.left is already viewport-relative — do not add scrollX.
+  const clamped = Math.min(rect.left, window.innerWidth - width - MARGIN);
   return Math.max(MARGIN, clamped);
 }
