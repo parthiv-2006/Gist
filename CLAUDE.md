@@ -169,7 +169,7 @@ via SSE back to the extension.
 
 ## After You Write Any Code
 
-After completing any code changes, always commit and push to the GitHub repository:
+After completing any code changes, always commit and push to the GitHub repository, do this in smaller batched commits rather than one large commit:
 1. Stage only the relevant source files (never `__pycache__`, `.pyc`, or generated build artifacts).
 2. Write a conventional commit message (`fix:`, `feat:`, `refactor:`, etc.).
 3. Push to `origin main`.
