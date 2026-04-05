@@ -14,13 +14,21 @@ export type MessageType =
   | "SAVE_GIST_RESULT"
   | "AUTOGIST_REQUEST"
   | "AUTOGIST_RESPONSE"
-  | "AUTOGIST_ERROR";
+  | "AUTOGIST_ERROR"
+  | "LENS_SCAN_REQUEST"
+  | "LENS_SCAN_RESPONSE"
+  | "LENS_SCAN_ERROR";
 
 export type ComplexityLevel = "standard" | "simple" | "legal" | "academic";
 
 export interface ChatMessage {
   role: "user" | "model";
   content: string;
+}
+
+export interface LensTerm {
+  term: string;
+  definition: string;
 }
 
 export interface GistMessage {
@@ -42,6 +50,8 @@ export interface GistMessage {
     // Save gist fields
     explanation?: string;
     success?: boolean;
+    // Gist Lens fields
+    terms?: LensTerm[];
   };
 }
 
@@ -81,6 +91,9 @@ export function isGistMessage(value: unknown): value is GistMessage {
     "AUTOGIST_REQUEST",
     "AUTOGIST_RESPONSE",
     "AUTOGIST_ERROR",
+    "LENS_SCAN_REQUEST",
+    "LENS_SCAN_RESPONSE",
+    "LENS_SCAN_ERROR",
   ];
   return VALID_TYPES.includes(type);
 }

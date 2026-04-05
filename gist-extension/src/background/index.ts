@@ -15,6 +15,10 @@ const AUTOGIST_URL = import.meta.env.DEV
   ? "http://localhost:8000/autogist"
   : "https://gist-vc8m.onrender.com/autogist";
 
+const LENS_SCAN_URL = import.meta.env.DEV
+  ? "http://localhost:8000/api/v1/scan-terms"
+  : "https://gist-vc8m.onrender.com/api/v1/scan-terms";
+
 // Per-tab rate limit: at most 1 auto-gist request every 8 seconds.
 const _lastAutoGistTime = new Map<number, number>();
 const AUTOGIST_COOLDOWN_MS = 8_000;
@@ -122,6 +126,11 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
 
     console.log("[Gist BG] AUTOGIST_REQUEST", { tabId, chars: textChunk.length });
     fetchAutoGist(tabId, textChunk, url ?? "");
+  } else if (message.type === "LENS_SCAN_REQUEST") {
+    const { textChunk, pageContext } = message.payload;
+    if (!textChunk) return;
+    console.log("[Gist BG] LENS_SCAN_REQUEST", { tabId, chars: textChunk.length });
+    fetchLensTerms(tabId, textChunk, pageContext ?? "");
   }
 });
 
@@ -277,6 +286,34 @@ async function fetchAutoGist(tabId: number, textChunk: string, url: string): Pro
     // AutoGist is best-effort — silently fail so it never disrupts the user, but tell UI to reset
     console.warn("[Gist BG] AutoGist fetch error:", err);
     chrome.tabs.sendMessage(tabId, { type: "AUTOGIST_ERROR", payload: {} });
+  }
+}
+
+async function fetchLensTerms(tabId: number, textChunk: string, pageContext: string): Promise<void> {
+  try {
+    const response = await fetch(LENS_SCAN_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text_content: textChunk, page_context: pageContext }),
+    });
+
+    if (!response.ok) {
+      console.warn("[Gist BG] LensScan non-OK:", response.status);
+      chrome.tabs.sendMessage(tabId, { type: "LENS_SCAN_ERROR", payload: {} });
+      return;
+    }
+
+    const data = await response.json() as { terms?: Array<{ term: string; definition: string }> };
+    if (!Array.isArray(data.terms) || data.terms.length === 0) return;
+
+    const msg: GistMessage = {
+      type: "LENS_SCAN_RESPONSE",
+      payload: { terms: data.terms },
+    };
+    chrome.tabs.sendMessage(tabId, msg);
+  } catch (err) {
+    console.warn("[Gist BG] LensScan fetch error:", err);
+    chrome.tabs.sendMessage(tabId, { type: "LENS_SCAN_ERROR", payload: {} });
   }
 }
 

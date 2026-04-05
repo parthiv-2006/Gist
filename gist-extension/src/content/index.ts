@@ -1,6 +1,7 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled, updateSaveResult } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled, updateSaveResult, showLensDefinition } from "./shadow-host";
+import { highlightTerms, removeLensHighlights, LENS_CLASS } from "../utils/dom-walker";
 import { startObserver } from "./observer";
 import { RateLimiter } from "../utils/rate-limiter";
 
@@ -53,11 +54,115 @@ if (!window.__gistMounted) {
 
   // React to toggle changes from the popup in real time
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local" || !changes["autoGistEnabled"]) return;
-    if (changes["autoGistEnabled"].newValue === true) {
-      startAutoGist();
-    } else {
-      stopAutoGist();
+    if (area !== "local") return;
+    if (changes["autoGistEnabled"]) {
+      if (changes["autoGistEnabled"].newValue === true) {
+        startAutoGist();
+      } else {
+        stopAutoGist();
+      }
+    }
+    if (changes["lensEnabled"]) {
+      if (changes["lensEnabled"].newValue === true) {
+        startLensMode();
+      } else {
+        stopLensMode();
+      }
+    }
+  });
+
+  // ── Gist Lens mode ────────────────────────────────────────────────────────
+  let lensActive = false;
+  let lensIdleCallbackId: ReturnType<typeof requestIdleCallback> | null = null;
+
+  function injectLensStyles(): void {
+    if (document.getElementById("gist-lens-styles")) return;
+    const style = document.createElement("style");
+    style.id = "gist-lens-styles";
+    style.textContent = [
+      `span.${LENS_CLASS} {`,
+      "  border-bottom: 1.5px dashed rgba(16,185,129,0.55);",
+      "  cursor: pointer;",
+      "  border-radius: 1px;",
+      "  transition: background-color 120ms ease, border-color 120ms ease;",
+      "}",
+      `span.${LENS_CLASS}:hover {`,
+      "  background-color: rgba(16,185,129,0.10);",
+      "  border-bottom-color: rgba(16,185,129,0.9);",
+      "}",
+    ].join("\n");
+    document.head.appendChild(style);
+  }
+
+  function getLensRoot(): Element {
+    return (
+      document.querySelector("article") ??
+      document.querySelector("main") ??
+      document.body
+    );
+  }
+
+  function chunkText(text: string, size: number): string[] {
+    const chunks: string[] = [];
+    for (let i = 0; i < text.length; i += size) {
+      chunks.push(text.slice(i, i + size));
+    }
+    return chunks;
+  }
+
+  function scanPageForTerms(): void {
+    const root = getLensRoot();
+    const fullText = (root as HTMLElement).innerText?.slice(0, 6000) ?? "";
+    if (!fullText.trim()) return;
+
+    const chunks = chunkText(fullText, 2000);
+    for (const chunk of chunks) {
+      chrome.runtime.sendMessage({
+        type: "LENS_SCAN_REQUEST",
+        payload: { textChunk: chunk, pageContext: document.title },
+      });
+    }
+  }
+
+  function startLensMode(): void {
+    if (lensActive) return;
+    lensActive = true;
+    injectLensStyles();
+    lensIdleCallbackId = requestIdleCallback(() => scanPageForTerms(), { timeout: 5000 });
+  }
+
+  function stopLensMode(): void {
+    if (!lensActive) return;
+    lensActive = false;
+    if (lensIdleCallbackId !== null) {
+      cancelIdleCallback(lensIdleCallbackId);
+      lensIdleCallbackId = null;
+    }
+    removeLensHighlights(document.body);
+    document.getElementById("gist-lens-styles")?.remove();
+  }
+
+  // Delegated click handler for highlighted Lens terms (capture phase so it
+  // intercepts before any host-page listeners and before the popover's own handler).
+  document.addEventListener(
+    "click",
+    (e) => {
+      const target = e.target as HTMLElement;
+      if (!target.classList.contains(LENS_CLASS)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const term = target.dataset["term"] ?? "";
+      const def  = target.dataset["def"]  ?? "";
+      const rect = target.getBoundingClientRect();
+      showLensDefinition(term, def, rect);
+    },
+    true
+  );
+
+  // Read initial lens storage state
+  chrome.storage.local.get(["lensEnabled"], (result) => {
+    if (result["lensEnabled"] === true) {
+      startLensMode();
     }
   });
 
@@ -137,6 +242,15 @@ if (!window.__gistMounted) {
           updateWidget(takeaways);
         } else {
           setWidgetIdle();
+        }
+        break;
+      }
+
+      case "LENS_SCAN_RESPONSE": {
+        const terms = msg.payload.terms ?? [];
+        if (terms.length > 0) {
+          const root = document.querySelector("article") ?? document.querySelector("main") ?? document.body;
+          highlightTerms(terms, root);
         }
         break;
       }

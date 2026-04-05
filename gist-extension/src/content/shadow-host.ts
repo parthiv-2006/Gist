@@ -182,6 +182,23 @@ export function updatePopover(update: PopoverUpdate): void {
   renderPopover({ state: "IDLE" });
 }
 
+/**
+ * Open the popover instantly with a pre-computed Lens definition.
+ * Bypasses streaming — renders directly into DONE state.
+ */
+export function showLensDefinition(term: string, definition: string, rect: DOMRect): void {
+  if (!reactRoot) return;
+  messages = [{ role: "model", content: definition }];
+  accumulatedText = "";
+  currentOriginalText = term;
+  currentPosition = rect;
+  currentPageContext = document.title;
+  currentImageData = undefined;
+  saveStatus = "unsaved";
+  isVisible = true;
+  renderPopover({ state: "DONE" });
+}
+
 export function unmountPopover(): void {
   if (reactRoot) {
     accumulatedText = "";
