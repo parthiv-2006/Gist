@@ -7,6 +7,10 @@ const BACKEND_URL = import.meta.env.DEV
   ? "http://localhost:8000/api/v1/simplify"
   : "https://gist-vc8m.onrender.com/api/v1/simplify";
 
+const LIBRARY_SAVE_URL = import.meta.env.DEV
+  ? "http://localhost:8000/library/save"
+  : "https://gist-vc8m.onrender.com/library/save";
+
 const AUTOGIST_URL = import.meta.env.DEV
   ? "http://localhost:8000/autogist"
   : "https://gist-vc8m.onrender.com/autogist";
@@ -98,6 +102,11 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     // when triggered from a content script message. Open as a tab instead.
     chrome.tabs.create({ url: chrome.runtime.getURL("popup.html") + "#library" });
     sendResponse({ success: true });
+    return true;
+  } else if (message.type === "SAVE_GIST") {
+    const { selectedText, explanation, complexityLevel, pageContext } = message.payload;
+    if (!selectedText || !explanation) return;
+    saveGistToLibrary(tabId, selectedText, explanation, complexityLevel ?? "standard", pageContext ?? "");
     return true;
   } else if (message.type === "AUTOGIST_REQUEST") {
     const { textChunk, url } = message.payload;
@@ -217,6 +226,28 @@ async function streamFromBackend(
       payload: { error: "Network error. Check your connection and try again." },
     };
     chrome.tabs.sendMessage(tabId, errorMsg);
+  }
+}
+
+async function saveGistToLibrary(
+  tabId: number,
+  selectedText: string,
+  explanation: string,
+  mode: string,
+  url: string
+): Promise<void> {
+  try {
+    const response = await fetch(LIBRARY_SAVE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ original_text: selectedText, explanation, mode, url }),
+    });
+    const success = response.ok;
+    const resultMsg: GistMessage = { type: "SAVE_GIST_RESULT", payload: { success } };
+    chrome.tabs.sendMessage(tabId, resultMsg);
+  } catch {
+    const resultMsg: GistMessage = { type: "SAVE_GIST_RESULT", payload: { success: false } };
+    chrome.tabs.sendMessage(tabId, resultMsg);
   }
 }
 

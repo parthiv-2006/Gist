@@ -1,6 +1,6 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled, updateSaveResult } from "./shadow-host";
 import { startObserver } from "./observer";
 import { RateLimiter } from "../utils/rate-limiter";
 
@@ -126,6 +126,11 @@ if (!window.__gistMounted) {
         break;
       }
 
+      case "SAVE_GIST_RESULT": {
+        updateSaveResult(msg.payload.success ?? false);
+        break;
+      }
+
       case "AUTOGIST_RESPONSE": {
         const takeaways = msg.payload.takeaways ?? [];
         if (takeaways.length > 0) {
@@ -165,17 +170,17 @@ function handleTrigger(): void {
   const selectionRect = (selection && selection.rangeCount > 0)
     ? selection.getRangeAt(0).getBoundingClientRect()
     : null;
-  updatePopover({ state: "LOADING", position: selectionRect ?? undefined });
+  const pageContext = document.title;
+  updatePopover({ state: "LOADING", position: selectionRect ?? undefined, originalText: text, pageContext });
 
   lastGistedText = text;
-  const pageContext = document.title;
   chrome.runtime.sendMessage(buildGistRequest(text, pageContext));
 }
 
 async function handleCapture(rect: { x: number; y: number; width: number; height: number }): Promise<void> {
   // 1. Loading state for popover
   const fauxRect = new DOMRect(rect.x, rect.y, rect.width, rect.height);
-  updatePopover({ state: "LOADING", position: fauxRect });
+  updatePopover({ state: "LOADING", position: fauxRect, originalText: "[Visual capture]", pageContext: document.title });
 
   try {
     // 2. Request full tab screenshot from background

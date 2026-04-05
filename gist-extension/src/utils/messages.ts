@@ -10,6 +10,8 @@ export type MessageType =
   | "GIST_COMPLETE"
   | "GIST_ERROR"
   | "OPEN_LIBRARY"
+  | "SAVE_GIST"
+  | "SAVE_GIST_RESULT"
   | "AUTOGIST_REQUEST"
   | "AUTOGIST_RESPONSE"
   | "AUTOGIST_ERROR";
@@ -37,6 +39,9 @@ export interface GistMessage {
     textChunk?: string;
     url?: string;
     takeaways?: string[];
+    // Save gist fields
+    explanation?: string;
+    success?: boolean;
   };
 }
 
@@ -71,6 +76,8 @@ export function isGistMessage(value: unknown): value is GistMessage {
     "GIST_COMPLETE",
     "GIST_ERROR",
     "OPEN_LIBRARY",
+    "SAVE_GIST",
+    "SAVE_GIST_RESULT",
     "AUTOGIST_REQUEST",
     "AUTOGIST_RESPONSE",
     "AUTOGIST_ERROR",

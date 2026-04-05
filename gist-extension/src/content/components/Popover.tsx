@@ -1,7 +1,7 @@
 // src/content/components/Popover.tsx
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus } from "lucide-react";
+import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus, Bookmark, Check } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
 import type { ComplexityLevel, ChatMessage } from "../../utils/messages";
@@ -29,11 +29,13 @@ export interface PopoverProps {
   imageData?: string;
   isSidebarMode?: boolean;
   isVisible?: boolean;
+  saveStatus?: "unsaved" | "saving" | "saved" | "error";
   onToggleSidebar?: () => void;
   onOpenLibrary?: () => void;
   onClose: () => void;
   onModeChange?: (mode: ComplexityLevel) => void;
   onSendMessage?: (query: string) => void;
+  onSaveGist?: (explanation: string) => void;
 }
 
 export function Popover({
@@ -46,11 +48,13 @@ export function Popover({
   imageData,
   isSidebarMode = false,
   isVisible = false,
+  saveStatus = "unsaved",
   onToggleSidebar,
   onOpenLibrary,
   onClose,
   onModeChange,
   onSendMessage,
+  onSaveGist,
 }: PopoverProps) {
   const [inputValue, setInputValue] = useState("");
   const [ttsState, setTtsState] = useState<"idle" | "playing" | "paused">("idle");
@@ -357,28 +361,48 @@ export function Popover({
           </div>
         )}
 
-        {messages.map((msg, idx) => (
-          <div
-            key={idx}
-            className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.modelMessage}`}
-          >
-            <div className={styles.markdown}>
-              <ReactMarkdown
-                components={{
-                  code({ node, className, children, ...props }) {
-                    const match = /language-(\w+)/.exec(className || "");
-                    if (match && match[1] === "mermaid") {
-                      return <Mermaid chart={String(children).replace(/\n$/, "")} />;
+        {messages.map((msg, idx) => {
+          const isLastModel = msg.role === "model" && idx === messages.length - 1;
+          return (
+            <div
+              key={idx}
+              className={`${styles.message} ${msg.role === "user" ? styles.userMessage : styles.modelMessage}`}
+            >
+              <div className={styles.markdown}>
+                <ReactMarkdown
+                  components={{
+                    code({ node, className, children, ...props }) {
+                      const match = /language-(\w+)/.exec(className || "");
+                      if (match && match[1] === "mermaid") {
+                        return <Mermaid chart={String(children).replace(/\n$/, "")} />;
+                      }
+                      return <code className={className} {...props}>{children}</code>;
+                    },
+                  }}
+                >
+                  {msg.content}
+                </ReactMarkdown>
+              </div>
+              {isLastModel && state === "DONE" && onSaveGist && (
+                <div className={styles.messageActions}>
+                  <button
+                    className={`${styles.saveButton} ${saveStatus === "saved" ? styles.saveButtonSaved : ""} ${saveStatus === "error" ? styles.saveButtonError : ""}`}
+                    onClick={() => saveStatus === "unsaved" || saveStatus === "error" ? onSaveGist(msg.content) : undefined}
+                    disabled={saveStatus === "saving" || saveStatus === "saved"}
+                    title={saveStatus === "saved" ? "Saved to library" : saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Save failed — retry" : "Save to library"}
+                    aria-label={saveStatus === "saved" ? "Saved to library" : "Save to library"}
+                  >
+                    {saveStatus === "saved"
+                      ? <Check size={12} />
+                      : <Bookmark size={12} fill={saveStatus === "saving" ? "currentColor" : "none"} />
                     }
-                    return <code className={className} {...props}>{children}</code>;
-                  },
-                }}
-              >
-                {msg.content}
-              </ReactMarkdown>
+                    <span>{saveStatus === "saved" ? "Saved" : saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Retry save" : "Save"}</span>
+                  </button>
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {state === "LOADING" && (
           <div className={`${styles.message} ${styles.modelMessage}`}>

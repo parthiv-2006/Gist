@@ -29,9 +29,12 @@ let messages: ChatMessage[] = [];
 let currentMode: ComplexityLevel = "standard";
 let currentPosition: DOMRect | undefined = undefined;
 let currentImageData: string | undefined = undefined;
+let currentOriginalText = "";
+let currentPageContext = "";
 let isSidebarMode = false;
 let isVisible = false;
 let lastState: PopoverState = "IDLE";
+let saveStatus: "unsaved" | "saving" | "saved" | "error" = "unsaved";
 
 // Callbacks set by content/index.ts
 let modeChangeCallback: ((mode: ComplexityLevel) => void) | null = null;
@@ -55,6 +58,8 @@ export interface PopoverUpdate {
   position?: DOMRect;
   mode?: ComplexityLevel;
   imageData?: string;
+  originalText?: string;
+  pageContext?: string;
 }
 
 export function mountPopover(): void {
@@ -141,6 +146,9 @@ export function updatePopover(update: PopoverUpdate): void {
       messages = [];
       accumulatedText = "";
       currentImageData = update.imageData;
+      if (update.originalText !== undefined) currentOriginalText = update.originalText;
+      if (update.pageContext !== undefined) currentPageContext = update.pageContext;
+      saveStatus = "unsaved";
     }
     if (update.mode) currentMode = update.mode;
     if (update.position) currentPosition = update.position;
@@ -220,6 +228,11 @@ export function toggleSidebar(): void {
   renderPopover({ state: lastState });
 }
 
+export function updateSaveResult(success: boolean): void {
+  saveStatus = success ? "saved" : "error";
+  renderPopover({ state: lastState });
+}
+
 // Stable references
 const stableOnClose = () => unmountPopover();
 const stableOnSendMessage = (query: string) => {
@@ -234,6 +247,20 @@ const stableOnOpenLibrary = () => {
     if (response?.success) {
       console.log("[Gist] Library opened");
     }
+  });
+};
+
+const stableOnSaveGist = (explanation: string) => {
+  saveStatus = "saving";
+  renderPopover({ state: lastState });
+  chrome.runtime.sendMessage({
+    type: "SAVE_GIST",
+    payload: {
+      selectedText: currentOriginalText,
+      explanation,
+      complexityLevel: currentMode,
+      pageContext: currentPageContext,
+    },
   });
 };
 
@@ -312,11 +339,13 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       imageData: currentImageData,
       isSidebarMode,
       isVisible,
+      saveStatus,
       onToggleSidebar: toggleSidebar,
       onOpenLibrary: stableOnOpenLibrary,
       onClose: stableOnClose,
       onModeChange: modeChangeCallback ?? undefined,
       onSendMessage: stableOnSendMessage,
+      onSaveGist: stableOnSaveGist,
     })
   );
 }
