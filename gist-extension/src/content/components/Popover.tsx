@@ -1,7 +1,7 @@
 // src/content/components/Popover.tsx
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus, Bookmark, Check } from "lucide-react";
+import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus, Bookmark, Check, Network } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
 import type { ComplexityLevel, ChatMessage } from "../../utils/messages";
@@ -42,6 +42,9 @@ export interface PopoverProps {
   onModeChange?: (mode: ComplexityLevel) => void;
   onSendMessage?: (query: string) => void;
   onSaveGist?: (explanation: string) => void;
+  diagramSvg?: string;
+  diagramState?: "idle" | "loading" | "done" | "error";
+  onVisualize?: (text: string) => void;
   onDrill?: (term: string) => void;
   onJumpToDrillingLevel?: (levelIndex: number) => void;
 }
@@ -64,6 +67,9 @@ export function Popover({
   onModeChange,
   onSendMessage,
   onSaveGist,
+  diagramSvg,
+  diagramState = "idle",
+  onVisualize,
   onDrill,
   onJumpToDrillingLevel,
 }: PopoverProps) {
@@ -470,26 +476,66 @@ export function Popover({
                   {msg.content}
                 </ReactMarkdown>
               </div>
-              {isLastModel && state === "DONE" && onSaveGist && (
+              {isLastModel && state === "DONE" && (onSaveGist || onVisualize) && (
                 <div className={styles.messageActions}>
-                  <button
-                    className={`${styles.saveButton} ${saveStatus === "saved" ? styles.saveButtonSaved : ""} ${saveStatus === "error" ? styles.saveButtonError : ""}`}
-                    onClick={() => saveStatus === "unsaved" || saveStatus === "error" ? onSaveGist(msg.content) : undefined}
-                    disabled={saveStatus === "saving" || saveStatus === "saved"}
-                    title={saveStatus === "saved" ? "Saved to library" : saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Save failed — retry" : "Save to library"}
-                    aria-label={saveStatus === "saved" ? "Saved to library" : "Save to library"}
-                  >
-                    {saveStatus === "saved"
-                      ? <Check size={12} />
-                      : <Bookmark size={12} fill={saveStatus === "saving" ? "currentColor" : "none"} />
-                    }
-                    <span>{saveStatus === "saved" ? "Saved" : saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Retry save" : "Save"}</span>
-                  </button>
+                  {onSaveGist && (
+                    <button
+                      className={`${styles.saveButton} ${saveStatus === "saved" ? styles.saveButtonSaved : ""} ${saveStatus === "error" ? styles.saveButtonError : ""}`}
+                      onClick={() => saveStatus === "unsaved" || saveStatus === "error" ? onSaveGist(msg.content) : undefined}
+                      disabled={saveStatus === "saving" || saveStatus === "saved"}
+                      title={saveStatus === "saved" ? "Saved to library" : saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Save failed — retry" : "Save to library"}
+                      aria-label={saveStatus === "saved" ? "Saved to library" : "Save to library"}
+                    >
+                      {saveStatus === "saved"
+                        ? <Check size={12} />
+                        : <Bookmark size={12} fill={saveStatus === "saving" ? "currentColor" : "none"} />
+                      }
+                      <span>{saveStatus === "saved" ? "Saved" : saveStatus === "saving" ? "Saving…" : saveStatus === "error" ? "Retry save" : "Save"}</span>
+                    </button>
+                  )}
+                  {onVisualize && (
+                    <button
+                      className={`${styles.saveButton} ${diagramState === "done" ? styles.saveButtonSaved : ""} ${diagramState === "error" ? styles.saveButtonError : ""}`}
+                      onClick={() => diagramState === "idle" || diagramState === "error" ? onVisualize(msg.content) : undefined}
+                      disabled={diagramState === "loading" || diagramState === "done"}
+                      title={diagramState === "done" ? "Diagram drawn" : diagramState === "loading" ? "Drawing diagram…" : diagramState === "error" ? "Diagram failed — retry" : "Generate visual diagram"}
+                      aria-label="Visualize as diagram"
+                    >
+                      <Network size={12} />
+                      <span>{diagramState === "done" ? "Drawn" : diagramState === "loading" ? "Drawing…" : diagramState === "error" ? "Retry diagram" : "Visualize"}</span>
+                    </button>
+                  )}
                 </div>
               )}
             </div>
           );
         })}
+
+        {/* Diagram panel — shown after messages when visualize is active */}
+        {diagramState === "loading" && (
+          <div className={styles.diagramPanel}>
+            <div className={styles.diagramLabel}>Drawing diagram…</div>
+            <div className={styles.diagramShimmer}>
+              <div className={styles.diagramShimmerBar} style={{ width: "70%" }} />
+              <div className={styles.diagramShimmerBar} style={{ width: "90%" }} />
+              <div className={styles.diagramShimmerBar} style={{ width: "55%" }} />
+            </div>
+          </div>
+        )}
+        {diagramState === "done" && diagramSvg && (
+          <div className={styles.diagramPanel}>
+            <div className={styles.diagramLabel}>Visual diagram</div>
+            <div
+              className={styles.diagramSvg}
+              dangerouslySetInnerHTML={{ __html: sanitizeSvg(diagramSvg) }}
+            />
+          </div>
+        )}
+        {diagramState === "error" && (
+          <div className={styles.diagramPanel}>
+            <div className={styles.diagramError}>Couldn't render diagram. Try again.</div>
+          </div>
+        )}
 
         {state === "LOADING" && (
           <div className={`${styles.message} ${styles.modelMessage}`}>
@@ -556,6 +602,17 @@ export function Popover({
       )}
     </div>
   );
+}
+
+// ─── SVG sanitizer ───────────────────────────────────────────────────────────
+// mermaid.ink returns server-rendered SVG (no user content), but strip any
+// script tags and inline event handlers as a belt-and-suspenders measure.
+function sanitizeSvg(svg: string): string {
+  return svg
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
+    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
+    .replace(/javascript:/gi, "");
 }
 
 // ─── Positioning helpers ─────────────────────────────────────────────────────
