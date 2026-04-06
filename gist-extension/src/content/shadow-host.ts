@@ -36,6 +36,10 @@ let isVisible = false;
 let lastState: PopoverState = "IDLE";
 let saveStatus: "unsaved" | "saving" | "saved" | "error" = "unsaved";
 
+// Visualize (Mermaid diagram) state
+let diagramSvg: string | undefined = undefined;
+let diagramState: "idle" | "loading" | "done" | "error" = "idle";
+
 // Progressive Disclosure: drilling stack for nested gists (breadcrumb trail)
 interface DrillLevel {
   term: string;
@@ -150,7 +154,7 @@ export function updatePopover(update: PopoverUpdate): void {
   if (!reactRoot) return;
 
   if (update.state === "LOADING") {
-    // If it's a fresh Gist (not a follow-up), clear history
+    // If it's a fresh Gist (not a follow-up), clear history and reset diagram
     if (!update.chunk) {
       messages = [];
       accumulatedText = "";
@@ -158,6 +162,8 @@ export function updatePopover(update: PopoverUpdate): void {
       if (update.originalText !== undefined) currentOriginalText = update.originalText;
       if (update.pageContext !== undefined) currentPageContext = update.pageContext;
       saveStatus = "unsaved";
+      diagramSvg = undefined;
+      diagramState = "idle";
     }
     if (update.mode) currentMode = update.mode;
     if (update.position) currentPosition = update.position;
@@ -346,6 +352,19 @@ const stableOnSaveGist = (explanation: string) => {
   });
 };
 
+// ── Visualize (Mermaid diagram) ───────────────────────────────────────────────
+
+export function updateDiagram(update: { state: "done" | "error"; svg?: string }): void {
+  if (update.state === "done" && update.svg) {
+    diagramSvg = update.svg;
+    diagramState = "done";
+  } else {
+    diagramSvg = undefined;
+    diagramState = "error";
+  }
+  renderPopover({ state: lastState });
+}
+
 // ── AutoGist widget exports ───────────────────────────────────────────────────
 
 export function setWidgetEnabled(enabled: boolean): void {
@@ -429,6 +448,16 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       onModeChange: modeChangeCallback ?? undefined,
       onSendMessage: stableOnSendMessage,
       onSaveGist: stableOnSaveGist,
+      diagramSvg,
+      diagramState,
+      onVisualize: (text: string) => {
+        diagramState = "loading";
+        renderPopover({ state: lastState });
+        chrome.runtime.sendMessage({
+          type: "VISUALIZE_REQUEST",
+          payload: { text, pageContext: currentPageContext },
+        });
+      },
       onDrill: (term: string) => {
         if (drillingStack.length >= MAX_DRILLING_DEPTH) return;
         // Content script will send NESTED_GIST_REQUEST to background

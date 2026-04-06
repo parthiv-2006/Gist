@@ -20,7 +20,10 @@ export type MessageType =
   | "LENS_SCAN_ERROR"
   | "NESTED_GIST_REQUEST"
   | "NESTED_GIST_RESPONSE"
-  | "NESTED_GIST_ERROR";
+  | "NESTED_GIST_ERROR"
+  | "VISUALIZE_REQUEST"
+  | "VISUALIZE_RESPONSE"
+  | "VISUALIZE_ERROR";
 
 export type ComplexityLevel = "standard" | "simple" | "legal" | "academic";
 
@@ -59,6 +62,10 @@ export interface GistMessage {
     term?: string;
     parentContext?: string;
     definition?: string;
+    // Visualize (Mermaid diagram) fields
+    text?: string;
+    diagramSvg?: string;
+    diagramSource?: string;
   };
 }
 
@@ -104,6 +111,9 @@ export function isGistMessage(value: unknown): value is GistMessage {
     "NESTED_GIST_REQUEST",
     "NESTED_GIST_RESPONSE",
     "NESTED_GIST_ERROR",
+    "VISUALIZE_REQUEST",
+    "VISUALIZE_RESPONSE",
+    "VISUALIZE_ERROR",
   ];
   return VALID_TYPES.includes(type);
 }

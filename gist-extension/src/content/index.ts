@@ -1,6 +1,6 @@
 import { buildGistRequest, isGistMessage, type GistMessage } from "../utils/messages";
 import { extractSelectedText, validateText } from "../utils/text";
-import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled, updateSaveResult, showLensDefinition, drillIntoGist, jumpToDrillingLevel, getDrillingStack } from "./shadow-host";
+import { mountPopover, updatePopover, setHandlers, mountCaptureOverlay, toggleSidebar, setWidgetLoading, updateWidget, setWidgetIdle, setWidgetEnabled, updateSaveResult, showLensDefinition, drillIntoGist, jumpToDrillingLevel, getDrillingStack, updateDiagram } from "./shadow-host";
 import { highlightTerms, removeLensHighlights, LENS_CLASS } from "../utils/dom-walker";
 import { startObserver } from "./observer";
 import { RateLimiter } from "../utils/rate-limiter";
@@ -286,6 +286,21 @@ if (!window.__gistMounted) {
         if (term && definition) {
           drillIntoNestedGist(term, definition);
         }
+        break;
+      }
+
+      case "VISUALIZE_RESPONSE": {
+        const svg = msg.payload.diagramSvg ?? "";
+        if (svg) {
+          updateDiagram({ state: "done", svg });
+        } else {
+          updateDiagram({ state: "error" });
+        }
+        break;
+      }
+
+      case "VISUALIZE_ERROR": {
+        updateDiagram({ state: "error" });
         break;
       }
     }

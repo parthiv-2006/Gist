@@ -136,6 +136,11 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     if (!term) return;
     console.log("[Gist BG] NESTED_GIST_REQUEST", { tabId, term });
     fetchNestedGist(tabId, term, parentContext ?? "");
+  } else if (message.type === "VISUALIZE_REQUEST") {
+    const { text, pageContext } = message.payload;
+    if (!text) return;
+    console.log("[Gist BG] VISUALIZE_REQUEST", { tabId, chars: text.length });
+    fetchVisualize(tabId, text, pageContext ?? "");
   }
 });
 
@@ -356,6 +361,38 @@ async function fetchNestedGist(tabId: number, term: string, parentContext: strin
   } catch (err) {
     console.warn("[Gist BG] NestedGist fetch error:", err);
     chrome.tabs.sendMessage(tabId, { type: "NESTED_GIST_ERROR", payload: {} });
+  }
+}
+
+async function fetchVisualize(tabId: number, text: string, pageContext: string): Promise<void> {
+  const base = await resolveBase();
+  try {
+    const response = await fetch(`${base}/api/v1/visualize`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, page_context: pageContext }),
+    });
+
+    if (!response.ok) {
+      console.warn("[Gist BG] Visualize non-OK:", response.status);
+      chrome.tabs.sendMessage(tabId, { type: "VISUALIZE_ERROR", payload: {} });
+      return;
+    }
+
+    const data = await response.json() as { svg?: string; mermaid_source?: string };
+    if (!data.svg) {
+      chrome.tabs.sendMessage(tabId, { type: "VISUALIZE_ERROR", payload: {} });
+      return;
+    }
+
+    const msg: GistMessage = {
+      type: "VISUALIZE_RESPONSE",
+      payload: { diagramSvg: data.svg, diagramSource: data.mermaid_source },
+    };
+    chrome.tabs.sendMessage(tabId, msg);
+  } catch (err) {
+    console.warn("[Gist BG] Visualize fetch error:", err);
+    chrome.tabs.sendMessage(tabId, { type: "VISUALIZE_ERROR", payload: {} });
   }
 }
 
