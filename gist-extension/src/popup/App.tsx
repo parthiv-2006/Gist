@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
+import { Dashboard } from "./Dashboard";
 
 // Try local dev server first (600 ms timeout); fall back to Render.
 const BACKEND_BASE: Promise<string> = (async () => {
@@ -786,31 +787,9 @@ function App() {
     window.location.hash === "#library" ? "library" : "capture"
   );
 
-  // ── Full-page library layout (tab mode) ──────────────────────────────────
+  // ── Full-page dashboard (tab mode) ──────────────────────────────────────
   if (IS_TAB_MODE) {
-    return (
-      <div style={{ fontFamily: FONT, background: T.bg, color: T.text, minHeight: "100vh" }}>
-        {/* Sticky top bar */}
-        <header style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "13px 32px",
-          borderBottom: `1px solid ${T.border}`,
-          position: "sticky", top: 0,
-          background: T.bg,
-          zIndex: 10,
-        }}>
-          <GistLogo />
-          <span style={{ fontSize: "11px", color: T.textMuted, letterSpacing: "0.01em" }}>
-            Personal knowledge base
-          </span>
-        </header>
-
-        {/* Centered content column */}
-        <div style={{ maxWidth: "680px", margin: "0 auto", padding: "28px 24px 60px" }}>
-          <LibraryView />
-        </div>
-      </div>
-    );
+    return <Dashboard />;
   }
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
