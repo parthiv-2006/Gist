@@ -290,9 +290,11 @@ if (!window.__gistMounted) {
       }
 
       case "VISUALIZE_RESPONSE": {
-        const svg = msg.payload.diagramSvg ?? "";
-        if (svg) {
-          updateDiagram({ state: "done", svg });
+        const svg = msg.payload.diagramSvg;
+        const source = msg.payload.diagramSource;
+        // svg may be undefined when mermaid.ink was unreachable — source always present
+        if (svg || source) {
+          updateDiagram({ state: "done", svg, source });
         } else {
           updateDiagram({ state: "error" });
         }

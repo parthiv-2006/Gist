@@ -38,6 +38,7 @@ let saveStatus: "unsaved" | "saving" | "saved" | "error" = "unsaved";
 
 // Visualize (Mermaid diagram) state
 let diagramSvg: string | undefined = undefined;
+let diagramSource: string | undefined = undefined;
 let diagramState: "idle" | "loading" | "done" | "error" = "idle";
 
 // Progressive Disclosure: drilling stack for nested gists (breadcrumb trail)
@@ -163,6 +164,7 @@ export function updatePopover(update: PopoverUpdate): void {
       if (update.pageContext !== undefined) currentPageContext = update.pageContext;
       saveStatus = "unsaved";
       diagramSvg = undefined;
+      diagramSource = undefined;
       diagramState = "idle";
     }
     if (update.mode) currentMode = update.mode;
@@ -354,12 +356,14 @@ const stableOnSaveGist = (explanation: string) => {
 
 // ── Visualize (Mermaid diagram) ───────────────────────────────────────────────
 
-export function updateDiagram(update: { state: "done" | "error"; svg?: string }): void {
-  if (update.state === "done" && update.svg) {
-    diagramSvg = update.svg;
+export function updateDiagram(update: { state: "done" | "error"; svg?: string; source?: string }): void {
+  if (update.state === "done") {
+    diagramSvg = update.svg;        // may be undefined when mermaid.ink failed
+    diagramSource = update.source;  // raw Mermaid code — always present as fallback
     diagramState = "done";
   } else {
     diagramSvg = undefined;
+    diagramSource = undefined;
     diagramState = "error";
   }
   renderPopover({ state: lastState });
@@ -449,6 +453,7 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       onSendMessage: stableOnSendMessage,
       onSaveGist: stableOnSaveGist,
       diagramSvg,
+      diagramSource,
       diagramState,
       onVisualize: (text: string) => {
         diagramState = "loading";

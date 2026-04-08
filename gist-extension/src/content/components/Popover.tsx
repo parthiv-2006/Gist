@@ -43,6 +43,7 @@ export interface PopoverProps {
   onSendMessage?: (query: string) => void;
   onSaveGist?: (explanation: string) => void;
   diagramSvg?: string;
+  diagramSource?: string;
   diagramState?: "idle" | "loading" | "done" | "error";
   onVisualize?: (text: string) => void;
   onDrill?: (term: string) => void;
@@ -68,6 +69,7 @@ export function Popover({
   onSendMessage,
   onSaveGist,
   diagramSvg,
+  diagramSource,
   diagramState = "idle",
   onVisualize,
   onDrill,
@@ -529,6 +531,12 @@ export function Popover({
               className={styles.diagramSvg}
               dangerouslySetInnerHTML={{ __html: sanitizeSvg(diagramSvg) }}
             />
+          </div>
+        )}
+        {diagramState === "done" && !diagramSvg && diagramSource && (
+          <div className={styles.diagramPanel}>
+            <div className={styles.diagramLabel}>Diagram source</div>
+            <Mermaid chart={diagramSource} />
           </div>
         )}
         {diagramState === "error" && (

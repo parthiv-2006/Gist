@@ -379,15 +379,20 @@ async function fetchVisualize(tabId: number, text: string, pageContext: string):
       return;
     }
 
-    const data = await response.json() as { svg?: string; mermaid_source?: string };
-    if (!data.svg) {
+    const data = await response.json() as { svg?: string | null; mermaid_source?: string };
+    // svg may be null when mermaid.ink is unavailable — still send VISUALIZE_RESPONSE
+    // so the extension can fall back to showing the raw Mermaid source as a code block.
+    if (!data.svg && !data.mermaid_source) {
       chrome.tabs.sendMessage(tabId, { type: "VISUALIZE_ERROR", payload: {} });
       return;
     }
 
     const msg: GistMessage = {
       type: "VISUALIZE_RESPONSE",
-      payload: { diagramSvg: data.svg, diagramSource: data.mermaid_source },
+      payload: {
+        diagramSvg: data.svg ?? undefined,
+        diagramSource: data.mermaid_source,
+      },
     };
     chrome.tabs.sendMessage(tabId, msg);
   } catch (err) {
