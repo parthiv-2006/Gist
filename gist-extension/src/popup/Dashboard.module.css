@@ -1,0 +1,114 @@
+@keyframes viewEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.layout {
+  display: flex;
+  min-height: 100vh;
+  background: #080808;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #f0f0f0;
+}
+
+/* ── Sidebar ── */
+
+.sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  background: rgba(255, 255, 255, 0.013);
+  border-right: 1px solid #1e1e1e;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  overflow: hidden;
+}
+
+.sidebarLogo {
+  padding: 22px 18px 20px;
+  border-bottom: 1px solid #1e1e1e;
+  flex-shrink: 0;
+}
+
+.navList {
+  flex: 1;
+  padding: 10px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  border: 1px solid transparent;
+  background: none;
+  cursor: pointer;
+  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  width: 100%;
+  text-align: left;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  position: relative;
+}
+
+.navItemActive {
+  background: rgba(16, 185, 129, 0.09);
+  border-color: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+}
+
+.navItemActive::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 16px;
+  background: #10b981;
+  border-radius: 0 2px 2px 0;
+}
+
+.navItemInactive {
+  color: #888888;
+}
+
+.navItemInactive:hover {
+  color: #f0f0f0;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.navIcon {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.sidebarFooter {
+  padding: 14px 18px;
+  border-top: 1px solid #1e1e1e;
+  font-size: 10px;
+  color: #484848;
+  font-family: 'Space Mono', 'Fira Code', monospace;
+  letter-spacing: 0.04em;
+  flex-shrink: 0;
+}
+
+/* ── Main content area ── */
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  background: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(16, 185, 129, 0.06) 0%, #080808 55%);
+  min-height: 100vh;
+}

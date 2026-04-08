@@ -1,0 +1,210 @@
+@keyframes viewEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.container {
+  padding: 36px 40px 60px;
+  max-width: 680px;
+  animation: viewEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.pageTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0f0f0;
+  letter-spacing: -0.02em;
+  margin-bottom: 32px;
+}
+
+/* ── Section ── */
+
+.section {
+  margin-bottom: 28px;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #484848;
+  margin-bottom: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+/* ── Row ── */
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  transition: border-color 150ms ease;
+  gap: 16px;
+}
+
+.row:hover {
+  border-color: #2a2a2a;
+}
+
+.rowInfo {
+  flex: 1;
+}
+
+.rowLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #f0f0f0;
+  margin-bottom: 2px;
+}
+
+.rowSub {
+  font-size: 11px;
+  color: #888888;
+  line-height: 1.4;
+}
+
+/* ── Action rows (buttons) ── */
+
+.actionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 13px 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  margin-bottom: 6px;
+  gap: 16px;
+  transition: border-color 150ms ease;
+}
+
+.actionRow:hover {
+  border-color: #2a2a2a;
+}
+
+.actionBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.actionBtnDefault {
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  color: #f0f0f0;
+}
+
+.actionBtnDefault:hover {
+  background: #161616;
+  border-color: #353535;
+}
+
+.actionBtnDestructive {
+  background: rgba(248, 113, 113, 0.06);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  color: #f87171;
+}
+
+.actionBtnDestructive:hover {
+  background: rgba(248, 113, 113, 0.12);
+  border-color: rgba(248, 113, 113, 0.32);
+}
+
+/* ── Confirm banner ── */
+
+.confirmBanner {
+  background: rgba(248, 113, 113, 0.06);
+  border: 1px solid rgba(248, 113, 113, 0.18);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 6px;
+}
+
+.confirmText {
+  font-size: 12px;
+  color: #f87171;
+  margin: 0 0 10px;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 8px;
+}
+
+.confirmYes {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: rgba(248, 113, 113, 0.12);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: #f87171;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 150ms ease;
+}
+
+.confirmYes:hover { background: rgba(248, 113, 113, 0.2); }
+
+.confirmNo {
+  padding: 6px 16px;
+  border-radius: 6px;
+  background: #0f0f0f;
+  border: 1px solid #1e1e1e;
+  color: #888888;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 120ms ease;
+}
+
+.confirmNo:hover { color: #f0f0f0; }
+
+/* ── Placeholder ── */
+
+.placeholder {
+  padding: 16px;
+  font-size: 12px;
+  color: #484848;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px dashed #1e1e1e;
+  border-radius: 8px;
+  text-align: center;
+  line-height: 1.6;
+}
+
+/* ── Toast ── */
+
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0f0f0f;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  padding: 10px 18px;
+  font-size: 12px;
+  color: #f0f0f0;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+  white-space: nowrap;
+}

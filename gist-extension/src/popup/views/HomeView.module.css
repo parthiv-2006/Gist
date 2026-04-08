@@ -1,0 +1,222 @@
+@keyframes viewEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.container {
+  padding: 36px 40px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  animation: viewEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  max-width: 960px;
+}
+
+/* ── Section header ── */
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.sectionTitle {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #484848;
+}
+
+/* ── Metrics row ── */
+
+.metricsRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.metricCard {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid #1e1e1e;
+  border-radius: 12px;
+  padding: 20px 22px;
+  transition: border-color 200ms ease, transform 150ms ease, box-shadow 150ms ease;
+  cursor: default;
+}
+
+.metricCard:hover {
+  border-color: #2a2a2a;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
+}
+
+.metricValue {
+  font-size: 32px;
+  font-weight: 800;
+  color: #f0f0f0;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.metricValueAccent {
+  color: #10b981;
+}
+
+.metricLabel {
+  font-size: 11px;
+  color: #888888;
+  font-weight: 500;
+}
+
+.metricSub {
+  font-size: 10px;
+  color: #484848;
+  margin-top: 3px;
+}
+
+/* ── Skeleton ── */
+
+.skeletonCard {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #1a1a1a;
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+
+.skeletonLine {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #161616 25%, #242424 50%, #161616 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
+}
+
+.skeletonValue {
+  height: 32px;
+  width: 60%;
+  margin-bottom: 8px;
+}
+
+.skeletonLabel {
+  height: 11px;
+  width: 40%;
+}
+
+/* ── Heatmap ── */
+
+.heatmapOuter {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #1e1e1e;
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+
+.heatmapGrid {
+  display: grid;
+  grid-template-columns: repeat(52, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.heatCell {
+  aspect-ratio: 1;
+  border-radius: 2px;
+  transition: opacity 150ms ease;
+  cursor: default;
+}
+
+.heatCell:hover {
+  opacity: 0.75;
+}
+
+.heatmapLegend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  justify-content: flex-end;
+}
+
+.legendLabel {
+  font-size: 9px;
+  color: #484848;
+}
+
+.legendCell {
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+}
+
+/* ── Insights card ── */
+
+.insightsCard {
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.16);
+  border-radius: 12px;
+  padding: 20px 22px;
+}
+
+.insightsHeader {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 10px;
+}
+
+.insightsDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+}
+
+.insightsTitle {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #10b981;
+}
+
+.insightsText {
+  margin: 0;
+  font-size: 13px;
+  color: #888888;
+  line-height: 1.7;
+}
+
+.insightsTextHighlight {
+  color: #f0f0f0;
+  font-weight: 500;
+}
+
+/* ── Empty state ── */
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 0;
+  color: #484848;
+  text-align: center;
+}
+
+.emptyIcon {
+  opacity: 0.35;
+}
+
+.emptyText {
+  font-size: 13px;
+  color: #484848;
+  line-height: 1.7;
+}
