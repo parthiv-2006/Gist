@@ -135,7 +135,8 @@ async def embed_text(text: str) -> list[float]:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set")
 
-    client = genai.Client(api_key=api_key)
+    # Force v1 (not v1beta) — text-embedding-004 is not available in v1beta.
+    client = genai.Client(api_key=api_key, http_options={"api_version": "v1"})
     truncated = text[:_EMBED_MAX_CHARS]
 
     loop = asyncio.get_running_loop()
