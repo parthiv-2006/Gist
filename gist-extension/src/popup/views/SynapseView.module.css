@@ -1,0 +1,458 @@
+/* SynapseView.module.css */
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Root layout ── */
+
+.container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  max-height: 100vh;
+  overflow: hidden;
+  background: #080808;
+  animation: fadeIn 200ms ease both;
+}
+
+/* ── Center state (loading / empty / error) ── */
+
+.centerState {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 48px 32px;
+  text-align: center;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 2px solid rgba(16, 185, 129, 0.18);
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+}
+
+.spinnerInline {
+  display: inline-block;
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid rgba(16, 185, 129, 0.25);
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 0.75s linear infinite;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.stateText {
+  font-size: 13px;
+  color: #666;
+  margin: 0;
+}
+
+.emptyIllus {
+  width: 96px;
+  height: 96px;
+  opacity: 0.75;
+}
+
+.emptyTitle {
+  font-size: 15px;
+  font-weight: 600;
+  color: #e0e0e0;
+  margin: 0;
+}
+
+.emptySubtext {
+  font-size: 12.5px;
+  color: #555;
+  margin: 0;
+  max-width: 280px;
+  line-height: 1.55;
+}
+
+.errorText {
+  font-size: 12.5px;
+  color: #f87171;
+  margin: 0;
+  text-align: center;
+  max-width: 300px;
+}
+
+/* ── Compute / recompute button ── */
+
+.computeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  background: rgba(16, 185, 129, 0.09);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  border-radius: 8px;
+  color: #10b981;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms, opacity 140ms;
+  font-family: inherit;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.computeBtn:hover:not(:disabled) {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.computeBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Header ── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 15px 20px 11px;
+  border-bottom: 1px solid #181818;
+  flex-shrink: 0;
+}
+
+.headerLeft {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #f0f0f0;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.metaRow {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.metaBadge {
+  font-size: 10.5px;
+  color: #4a4a4a;
+  padding: 2px 7px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #1e1e1e;
+  border-radius: 4px;
+  font-family: 'Space Mono', 'Fira Code', monospace;
+  letter-spacing: 0.01em;
+}
+
+.staleBadge {
+  font-size: 10.5px;
+  color: #f59e0b;
+  padding: 2px 8px;
+  background: rgba(245, 158, 11, 0.07);
+  border: 1px solid rgba(245, 158, 11, 0.18);
+  border-radius: 4px;
+}
+
+/* ── Controls bar ── */
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 20px;
+  border-bottom: 1px solid #141414;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+/* Filter input */
+
+.filterWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 130px;
+  max-width: 240px;
+}
+
+.filterIcon {
+  position: absolute;
+  left: 10px;
+  width: 12px;
+  height: 12px;
+  color: #444;
+  pointer-events: none;
+  flex-shrink: 0;
+}
+
+.filterInput {
+  width: 100%;
+  padding: 6px 28px 6px 30px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #1e1e1e;
+  border-radius: 7px;
+  color: #e8e8e8;
+  font-size: 12px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 140ms;
+}
+
+.filterInput:focus {
+  border-color: rgba(16, 185, 129, 0.28);
+}
+
+.filterInput::placeholder {
+  color: #3c3c3c;
+}
+
+.clearX {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 100ms;
+}
+
+.clearX:hover {
+  color: #aaa;
+}
+
+/* Timeline */
+
+.timeline {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sliderStack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tlSlider {
+  width: 110px;
+  accent-color: #10b981;
+  cursor: pointer;
+  height: 2px;
+  margin: 0;
+}
+
+.tlLabel {
+  font-size: 10px;
+  color: #4a4a4a;
+  font-family: 'Space Mono', monospace;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* ── Graph canvas ── */
+
+.canvasWrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  cursor: grab;
+  background:
+    radial-gradient(ellipse 55% 55% at 50% 50%, rgba(16, 185, 129, 0.022) 0%, transparent 70%);
+}
+
+.canvasDragging {
+  cursor: grabbing;
+}
+
+.svgInner {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform-origin: center center;
+  will-change: transform;
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+/* ── Hover tooltip ── */
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  background: rgba(12, 12, 12, 0.96);
+  border: 1px solid #262626;
+  border-radius: 10px;
+  padding: 10px 13px;
+  max-width: 210px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  animation: fadeIn 80ms ease both;
+}
+
+.ttCategory {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  margin-bottom: 5px;
+  font-family: 'Space Mono', monospace;
+}
+
+.ttTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: #ebebeb;
+  margin-bottom: 5px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.ttSnippet {
+  font-size: 11px;
+  color: #777;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 7px;
+}
+
+.ttDate {
+  font-size: 9.5px;
+  color: #484848;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.02em;
+}
+
+/* ── Zoom controls ── */
+
+.zoomCtrl {
+  position: absolute;
+  bottom: 14px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 10;
+}
+
+.zBtn {
+  width: 30px;
+  height: 30px;
+  background: rgba(18, 18, 18, 0.92);
+  border: 1px solid #282828;
+  border-radius: 7px;
+  color: #777;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: inherit;
+  transition: color 120ms, border-color 120ms, background 120ms;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.zBtn:hover {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+/* ── Cluster legend ── */
+
+.legend {
+  display: flex;
+  gap: 5px;
+  padding: 8px 20px;
+  border-top: 1px solid #141414;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  max-height: 76px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a2a transparent;
+}
+
+.legendChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 6px;
+  border: 1px solid #1e1e1e;
+  background: rgba(255, 255, 255, 0.02);
+  color: #666;
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 130ms;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.legendChip:hover {
+  border-color: #303030;
+  color: #bbb;
+}
+
+.legendChipActive {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.05);
+  color: #e8e8e8;
+}
+
+.legendDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legendSz {
+  color: #484848;
+  font-size: 9.5px;
+  font-family: 'Space Mono', monospace;
+}
+
+/* ── Accessibility ── */
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner, .spinnerInline { animation: none; border-color: #10b981; }
+  .container, .tooltip     { animation: none; }
+}

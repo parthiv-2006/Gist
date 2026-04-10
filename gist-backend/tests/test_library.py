@@ -57,6 +57,7 @@ async def test_library_returns_items_list(client):
     from datetime import datetime, timezone
 
     fake_doc = {
+        "_id": "abc123",
         "original_text": "Some highlighted text",
         "explanation": "A plain-language summary",
         "mode": "standard",

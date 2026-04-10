@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { DashboardRoute } from "./types";
-import { IconHome, IconLibraryTab, IconSettings } from "./icons";
+import { IconHome, IconLibraryTab, IconSettings, IconSynapse } from "./icons";
 import { HomeView } from "./views/HomeView";
 import { LibraryView } from "./views/LibraryView";
 import { SettingsView } from "./views/SettingsView";
+import { SynapseView } from "./views/SynapseView";
 import styles from "./Dashboard.module.css";
 
 // Inline GistLogo to avoid circular dependency with App.tsx
@@ -25,6 +26,7 @@ function GistLogo() {
 const NAV_ITEMS: { id: DashboardRoute; label: string; icon: React.ReactNode }[] = [
   { id: "home",     label: "Overview",  icon: <IconHome /> },
   { id: "library",  label: "Library",   icon: <IconLibraryTab /> },
+  { id: "synapse",  label: "Synapse",   icon: <IconSynapse /> },
   { id: "settings", label: "Settings",  icon: <IconSettings /> },
 ];
 
@@ -59,6 +61,7 @@ export function Dashboard() {
       <main className={styles.content}>
         {route === "home"     && <HomeView />}
         {route === "library"  && <LibraryView />}
+        {route === "synapse"  && <SynapseView />}
         {route === "settings" && <SettingsView />}
       </main>
     </div>
