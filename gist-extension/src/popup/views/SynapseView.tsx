@@ -41,8 +41,9 @@ export function SynapseView() {
     setLoading(true);
     setError(null);
     setNoCache(false);
-    BACKEND_BASE.then(async (base) => {
+    (async () => {
       try {
+        const base = await BACKEND_BASE;
         const r = await fetch(`${base}/synapse/graph`);
         if (r.status === 404) {
           if (!cancelled) { setNoCache(true); setLoading(false); }
@@ -57,7 +58,7 @@ export function SynapseView() {
       } catch (e) {
         if (!cancelled) { setError((e as Error).message); setLoading(false); }
       }
-    });
+    })();
     return () => { cancelled = true; };
   }, []);
 
@@ -127,10 +128,19 @@ export function SynapseView() {
 
   // ── Pan / zoom handlers ─────────────────────────────────────────────────────
 
-  const handleWheel = useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const factor = e.deltaY < 0 ? 1.12 : 0.89;
-    setTxfm((p) => ({ ...p, scale: Math.max(0.1, Math.min(6, p.scale * factor)) }));
+  // Non-passive wheel listener — React's synthetic onWheel is passive by default
+  // in React 17+, making e.preventDefault() a no-op and allowing page scroll.
+  // Attaching a native listener with { passive: false } gives us real prevention.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.12 : 0.89;
+      setTxfm((p) => ({ ...p, scale: Math.max(0.1, Math.min(6, p.scale * factor)) }));
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
   }, []);
 
   const handleMouseDown = useCallback(
@@ -292,7 +302,6 @@ export function SynapseView() {
       <div
         className={`${styles.canvasWrap} ${dragging ? styles.canvasDragging : ""}`}
         ref={containerRef}
-        onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={stopDrag}
