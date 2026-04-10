@@ -6,6 +6,7 @@
 .container {
   padding: 36px 40px 60px;
   max-width: 680px;
+  margin: 0 auto;
   animation: viewEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 

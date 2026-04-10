@@ -15,6 +15,7 @@
   gap: 32px;
   animation: viewEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
   max-width: 960px;
+  margin: 0 auto;
 }
 
 /* ── Section header ── */
@@ -116,12 +117,14 @@
   border: 1px solid #1e1e1e;
   border-radius: 12px;
   padding: 20px 22px;
+  overflow-x: auto;
 }
 
 .heatmapGrid {
   display: grid;
   grid-template-columns: repeat(52, minmax(0, 1fr));
   gap: 3px;
+  min-width: 520px;
 }
 
 .heatCell {

@@ -75,6 +75,10 @@
   box-sizing: border-box;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .popover { animation: none; }
+}
+
 /* ── Sidebar Override ────────────────────────────────────────── */
 
 .sidebar {
@@ -283,6 +287,7 @@
 
 .chatHistory {
   flex: 1;
+  min-height: 0; /* allows flex item to shrink below content size — unlocks overflow-y scroll */
   overflow-y: auto;
   margin: 0 -6px var(--gist-gap) -6px;
   padding: 0 6px;
@@ -296,6 +301,7 @@
 .chatHistory::-webkit-scrollbar-thumb { background: var(--gist-border-mid); border-radius: 3px; }
 
 .message {
+  flex-shrink: 0; /* prevents messages from collapsing under flex constraint */
   width: 100%;
   font-size: var(--gist-font-size-body);
   line-height: var(--gist-line-height);

@@ -333,6 +333,10 @@
   transform: translateX(0);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .drawer { transition: none; }
+}
+
 .drawerHeader {
   padding: 18px 20px 14px;
   border-bottom: 1px solid #1e1e1e;
@@ -528,6 +532,13 @@
   font-size: 12px;
   color: #f87171;
   margin: 0;
+}
+
+.deleteErrorText {
+  font-size: 11px;
+  color: #f87171;
+  opacity: 0.8;
+  margin: 4px 0 0;
 }
 
 .confirmActions {

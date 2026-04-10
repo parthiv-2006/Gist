@@ -18,12 +18,14 @@ function GistDrawer({ item, open, onClose, onDeleted }: GistDrawerProps) {
   const [originalOpen, setOriginalOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Reset internal state when item changes
   useEffect(() => {
     setOriginalOpen(false);
     setDeleteConfirm(false);
     setDeleting(false);
+    setDeleteError(null);
   }, [item?.created_at]);
 
   if (!item) return null;
@@ -38,14 +40,19 @@ function GistDrawer({ item, open, onClose, onDeleted }: GistDrawerProps) {
   const handleDelete = async () => {
     if (!item.id) return;
     setDeleting(true);
+    setDeleteError(null);
     try {
       const base = await BACKEND_BASE;
       const r = await fetch(`${base}/library/${item.id}`, { method: "DELETE" });
       if (r.ok) {
         onDeleted(item);
         onClose();
+      } else {
+        setDeleteError("Delete failed — server returned an error.");
+        setDeleting(false);
       }
-    } catch { /* ignore */ } finally {
+    } catch {
+      setDeleteError("Delete failed — check your connection.");
       setDeleting(false);
     }
   };
@@ -85,6 +92,7 @@ function GistDrawer({ item, open, onClose, onDeleted }: GistDrawerProps) {
               <button
                 className={styles.collapseToggle}
                 onClick={() => setOriginalOpen((v) => !v)}
+                aria-expanded={originalOpen}
               >
                 <span>{originalOpen ? "Hide" : "Show"} original</span>
                 <span style={{ display: "flex", transition: "transform 150ms", transform: originalOpen ? "rotate(180deg)" : "none" }}>
@@ -126,11 +134,12 @@ function GistDrawer({ item, open, onClose, onDeleted }: GistDrawerProps) {
             {deleteConfirm ? (
               <div className={styles.confirmBanner}>
                 <p className={styles.confirmText}>Delete this gist? This cannot be undone.</p>
+                {deleteError && <p className={styles.deleteErrorText}>{deleteError}</p>}
                 <div className={styles.confirmActions}>
                   <button className={styles.confirmYes} onClick={handleDelete} disabled={deleting}>
                     {deleting ? "Deleting…" : "Yes, delete"}
                   </button>
-                  <button className={styles.confirmNo} onClick={() => setDeleteConfirm(false)}>
+                  <button className={styles.confirmNo} onClick={() => { setDeleteConfirm(false); setDeleteError(null); }}>
                     Cancel
                   </button>
                 </div>

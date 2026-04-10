@@ -131,10 +131,11 @@ async def ask_library(request: Request):
     # 1. Embed the user's query.
     try:
         query_embedding = await embed_text(query)
-    except RuntimeError as exc:
+    except Exception as exc:
+        logger.warning("embed_text failed for ask query: %s", exc)
         return JSONResponse(
             status_code=503,
-            content={"error": str(exc), "code": "LLM_UNAVAILABLE"},
+            content={"error": "Search unavailable — could not embed query.", "code": "LLM_UNAVAILABLE"},
         )
 
     # 2. Find the most semantically similar gists.
@@ -177,10 +178,11 @@ async def ask_library(request: Request):
             messages=[{"role": "user", "content": rag_prompt}],
         ):
             chunks.append(chunk)
-    except RuntimeError as exc:
+    except Exception as exc:
+        logger.warning("stream_explanation failed for ask query: %s", exc)
         return JSONResponse(
             status_code=503,
-            content={"error": str(exc), "code": "LLM_UNAVAILABLE"},
+            content={"error": "Could not generate answer — LLM unavailable.", "code": "LLM_UNAVAILABLE"},
         )
 
     return {"answer": "".join(chunks), "sources": sources}
