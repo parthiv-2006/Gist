@@ -169,11 +169,18 @@ async def compute_graph():
 
             # 2. Guard: need at least 4 gists
             if len(docs) < 4:
+                msg = (
+                    f"Need at least 4 gists with embeddings — "
+                    f"found {len(docs)} of {total_all} saved gists have embeddings. "
+                    f"Save more gists and try again."
+                ) if total_all > 0 else "Save at least 4 gists first, then build the graph."
                 return JSONResponse(
                     status_code=503,
                     content={
-                        "error": "Need at least 4 gists with embeddings to build a graph.",
+                        "error": msg,
                         "code": "INSUFFICIENT_DATA",
+                        "indexed_count": len(docs),
+                        "total_count": total_all,
                     },
                 )
 

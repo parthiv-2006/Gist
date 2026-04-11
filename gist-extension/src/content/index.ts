@@ -105,26 +105,17 @@ if (!window.__gistMounted) {
     );
   }
 
-  function chunkText(text: string, size: number): string[] {
-    const chunks: string[] = [];
-    for (let i = 0; i < text.length; i += size) {
-      chunks.push(text.slice(i, i + size));
-    }
-    return chunks;
-  }
-
   function scanPageForTerms(): void {
+    if (!lensActive) return; // Guard: idle callback may fire after stopLensMode()
     const root = getLensRoot();
-    const fullText = (root as HTMLElement).innerText?.slice(0, 6000) ?? "";
+    // Send a single chunk — 3 parallel requests hammer the API quota
+    const fullText = (root as HTMLElement).innerText?.slice(0, 2000) ?? "";
     if (!fullText.trim()) return;
 
-    const chunks = chunkText(fullText, 2000);
-    for (const chunk of chunks) {
-      chrome.runtime.sendMessage({
-        type: "LENS_SCAN_REQUEST",
-        payload: { textChunk: chunk, pageContext: document.title },
-      });
-    }
+    chrome.runtime.sendMessage({
+      type: "LENS_SCAN_REQUEST",
+      payload: { textChunk: fullText, pageContext: document.title },
+    });
   }
 
   function scheduleLensScan(delayMs = 0): void {
@@ -135,7 +126,7 @@ if (!window.__gistMounted) {
         if (lensActive) lensIdleCallbackId = requestIdleCallback(() => scanPageForTerms(), { timeout: 5000 });
       }, delayMs);
     } else {
-      lensIdleCallbackId = requestIdleCallback(() => scanPageForTerms(), { timeout: 5000 });
+      if (lensActive) lensIdleCallbackId = requestIdleCallback(() => scanPageForTerms(), { timeout: 5000 });
     }
   }
 

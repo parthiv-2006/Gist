@@ -23,6 +23,10 @@ async function resolveBase(): Promise<string> {
 const _lastAutoGistTime = new Map<number, number>();
 const AUTOGIST_COOLDOWN_MS = 8_000;
 
+// Per-tab rate limit for lens scans: at most 1 scan every 45 seconds.
+const _lastLensScanTime = new Map<number, number>();
+const LENS_COOLDOWN_MS = 45_000;
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.contextMenus.create({
     id: "gist-this",
@@ -129,6 +133,15 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
   } else if (message.type === "LENS_SCAN_REQUEST") {
     const { textChunk, pageContext } = message.payload;
     if (!textChunk) return;
+
+    const now = Date.now();
+    const last = _lastLensScanTime.get(tabId) ?? 0;
+    if (now - last < LENS_COOLDOWN_MS) {
+      console.log("[Gist BG] LENS_SCAN_REQUEST rate-limited for tab", tabId);
+      return;
+    }
+    _lastLensScanTime.set(tabId, now);
+
     console.log("[Gist BG] LENS_SCAN_REQUEST", { tabId, chars: textChunk.length });
     fetchLensTerms(tabId, textChunk, pageContext ?? "");
   } else if (message.type === "NESTED_GIST_REQUEST") {

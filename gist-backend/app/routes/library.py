@@ -40,7 +40,8 @@ async def save_gist(body: SaveGistRequest):
         )
 
     try:
-        category = categorize_text(body.original_text)
+        # Combine selected text + explanation for better keyword coverage
+        category = categorize_text(f"{body.original_text}\n{body.explanation}")
         embedding = None
         try:
             embedding = await embed_text(f"{body.original_text} {body.explanation}")
