@@ -16,6 +16,7 @@ from app.routes.autogist import router as autogist_router
 from app.routes.scan import router as scan_router
 from app.routes.nested import router as nested_router
 from app.routes.visualize import router as visualize_router
+from app.routes.synapse import router as synapse_router
 from app.db import connect_db, disconnect_db
 
 load_dotenv()  # Load .env if present (local dev only)
@@ -74,6 +75,7 @@ app.include_router(autogist_router)
 app.include_router(scan_router)
 app.include_router(nested_router)
 app.include_router(visualize_router)
+app.include_router(synapse_router)
 
 
 @app.exception_handler(Exception)
