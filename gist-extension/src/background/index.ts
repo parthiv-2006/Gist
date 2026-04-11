@@ -27,12 +27,21 @@ const AUTOGIST_COOLDOWN_MS = 8_000;
 const _lastLensScanTime = new Map<number, number>();
 const LENS_COOLDOWN_MS = 45_000;
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
     id: "gist-this",
     title: "Gist this",
     contexts: ["selection"],
   });
+
+  // On first install: open the onboarding walkthrough tab
+  if (details.reason === "install") {
+    chrome.storage.local.get(["onboardingComplete"], (result) => {
+      if (!result["onboardingComplete"]) {
+        chrome.tabs.create({ url: chrome.runtime.getURL("onboarding.html") });
+      }
+    });
+  }
 
   // Warm up the backend (also seeds the _resolvedBase cache)
   resolveBase().then(base => fetch(`${base}/health`).catch(() => {}));

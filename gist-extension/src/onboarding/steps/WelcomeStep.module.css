@@ -1,0 +1,176 @@
+/* ─── Root ─────────────────────────────────────────────────────────────────── */
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 60px 24px 80px;
+  max-width: 560px;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.root.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ─── Logo ─────────────────────────────────────────────────────────────────── */
+.logoWrap {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoRing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  animation: spin 12s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.logoGlyph {
+  position: relative;
+  z-index: 1;
+  font-size: 32px;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: -1px;
+  text-shadow: 0 0 24px rgba(16, 185, 129, 0.5);
+  font-family: 'Inter', -apple-system, sans-serif;
+}
+
+/* ─── Headline ─────────────────────────────────────────────────────────────── */
+.headline {
+  font-size: clamp(28px, 4vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: #f0f0f0;
+  margin: 0 0 12px;
+  line-height: 1.15;
+}
+
+.brandName {
+  color: #10b981;
+}
+
+.tagline {
+  font-size: 17px;
+  color: #888;
+  margin: 0 0 40px;
+  line-height: 1.6;
+  max-width: 400px;
+}
+
+/* ─── Feature list ─────────────────────────────────────────────────────────── */
+.features {
+  list-style: none;
+  margin: 0 0 48px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  align-self: stretch;
+  max-width: 360px;
+}
+
+.featureItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #c0c0c0;
+  text-align: left;
+  opacity: 0;
+  animation: fadeUp 0.4s ease forwards;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.featureIcon {
+  color: #10b981;
+  font-size: 10px;
+  flex-shrink: 0;
+}
+
+/* ─── CTA ──────────────────────────────────────────────────────────────────── */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: #10b981;
+  color: #080808;
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  letter-spacing: -0.01em;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4);
+  animation: pulseCta 2.5s ease-in-out 1.2s infinite;
+}
+
+.cta:hover {
+  background: #0ea573;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+  animation: none;
+}
+
+.cta:active {
+  transform: translateY(0);
+}
+
+@keyframes pulseCta {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+.ctaArrow {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.18s ease;
+}
+
+.cta:hover .ctaArrow {
+  transform: translateX(3px);
+}
+
+/* ─── Skip ─────────────────────────────────────────────────────────────────── */
+.skip {
+  margin-top: 20px;
+  font-size: 12px;
+  color: #444;
+}
+
+.skipLink {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.skipLink:hover {
+  color: #888;
+}

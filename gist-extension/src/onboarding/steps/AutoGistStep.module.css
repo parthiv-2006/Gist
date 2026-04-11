@@ -1,0 +1,292 @@
+/* ─── Layout ───────────────────────────────────────────────────────────────── */
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px 80px;
+  width: 100%;
+  max-width: 680px;
+  gap: 24px;
+}
+
+/* ─── Header ───────────────────────────────────────────────────────────────── */
+.header {
+  text-align: center;
+}
+
+.stepBadge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 20px;
+  padding: 3px 10px;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: clamp(20px, 3vw, 28px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: #f0f0f0;
+  margin: 0 0 8px;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 500px;
+}
+
+/* ─── Browser viewport ─────────────────────────────────────────────────────── */
+.viewport {
+  width: 100%;
+  background: #0d0d0d;
+  border: 1px solid #1e1e1e;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ─── Browser bar ──────────────────────────────────────────────────────────── */
+.browserBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #111;
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.browserDots {
+  display: flex;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.browserDots span {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #282828;
+}
+
+.browserDots span:nth-child(1) { background: #ff5f57; }
+.browserDots span:nth-child(2) { background: #febc2e; }
+.browserDots span:nth-child(3) { background: #28c840; }
+
+.browserUrl {
+  font-size: 11px;
+  color: #444;
+  font-family: 'Space Mono', monospace;
+  background: #0a0a0a;
+  border: 1px solid #1e1e1e;
+  border-radius: 4px;
+  padding: 3px 10px;
+  flex: 1;
+  text-align: center;
+}
+
+/* ─── Page content ─────────────────────────────────────────────────────────── */
+.pageContent {
+  padding: 20px 24px 100px;
+}
+
+.articleHeader {
+  margin-bottom: 14px;
+}
+
+.articleTag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #6366f1;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-bottom: 8px;
+}
+
+.articleTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e0e0e0;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.articleBody {
+  font-size: 13px;
+  color: #888;
+  line-height: 1.75;
+  margin: 0 0 12px;
+}
+
+.articleBodyFaded {
+  color: #555;
+}
+
+/* ─── Skeleton lines ───────────────────────────────────────────────────────── */
+.skeletonLines {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skeletonLine {
+  height: 10px;
+  background: #161616;
+  border-radius: 3px;
+}
+
+/* ─── Scroll indicator ─────────────────────────────────────────────────────── */
+.scrollIndicator {
+  position: absolute;
+  top: 52px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  color: #10b981;
+  animation: fadeIn 0.3s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.scrollDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulseDot 1.2s ease-in-out infinite;
+}
+
+@keyframes pulseDot {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 1; transform: scale(1.4); }
+}
+
+/* ─── Floating widget ──────────────────────────────────────────────────────── */
+.widget {
+  position: absolute;
+  bottom: 14px;
+  left: 14px;
+  background: #0a0a0a;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 10px;
+  padding: 10px 14px;
+  min-width: 180px;
+  max-width: 420px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(16, 185, 129, 0.06);
+  animation: slideUp 0.28s cubic-bezier(0.2, 0, 0, 1) both;
+  transition: max-width 0.35s ease, padding 0.25s ease;
+}
+
+.widgetExpanded {
+  max-width: 420px;
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.widgetHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.widgetIcon {
+  font-size: 12px;
+}
+
+.widgetLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #10b981;
+  letter-spacing: -0.01em;
+}
+
+.widgetSpinner {
+  margin-left: 4px;
+  width: 12px;
+  height: 12px;
+  position: relative;
+}
+
+.spinnerRing {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(16, 185, 129, 0.2);
+  border-top-color: #10b981;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.widgetTakeaway {
+  font-size: 12px;
+  color: #b0b0b0;
+  line-height: 1.55;
+  margin: 8px 0 0;
+  border-top: 1px solid #1a1a1a;
+  padding-top: 8px;
+  animation: fadeIn 0.3s ease both;
+}
+
+/* ─── Next button ──────────────────────────────────────────────────────────── */
+.nextBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: #10b981;
+  color: #080808;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  animation: fadeUp 0.3s ease both;
+}
+
+.nextBtn svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.18s ease;
+}
+
+.nextBtn:hover {
+  background: #0ea573;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.3);
+}
+
+.nextBtn:hover svg {
+  transform: translateX(3px);
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
