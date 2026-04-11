@@ -218,7 +218,7 @@
   transition: border-color 140ms;
 }
 
-.filterInput:focus {
+.filterInput:focus-visible {
   border-color: rgba(16, 185, 129, 0.28);
 }
 

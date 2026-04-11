@@ -29,7 +29,10 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
 
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(); } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       className={`${styles.card} ${expanded ? styles.cardExpanded : ""} ${hovered ? styles.cardHovered : ""}`}

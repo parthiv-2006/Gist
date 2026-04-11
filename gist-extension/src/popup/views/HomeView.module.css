@@ -223,3 +223,8 @@
   color: #484848;
   line-height: 1.7;
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .container   { animation: none; }
+  .skeletonLine { animation: none; background: #1a1a1a; }
+}

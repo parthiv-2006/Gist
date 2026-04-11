@@ -314,7 +314,7 @@ export function Popover({
             className={styles.closeButton}
             onClick={onOpenLibrary}
             aria-label="Open Library"
-            title="Library (📚)"
+            title="Library"
           >
             <BookOpen size={16} />
           </button>

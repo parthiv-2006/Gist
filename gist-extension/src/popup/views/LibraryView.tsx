@@ -157,6 +157,22 @@ function GistDrawer({ item, open, onClose, onDeleted }: GistDrawerProps) {
   );
 }
 
+// ── Skeleton card ─────────────────────────────────────────────────────────────
+
+function SkeletonCard({ tall = false }: { tall?: boolean }) {
+  return (
+    <div className={styles.skeletonCard}>
+      <div className={styles.skeletonTopRow}>
+        <div className={`${styles.skeletonLine} ${styles.skeletonBadge}`} />
+        <div className={`${styles.skeletonLine} ${styles.skeletonDate}`} />
+      </div>
+      <div className={`${styles.skeletonLine} ${styles.skeletonTextFull}`} />
+      <div className={`${styles.skeletonLine} ${styles.skeletonTextMid}`} />
+      {tall && <div className={`${styles.skeletonLine} ${styles.skeletonTextShort}`} />}
+    </div>
+  );
+}
+
 // ── LibraryView ───────────────────────────────────────────────────────────────
 
 const FILTERS = ["All", ...Object.keys(CATEGORY_COLORS)];
@@ -313,7 +329,7 @@ export function LibraryView() {
               <p className={styles.sourcesLabel}>Sources · {displayItems.length}</p>
               <div className={styles.masonryGrid}>
                 {displayItems.map((item, i) => (
-                  <div key={i} className={styles.masonryItem}>
+                  <div key={item.id ?? i} className={styles.masonryItem}>
                     <GistCard
                       item={item}
                       variant="grid"
@@ -338,7 +354,15 @@ export function LibraryView() {
     }
 
     if (loading) {
-      return <div className={styles.loadingState}>Loading your library…</div>;
+      return (
+        <div className={styles.masonryGrid}>
+          {([false, true, false, false, true, false] as boolean[]).map((tall, i) => (
+            <div key={i} className={styles.masonryItem}>
+              <SkeletonCard tall={tall} />
+            </div>
+          ))}
+        </div>
+      );
     }
 
     if (error) {

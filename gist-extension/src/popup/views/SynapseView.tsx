@@ -268,7 +268,11 @@ export function SynapseView() {
             onChange={(e) => setTextFilter(e.target.value)}
           />
           {textFilter && (
-            <button className={styles.clearX} onClick={() => setTextFilter("")}>×</button>
+            <button className={styles.clearX} onClick={() => setTextFilter("")} aria-label="Clear filter">
+              <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                <line x1="1" y1="1" x2="9" y2="9" /><line x1="9" y1="1" x2="1" y2="9" />
+              </svg>
+            </button>
           )}
         </div>
 
@@ -442,9 +446,13 @@ export function SynapseView() {
 
         {/* Zoom controls */}
         <div className={styles.zoomCtrl}>
-          <button className={styles.zBtn} title="Zoom in"    onClick={() => setTxfm((p) => ({ ...p, scale: Math.min(6, p.scale * 1.25) }))}>+</button>
-          <button className={styles.zBtn} title="Zoom out"   onClick={() => setTxfm((p) => ({ ...p, scale: Math.max(0.1, p.scale * 0.8) }))}>−</button>
-          <button className={styles.zBtn} title="Reset view" onClick={() => setTxfm({ x: 0, y: 0, scale: 1 })}>⊙</button>
+          <button className={styles.zBtn} title="Zoom in"  aria-label="Zoom in"  onClick={() => setTxfm((p) => ({ ...p, scale: Math.min(6, p.scale * 1.25) }))}>+</button>
+          <button className={styles.zBtn} title="Zoom out" aria-label="Zoom out" onClick={() => setTxfm((p) => ({ ...p, scale: Math.max(0.1, p.scale * 0.8) }))}>−</button>
+          <button className={styles.zBtn} title="Reset view" aria-label="Reset view" onClick={() => setTxfm({ x: 0, y: 0, scale: 1 })}>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="9" />
+            </svg>
+          </button>
         </div>
       </div>
 
