@@ -109,3 +109,172 @@ async def test_library_returns_empty_list_when_no_gists(client):
 
     assert response.status_code == 200
     assert response.json() == {"items": []}
+
+
+async def test_library_returns_tags_field_in_items(client):
+    """GET /library includes tags array on each item."""
+    from datetime import datetime, timezone
+
+    fake_doc = {
+        "_id": "abc123",
+        "original_text": "async def fetch(): ...",
+        "explanation": "An async Python function",
+        "mode": "standard",
+        "url": "https://example.com",
+        "category": "Code",
+        "tags": ["async-await", "python"],
+        "created_at": datetime(2024, 6, 1, tzinfo=timezone.utc),
+    }
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort.return_value = mock_cursor
+    mock_cursor.limit.return_value = mock_cursor
+    mock_cursor.to_list = AsyncMock(return_value=[fake_doc])
+
+    mock_collection = MagicMock()
+    mock_collection.find.return_value = mock_cursor
+
+    mock_db = MagicMock()
+    mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+    with patch("app.routes.library.get_db", return_value=mock_db):
+        response = await client.get("/library")
+
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert item["tags"] == ["async-await", "python"]
+
+
+async def test_library_items_default_empty_tags_when_missing(client):
+    """GET /library returns tags=[] for older docs that have no tags field."""
+    from datetime import datetime, timezone
+
+    fake_doc = {
+        "_id": "old1",
+        "original_text": "old gist",
+        "explanation": "legacy",
+        "mode": "standard",
+        "url": "https://example.com",
+        "category": "General",
+        # No "tags" field — simulating a pre-tags document
+        "created_at": datetime(2023, 1, 1, tzinfo=timezone.utc),
+    }
+
+    mock_cursor = MagicMock()
+    mock_cursor.sort.return_value = mock_cursor
+    mock_cursor.limit.return_value = mock_cursor
+    mock_cursor.to_list = AsyncMock(return_value=[fake_doc])
+
+    mock_collection = MagicMock()
+    mock_collection.find.return_value = mock_cursor
+
+    mock_db = MagicMock()
+    mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+    with patch("app.routes.library.get_db", return_value=mock_db):
+        response = await client.get("/library")
+
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    assert item["tags"] == []
+
+
+async def test_save_gist_stores_tags(client):
+    """POST /library/save calls generate_tags and stores result in doc."""
+    mock_collection = MagicMock()
+    mock_collection.insert_one = AsyncMock(return_value=MagicMock(inserted_id="xyz"))
+
+    mock_db = MagicMock()
+    mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+    with (
+        patch("app.routes.library.get_db", return_value=mock_db),
+        patch("app.routes.library.categorize_text", return_value="Code"),
+        patch("app.routes.library.embed_text", new_callable=AsyncMock, return_value=[0.1] * 768),
+        patch("app.routes.library.generate_tags", new_callable=AsyncMock, return_value=["async-await", "python"]),
+    ):
+        response = await client.post(
+            "/library/save",
+            json={
+                "original_text": "async def fetch(): ...",
+                "explanation": "Async fetch function",
+                "mode": "standard",
+                "url": "https://example.com",
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["success"] is True
+
+    # Verify the document passed to insert_one contains tags
+    call_args = mock_collection.insert_one.call_args[0][0]
+    assert call_args["tags"] == ["async-await", "python"]
+
+
+async def test_get_library_tags_endpoint(client):
+    """GET /library/tags returns aggregated tag counts sorted by frequency."""
+    fake_agg = [
+        {"tag": "python", "count": 5},
+        {"tag": "async-await", "count": 3},
+        {"tag": "react-hooks", "count": 1},
+    ]
+
+    mock_cursor = MagicMock()
+    mock_cursor.to_list = AsyncMock(return_value=fake_agg)
+
+    mock_collection = MagicMock()
+    mock_collection.aggregate.return_value = mock_cursor
+
+    mock_db = MagicMock()
+    mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+
+    with patch("app.routes.library.get_db", return_value=mock_db):
+        response = await client.get("/library/tags")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert "tags" in data
+    assert data["tags"][0]["tag"] == "python"
+    assert data["tags"][0]["count"] == 5
+
+
+async def test_get_library_tags_returns_503_when_db_unavailable(client):
+    """GET /library/tags returns 503 when DB is not connected."""
+    with patch("app.routes.library.get_db", return_value=None):
+        response = await client.get("/library/tags")
+    assert response.status_code == 503
+    assert response.json()["code"] == "DB_UNAVAILABLE"
+
+
+# ---------------------------------------------------------------------------
+# generate_tags unit tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_generate_tags_mock_mode():
+    """generate_tags returns mock tags when MOCK_LLM is enabled."""
+    import os
+    from app.services.gemini import generate_tags
+
+    with patch.dict(os.environ, {"MOCK_LLM": "true"}):
+        # Re-import to pick up mock flag — or just test the mock path directly
+        from unittest.mock import patch as _patch
+        with _patch("app.services.gemini._MOCK_LLM", True):
+            tags = await generate_tags("some text", "some explanation")
+    assert tags == ["mock", "tags"]
+
+
+@pytest.mark.asyncio
+async def test_generate_tags_returns_empty_on_error():
+    """generate_tags returns [] if Gemini raises an exception."""
+    from app.services.gemini import generate_tags
+    import os
+
+    with (
+        patch.dict(os.environ, {"GEMINI_API_KEY": "fake-key", "MOCK_LLM": "false"}),
+        patch("app.services.gemini._MOCK_LLM", False),
+        patch("app.services.gemini.genai.Client") as mock_client,
+    ):
+        mock_client.return_value.models.generate_content.side_effect = RuntimeError("API down")
+        tags = await generate_tags("text", "explanation")
+    assert tags == []

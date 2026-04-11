@@ -14,7 +14,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.db import get_db
-from app.services.gemini import embed_text
+from app.services.gemini import embed_text, generate_tags
 from app.services.categorize import categorize_text
 
 logger = logging.getLogger(__name__)
@@ -42,11 +42,27 @@ async def save_gist(body: SaveGistRequest):
     try:
         # Combine selected text + explanation for better keyword coverage
         category = categorize_text(f"{body.original_text}\n{body.explanation}")
+
+        # Run embedding and tag generation concurrently
+        import asyncio as _asyncio
+        embedding_task = _asyncio.create_task(
+            embed_text(f"{body.original_text} {body.explanation}")
+        )
+        tags_task = _asyncio.create_task(
+            generate_tags(body.original_text, body.explanation)
+        )
+
         embedding = None
         try:
-            embedding = await embed_text(f"{body.original_text} {body.explanation}")
+            embedding = await embedding_task
         except Exception as exc:
             logger.warning("Embedding generation failed — saving without embedding: %s", exc)
+
+        tags: list[str] = []
+        try:
+            tags = await tags_task
+        except Exception as exc:
+            logger.warning("Tag generation failed — saving without tags: %s", exc)
 
         doc = {
             "original_text": body.original_text,
@@ -54,6 +70,7 @@ async def save_gist(body: SaveGistRequest):
             "mode": body.mode,
             "url": body.url,
             "category": category,
+            "tags": tags,
             "created_at": datetime.now(timezone.utc),
         }
         if embedding is not None:
@@ -85,7 +102,7 @@ async def get_library():
     try:
         cursor = db["gists"].find(
             {},
-            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "created_at": 1},
+            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "tags": 1, "created_at": 1},
         ).sort("created_at", -1).limit(100)
 
         raw_items = await cursor.to_list(length=100)
@@ -102,9 +119,43 @@ async def get_library():
         if "created_at" in doc and hasattr(doc["created_at"], "isoformat"):
             doc["created_at"] = doc["created_at"].isoformat()
         doc["id"] = str(doc.pop("_id"))
+        # Ensure tags is always a list (older docs without the field get [])
+        doc.setdefault("tags", [])
         items.append(doc)
 
     return {"items": items}
+
+
+@router.get("/library/tags")
+async def get_library_tags():
+    """
+    Return the top 20 tags across all gists, sorted by frequency descending.
+    Each entry: {"tag": str, "count": int}
+    """
+    db = get_db()
+    if db is None:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Library unavailable — database not connected.", "code": "DB_UNAVAILABLE"},
+        )
+
+    try:
+        pipeline = [
+            {"$unwind": "$tags"},
+            {"$group": {"_id": "$tags", "count": {"$sum": 1}}},
+            {"$sort": {"count": -1}},
+            {"$limit": 20},
+            {"$project": {"_id": 0, "tag": "$_id", "count": 1}},
+        ]
+        cursor = db["gists"].aggregate(pipeline)
+        raw = await cursor.to_list(length=20)
+        return {"tags": raw}
+    except Exception as exc:
+        logger.error("Tag aggregation failed: %s", exc, exc_info=True)
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Failed to retrieve tags.", "code": "DB_ERROR"},
+        )
 
 
 @router.delete("/library/{gist_id}")
