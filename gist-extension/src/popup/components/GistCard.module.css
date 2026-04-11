@@ -101,6 +101,25 @@
   -webkit-line-clamp: unset;
 }
 
+.tagRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.tagChip {
+  font-size: 9.5px;
+  color: #555;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid #1e1e1e;
+  border-radius: 4px;
+  padding: 1px 5px;
+  letter-spacing: 0.01em;
+  font-family: 'Space Mono', 'Fira Code', monospace;
+  white-space: nowrap;
+}
+
 .expandedBody {
   margin-top: 10px;
   padding-top: 10px;

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { GistItem } from "../types";
+import { GistItem, TagCount } from "../types";
 import { BACKEND_BASE, CATEGORY_COLORS } from "../tokens";
 import { IconEmptyLibrary } from "../icons";
 import styles from "./HomeView.module.css";
@@ -68,16 +68,30 @@ function SkeletonMetric() {
 
 // ── HomeView ───────────────────────────────────────────────────────────────────
 
-export function HomeView() {
-  const [items, setItems] = useState<GistItem[]>([]);
+interface HomeViewProps {
+  onTagClick?: (tag: string) => void;
+}
+
+export function HomeView({ onTagClick }: HomeViewProps = {}) {
+  const [items, setItems]     = useState<GistItem[]>([]);
+  const [topTags, setTopTags] = useState<TagCount[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     BACKEND_BASE.then((base) => {
-      fetch(`${base}/library`)
-        .then((r) => (r.ok ? r.json() : Promise.reject()))
-        .then((data) => { if (!cancelled) { setItems(data.items ?? []); setLoading(false); } })
+      // Fetch library and top tags in parallel
+      Promise.all([
+        fetch(`${base}/library`).then((r) => r.ok ? r.json() : Promise.reject()),
+        fetch(`${base}/library/tags`).then((r) => r.ok ? r.json() : { tags: [] }),
+      ])
+        .then(([libData, tagsData]) => {
+          if (!cancelled) {
+            setItems(libData.items ?? []);
+            setTopTags((tagsData.tags ?? []).slice(0, 8));
+            setLoading(false);
+          }
+        })
         .catch(() => { if (!cancelled) setLoading(false); });
     });
     return () => { cancelled = true; };
@@ -211,6 +225,36 @@ export function HomeView() {
           </div>
         )}
       </section>
+
+      {/* ── Top Tags ── */}
+      {(loading || topTags.length > 0) && (
+        <section>
+          <div className={styles.sectionHeader}>
+            <span className={styles.sectionTitle}>Top Tags</span>
+          </div>
+          {loading ? (
+            <div className={styles.tagSkeletonRow}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className={`${styles.skeletonLine} ${styles.tagSkeletonChip}`} style={{ width: `${48 + i * 12}px` }} />
+              ))}
+            </div>
+          ) : (
+            <div className={styles.tagCloudRow}>
+              {topTags.map(({ tag, count }) => (
+                <button
+                  key={tag}
+                  className={styles.tagCloudChip}
+                  onClick={() => onTagClick?.(tag)}
+                  title={`${count} gist${count !== 1 ? "s" : ""} tagged #${tag}`}
+                >
+                  #{tag}
+                  <span className={styles.tagCloudCount}>{count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
 
     </div>
   );

@@ -224,6 +224,59 @@
   line-height: 1.7;
 }
 
+/* ── Top Tags ── */
+
+.tagCloudRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.tagCloudChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 11px;
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid #1e1e1e;
+  border-radius: 7px;
+  color: #888888;
+  font-size: 11.5px;
+  font-weight: 500;
+  font-family: 'Space Mono', 'Fira Code', monospace;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+  letter-spacing: 0.01em;
+}
+
+.tagCloudChip:hover {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.28);
+  background: rgba(16, 185, 129, 0.06);
+}
+
+.tagCloudChip:focus-visible {
+  outline: 1.5px solid rgba(16, 185, 129, 0.5);
+  outline-offset: 2px;
+}
+
+.tagCloudCount {
+  font-size: 9px;
+  color: #484848;
+  font-family: inherit;
+}
+
+.tagSkeletonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.tagSkeletonChip {
+  height: 28px !important;
+  border-radius: 7px !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .container   { animation: none; }
   .skeletonLine { animation: none; background: #1a1a1a; }

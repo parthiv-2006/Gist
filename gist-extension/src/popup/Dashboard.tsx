@@ -32,6 +32,12 @@ const NAV_ITEMS: { id: DashboardRoute; label: string; icon: React.ReactNode }[] 
 
 export function Dashboard() {
   const [route, setRoute] = useState<DashboardRoute>("home");
+  const [pendingTag, setPendingTag] = useState<string | null>(null);
+
+  const handleTagClick = (tag: string) => {
+    setPendingTag(tag);
+    setRoute("library");
+  };
 
   return (
     <div className={styles.layout}>
@@ -59,8 +65,8 @@ export function Dashboard() {
 
       {/* Content area — unmount/remount on route change triggers viewEnter animation */}
       <main className={styles.content}>
-        {route === "home"     && <HomeView />}
-        {route === "library"  && <LibraryView />}
+        {route === "home"     && <HomeView onTagClick={handleTagClick} />}
+        {route === "library"  && <LibraryView initialTag={pendingTag} onTagConsumed={() => setPendingTag(null)} />}
         {route === "synapse"  && <SynapseView />}
         {route === "settings" && <SettingsView />}
       </main>

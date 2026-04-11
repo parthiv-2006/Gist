@@ -177,7 +177,12 @@ function SkeletonCard({ tall = false }: { tall?: boolean }) {
 
 const FILTERS = ["All", ...Object.keys(CATEGORY_COLORS)];
 
-export function LibraryView() {
+interface LibraryViewProps {
+  initialTag?: string | null;
+  onTagConsumed?: () => void;
+}
+
+export function LibraryView({ initialTag, onTagConsumed }: LibraryViewProps = {}) {
   const [items, setItems]           = useState<GistItem[]>([]);
   const [loading, setLoading]       = useState(true);
   const [error, setError]           = useState<string | null>(null);
@@ -190,8 +195,18 @@ export function LibraryView() {
   const [searchFocused, setSearchFocused] = useState(false);
 
   const [activeFilter, setFilter]   = useState("All");
+  const [activeTag, setActiveTag]   = useState<string | null>(null);
   const [selectedItem, setSelected] = useState<GistItem | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+
+  // Consume the pending tag from Dashboard on first render
+  useEffect(() => {
+    if (initialTag) {
+      setActiveTag(initialTag);
+      onTagConsumed?.();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -217,11 +232,15 @@ export function LibraryView() {
     return () => { cancelled = true; };
   }, [retryCount]);
 
-  // Filtered display items
+  // Filtered display items — category filter AND tag filter applied together
   const displayItems = useMemo(() => {
     const base = askResult ? askResult.sources : items;
-    return activeFilter === "All" ? base : base.filter((i) => i.category === activeFilter);
-  }, [items, askResult, activeFilter]);
+    return base.filter((i) => {
+      const catMatch = activeFilter === "All" || i.category === activeFilter;
+      const tagMatch = !activeTag || (i.tags ?? []).includes(activeTag);
+      return catMatch && tagMatch;
+    });
+  }, [items, askResult, activeFilter, activeTag]);
 
   const handleAsk = async () => {
     const q = query.trim();
@@ -393,11 +412,17 @@ export function LibraryView() {
       return (
         <div className={styles.emptyState}>
           <p className={styles.emptyText}>
-            No <span style={{ color: "#f0f0f0" }}>{activeFilter}</span> gists found.
+            No{activeFilter !== "All" && <> <span style={{ color: "#f0f0f0" }}>{activeFilter}</span></>} gists
+            {activeTag && <> tagged <span style={{ color: "#10b981" }}>#{activeTag}</span></>} found.
           </p>
-          <button className={styles.pill} onClick={() => setFilter("All")} style={{ marginTop: 4 }}>
-            Clear filter
-          </button>
+          <div style={{ display: "flex", gap: "6px", marginTop: 4 }}>
+            {activeFilter !== "All" && (
+              <button className={styles.pill} onClick={() => setFilter("All")}>Clear category</button>
+            )}
+            {activeTag && (
+              <button className={styles.pill} onClick={() => setActiveTag(null)}>Clear tag</button>
+            )}
+          </div>
         </div>
       );
     }
@@ -421,7 +446,23 @@ export function LibraryView() {
   return (
     <div className={styles.container}>
       <div className={styles.toolbar}>
-        <p className={styles.toolbarTitle}>Library</p>
+        <div className={styles.toolbarTitleRow}>
+          <p className={styles.toolbarTitle}>Library</p>
+          {activeTag && (
+            <span className={styles.activeTagBadge}>
+              #{activeTag}
+              <button
+                className={styles.activeTagClear}
+                onClick={() => setActiveTag(null)}
+                aria-label={`Clear tag filter: ${activeTag}`}
+              >
+                <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
+                  <line x1="1" y1="1" x2="7" y2="7" /><line x1="7" y1="1" x2="1" y2="7" />
+                </svg>
+              </button>
+            </span>
+          )}
+        </div>
         {searchBar}
       </div>
 

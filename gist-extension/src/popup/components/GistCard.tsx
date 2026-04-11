@@ -81,6 +81,15 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
         {item.original_text}
       </p>
 
+      {/* Tag chips */}
+      {item.tags && item.tags.length > 0 && (
+        <div className={styles.tagRow}>
+          {item.tags.map((tag) => (
+            <span key={tag} className={styles.tagChip}>#{tag}</span>
+          ))}
+        </div>
+      )}
+
       {/* Expanded body — list mode only */}
       {expanded && variant === "list" && (
         <div className={styles.expandedBody}>
