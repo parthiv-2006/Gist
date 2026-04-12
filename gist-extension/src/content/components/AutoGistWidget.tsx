@@ -48,13 +48,17 @@ export function AutoGistWidget({ state, takeaways, onDismiss }: AutoGistWidgetPr
         )}
 
         {state === "loading" && (
-          <p className={styles.hint}>Reading…</p>
+          <div className={styles.loadingSkeleton}>
+            <div className={styles.skeletonBar} />
+            <div className={styles.skeletonBar} />
+            <div className={styles.skeletonBar} />
+          </div>
         )}
 
         {state === "ready" && takeaways.length > 0 && (
           <div className={styles.takeaways}>
             {takeaways.map((point, i) => (
-              <div key={i} className={styles.takeaway}>
+              <div key={i} className={styles.takeaway} style={{ animationDelay: `${i * 60}ms` }}>
                 <div className={styles.bullet} />
                 <p className={styles.takeawayText}>{point}</p>
               </div>

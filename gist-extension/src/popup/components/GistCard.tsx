@@ -35,7 +35,8 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
       onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(); } }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`${styles.card} ${expanded ? styles.cardExpanded : ""} ${hovered ? styles.cardHovered : ""}`}
+      className={`${styles.card} ${variant === "list" ? styles.cardList : ""} ${expanded ? styles.cardExpanded : ""} ${hovered ? styles.cardHovered : ""}`}
+      style={variant === "list" ? { "--card-accent": color } as React.CSSProperties : undefined}
     >
       {/* Top row */}
       <div className={styles.topRow}>
@@ -76,9 +77,9 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
         </div>
       </div>
 
-      {/* Preview text */}
+      {/* Preview text — AI explanation is the value; show it first */}
       <p className={`${styles.previewText} ${expanded && variant === "list" ? styles.previewExpanded : ""}`}>
-        {item.original_text}
+        {item.explanation}
       </p>
 
       {/* Tag chips */}
@@ -93,7 +94,8 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
       {/* Expanded body — list mode only */}
       {expanded && variant === "list" && (
         <div className={styles.expandedBody}>
-          <p className={styles.explanationText}>{item.explanation}</p>
+          <p className={styles.originalLabel}>Original</p>
+          <p className={styles.explanationText}>{item.original_text}</p>
           {item.url && item.url !== "Unknown page" && (
             <p className={styles.urlText} style={{ fontFamily: MONO }}>{item.url}</p>
           )}

@@ -24,6 +24,10 @@
   outline-offset: 1px;
 }
 
+.cardList {
+  border-left: 2px solid var(--card-accent, transparent);
+}
+
 .topRow {
   display: flex;
   align-items: center;
@@ -124,6 +128,15 @@
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid #1e1e1e;
+}
+
+.originalLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #363636;
+  margin: 0 0 6px;
 }
 
 .explanationText {

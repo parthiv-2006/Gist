@@ -151,6 +151,16 @@
 .headerActions {
   display: flex;
   gap: 3px;
+  align-items: center;
+}
+
+.headerSep {
+  width: 1px;
+  height: 13px;
+  background: var(--gist-border-mid);
+  flex-shrink: 0;
+  align-self: center;
+  margin: 0 3px;
 }
 
 /* ── Brand ───────────────────────────────────────────────────── */
@@ -166,14 +176,10 @@
   flex: 1;
 }
 
-.brandDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--gist-accent);
-  box-shadow: 0 0 7px var(--gist-accent-glow);
-  flex-shrink: 0;
-  display: block;
+.brandName {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 /* ── Header Action Buttons ───────────────────────────────────── */
@@ -729,6 +735,52 @@
   padding: 10px;
   font-size: 12px;
   color: var(--gist-text-error);
+}
+
+/* ── Breadcrumb ──────────────────────────────────────────────── */
+
+.breadcrumb {
+  display: flex;
+  gap: 1px;
+  align-items: center;
+  padding: 5px 10px 5px 8px;
+  border-bottom: 1px solid var(--gist-border);
+  overflow-x: auto;
+  white-space: nowrap;
+  flex-shrink: 0;
+  scrollbar-width: none;
+}
+
+.breadcrumb::-webkit-scrollbar {
+  display: none;
+}
+
+.breadcrumbBtn {
+  background: none;
+  border: none;
+  color: var(--gist-accent);
+  cursor: pointer;
+  font-size: 11px;
+  font-family: var(--gist-font-family);
+  padding: 2px 5px;
+  border-radius: 3px;
+  transition: background 120ms ease;
+  max-width: 110px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.breadcrumbBtn:hover {
+  background: var(--gist-bg-hover);
+}
+
+.breadcrumbSep {
+  color: var(--gist-text-muted);
+  font-size: 10px;
+  flex-shrink: 0;
+  padding: 0 2px;
+  opacity: 0.55;
 }
 
 /* ── Explanation text (legacy) ───────────────────────────────── */
