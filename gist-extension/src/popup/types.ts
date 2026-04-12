@@ -22,7 +22,7 @@ export interface AskResult {
 
 export type AskState = "idle" | "searching" | "done" | "error";
 
-export type DashboardRoute = "home" | "library" | "synapse" | "settings";
+export type DashboardRoute = "home" | "library" | "synapse" | "settings" | "recall";
 
 export interface SynapseNode {
   id:         string;

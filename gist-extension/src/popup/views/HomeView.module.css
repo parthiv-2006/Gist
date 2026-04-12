@@ -8,115 +8,290 @@
   100% { background-position: -200% 0; }
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.45; }
+}
+
+/* ── Container ── */
+
 .container {
-  padding: 36px 40px 60px;
+  padding: 40px 44px 80px;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: 38px;
   animation: viewEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
   max-width: 960px;
   margin: 0 auto;
 }
 
-/* ── Section header ── */
-
-.sectionHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-}
+/* ── Section title ── */
 
 .sectionTitle {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.11em;
   text-transform: uppercase;
   color: #484848;
+  margin: 0 0 14px;
 }
 
-/* ── Metrics row ── */
+/* ── Hero ── */
 
-.metricsRow {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
-}
-
-.metricCard {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid #1e1e1e;
-  border-radius: 12px;
-  padding: 20px 22px;
-  transition: border-color 200ms ease, transform 150ms ease, box-shadow 150ms ease;
-  cursor: default;
-}
-
-.metricCard:hover {
-  border-color: #2a2a2a;
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.25);
-}
-
-.metricValue {
-  font-size: 32px;
-  font-weight: 800;
+.heroNumber {
+  font-size: 80px;
+  font-weight: 900;
   color: #f0f0f0;
-  letter-spacing: -0.03em;
-  line-height: 1;
-  margin-bottom: 6px;
+  letter-spacing: -0.04em;
+  line-height: 0.88;
+  margin-bottom: 10px;
+  font-variant-numeric: tabular-nums;
 }
 
-.metricValueAccent {
+.heroLabel {
+  font-size: 13px;
+  color: #484848;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
+
+.heroMeta {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+
+.heroMetaItem {
+  font-size: 12px;
+  color: #888;
+}
+
+.heroMetaHi {
+  color: #c8c8c8;
+  font-weight: 600;
+}
+
+.heroMetaDot {
+  font-size: 12px;
+  color: #2a2a2a;
+}
+
+.heroSkeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ── Recall prompt ── */
+
+.recallPrompt {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px solid rgba(16, 185, 129, 0.12);
+  border-radius: 9px;
+}
+
+.recallDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #10b981;
+  flex-shrink: 0;
+  box-shadow: 0 0 5px rgba(16, 185, 129, 0.45);
+  animation: pulse 2.2s ease infinite;
+}
+
+.recallText {
+  flex: 1;
+  font-size: 12.5px;
+  color: #888;
+}
+
+.recallCount {
   color: #10b981;
+  font-weight: 600;
 }
 
-.metricLabel {
+.recallBtn {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: #10b981;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 0;
+  font-family: inherit;
+  transition: opacity 150ms ease;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.recallBtn:hover {
+  opacity: 0.7;
+}
+
+/* ── Category breakdown ── */
+
+.catList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.catRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.catLabel {
   font-size: 11px;
-  color: #888888;
+  font-weight: 600;
+  width: 58px;
+  flex-shrink: 0;
+  letter-spacing: 0.01em;
+}
+
+.catBarTrack {
+  flex: 1;
+  height: 3px;
+  background: #161616;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.catBar {
+  height: 100%;
+  border-radius: 2px;
+  opacity: 0.7;
+  transition: width 700ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.catCount {
+  font-size: 11px;
+  color: #484848;
+  width: 22px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+/* ── Weekly bars ── */
+
+.barsRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.barCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+}
+
+.barOuter {
+  width: 100%;
+  height: 36px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.bar {
+  width: 100%;
+  max-width: 26px;
+  background: #1e1e1e;
+  border-radius: 3px 3px 1px 1px;
+  min-height: 2px;
+  transition: height 550ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.barToday {
+  background: rgba(16, 185, 129, 0.5);
+}
+
+.barLabel {
+  font-size: 9.5px;
+  color: #363636;
   font-weight: 500;
 }
 
-.metricSub {
-  font-size: 10px;
-  color: #484848;
-  margin-top: 3px;
+.barLabelToday {
+  color: #10b981;
 }
 
-/* ── Skeleton ── */
-
-.skeletonCard {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #1a1a1a;
-  border-radius: 12px;
-  padding: 20px 22px;
+.barsSkeletonRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 50px;
 }
 
-.skeletonLine {
+/* ── Recent feed ── */
+
+.feedList {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.feedGroup {
+  /* no card wrapper — intentionally flat */
+}
+
+.feedDayLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #2e2e2e;
+  margin: 0 0 8px;
+}
+
+.feedItem {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 7px 0;
+  border-bottom: 1px solid #0f0f0f;
+}
+
+.feedItem:last-child {
+  border-bottom: none;
+}
+
+.feedCat {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 2px 7px;
   border-radius: 4px;
-  background: linear-gradient(90deg, #161616 25%, #242424 50%, #161616 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.5s linear infinite;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
-.skeletonValue {
-  height: 32px;
-  width: 60%;
-  margin-bottom: 8px;
-}
-
-.skeletonLabel {
-  height: 11px;
-  width: 40%;
+.feedSnippet {
+  font-size: 12.5px;
+  color: #888;
+  line-height: 1.5;
+  min-width: 0;
 }
 
 /* ── Heatmap ── */
 
 .heatmapOuter {
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #1e1e1e;
-  border-radius: 12px;
-  padding: 20px 22px;
+  background: rgba(255, 255, 255, 0.015);
+  border: 1px solid #161616;
+  border-radius: 10px;
+  padding: 16px 18px;
   overflow-x: auto;
 }
 
@@ -141,64 +316,65 @@
 .heatmapLegend {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 5px;
+  margin-top: 8px;
   justify-content: flex-end;
 }
 
 .legendLabel {
   font-size: 9px;
-  color: #484848;
+  color: #363636;
 }
 
 .legendCell {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   border-radius: 2px;
 }
 
-/* ── Insights card ── */
+/* ── Tags ── */
 
-.insightsCard {
-  background: rgba(16, 185, 129, 0.05);
-  border: 1px solid rgba(16, 185, 129, 0.16);
-  border-radius: 12px;
-  padding: 20px 22px;
-}
-
-.insightsHeader {
+.tagCloudRow {
   display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tagCloudChip {
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  margin-bottom: 10px;
-}
-
-.insightsDot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #10b981;
-  flex-shrink: 0;
-}
-
-.insightsTitle {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  text-transform: uppercase;
-  color: #10b981;
-}
-
-.insightsText {
-  margin: 0;
-  font-size: 13px;
-  color: #888888;
-  line-height: 1.7;
-}
-
-.insightsTextHighlight {
-  color: #f0f0f0;
+  gap: 5px;
+  padding: 5px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid #1a1a1a;
+  border-radius: 6px;
+  color: #888;
+  font-size: 11px;
   font-weight: 500;
+  cursor: pointer;
+  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.tagCloudChip:hover {
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.24);
+  background: rgba(16, 185, 129, 0.05);
+}
+
+.tagCloudChip:focus-visible {
+  outline: 1.5px solid rgba(16, 185, 129, 0.5);
+  outline-offset: 2px;
+}
+
+.tagCloudCount {
+  font-size: 9px;
+  color: #484848;
+}
+
+.tagSkeletonRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 /* ── Empty state ── */
@@ -210,74 +386,57 @@
   justify-content: center;
   gap: 12px;
   padding: 48px 0;
-  color: #484848;
   text-align: center;
 }
 
 .emptyIcon {
-  opacity: 0.35;
+  opacity: 0.25;
 }
 
 .emptyText {
   font-size: 13px;
   color: #484848;
   line-height: 1.7;
+  margin: 0;
 }
 
-/* ── Top Tags ── */
+/* ── Skeleton ── */
 
-.tagCloudRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+.skeletonLine {
+  border-radius: 4px;
+  background: linear-gradient(90deg, #0e0e0e 25%, #1c1c1c 50%, #0e0e0e 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s linear infinite;
 }
 
-.tagCloudChip {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 11px;
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid #1e1e1e;
-  border-radius: 7px;
-  color: #888888;
-  font-size: 11.5px;
-  font-weight: 500;
-  font-family: 'Space Mono', 'Fira Code', monospace;
-  cursor: pointer;
-  transition: color 150ms ease, border-color 150ms ease, background 150ms ease;
-  letter-spacing: 0.01em;
+.skHeroNum {
+  height: 68px;
+  width: 110px;
 }
 
-.tagCloudChip:hover {
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.28);
-  background: rgba(16, 185, 129, 0.06);
+.skHeroSub {
+  height: 12px;
+  width: 80px;
 }
 
-.tagCloudChip:focus-visible {
-  outline: 1.5px solid rgba(16, 185, 129, 0.5);
-  outline-offset: 2px;
+.skHeroMeta {
+  height: 12px;
+  width: 200px;
+  margin-top: 2px;
 }
 
-.tagCloudCount {
-  font-size: 9px;
-  color: #484848;
-  font-family: inherit;
+.skBar {
+  flex: 1;
+  border-radius: 3px 3px 1px 1px !important;
 }
 
-.tagSkeletonRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-}
-
-.tagSkeletonChip {
-  height: 28px !important;
-  border-radius: 7px !important;
+.skTagChip {
+  height: 27px !important;
+  border-radius: 6px !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .container   { animation: none; }
-  .skeletonLine { animation: none; background: #1a1a1a; }
+  .container    { animation: none; }
+  .skeletonLine { animation: none; background: #111; }
+  .recallDot    { animation: none; }
 }
