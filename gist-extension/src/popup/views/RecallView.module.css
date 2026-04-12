@@ -1,0 +1,331 @@
+@keyframes viewEnter {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes drawCircle {
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Container ── */
+
+.container {
+  padding: 40px 44px 80px;
+  max-width: 600px;
+  margin: 0 auto;
+  animation: viewEnter 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* ── Header ── */
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.headerLabel {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #484848;
+}
+
+.headerCount {
+  font-size: 11px;
+  color: #363636;
+}
+
+/* ── Progress ── */
+
+.progressTrack {
+  height: 2px;
+  background: #161616;
+  border-radius: 2px;
+  margin-bottom: 28px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981, #34d399);
+  border-radius: 2px;
+  transition: width 500ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ── Card ── */
+
+.card {
+  background: rgba(255, 255, 255, 0.022);
+  border: 1px solid #1e1e1e;
+  border-radius: 14px;
+  padding: 26px 28px;
+  margin-bottom: 14px;
+}
+
+.cardMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.categoryBadge {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 5px;
+  flex-shrink: 0;
+}
+
+.cardMode {
+  font-size: 11px;
+  color: #363636;
+  flex: 1;
+}
+
+.skipBtn {
+  font-size: 11px;
+  color: #363636;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: color 150ms ease;
+  font-family: inherit;
+}
+
+.skipBtn:hover {
+  color: #888;
+}
+
+/* ── Card sections ── */
+
+.cardSection {
+  /* spacing provided by parent context */
+}
+
+.sectionLabel {
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #363636;
+  margin: 0 0 9px;
+}
+
+.originalText {
+  font-size: 14px;
+  color: #f0f0f0;
+  line-height: 1.65;
+  margin: 0;
+}
+
+/* ── Answer ── */
+
+.answerSection {
+  margin-top: 22px;
+}
+
+.answerDivider {
+  height: 1px;
+  background: #1a1a1a;
+  margin-bottom: 18px;
+}
+
+.showAnswerBtn {
+  width: 100%;
+  padding: 11px 16px;
+  background: none;
+  border: 1px solid #1e1e1e;
+  border-radius: 8px;
+  color: #484848;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: border-color 150ms ease, color 150ms ease, background 150ms ease;
+}
+
+.showAnswerBtn:hover {
+  border-color: #2a2a2a;
+  color: #888;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.showAnswerArrow {
+  opacity: 0.4;
+}
+
+.answerReveal {
+  animation: fadeIn 200ms ease both;
+}
+
+.explanationText {
+  font-size: 13.5px;
+  color: #c0c0c0;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ── Actions ── */
+
+.actions {
+  display: flex;
+  gap: 10px;
+  animation: fadeIn 180ms ease both;
+  margin-bottom: 14px;
+}
+
+.againBtn {
+  flex: 1;
+  padding: 11px 16px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.18);
+  border-radius: 9px;
+  color: #f87171;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.againBtn:hover {
+  background: rgba(239, 68, 68, 0.09);
+  border-color: rgba(239, 68, 68, 0.28);
+}
+
+.goodBtn {
+  flex: 1.5;
+  padding: 11px 16px;
+  background: rgba(16, 185, 129, 0.07);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 9px;
+  color: #10b981;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background 150ms ease, border-color 150ms ease;
+}
+
+.goodBtn:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.32);
+}
+
+/* ── Keyboard hint ── */
+
+.hint {
+  text-align: center;
+  font-size: 10.5px;
+  color: #2a2a2a;
+  font-family: 'Space Mono', 'Fira Code', monospace;
+  margin: 0;
+}
+
+/* ── Centered states ── */
+
+.centeredState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 80px 0;
+  text-align: center;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 2px solid #1e1e1e;
+  border-top-color: #10b981;
+  border-radius: 50%;
+  animation: spin 0.85s linear infinite;
+}
+
+.stateIcon {
+  opacity: 0.7;
+}
+
+.stateTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: #888;
+  margin: 0;
+}
+
+.stateText {
+  font-size: 13px;
+  color: #484848;
+  margin: 0;
+}
+
+.stateSubtext {
+  font-size: 13px;
+  color: #484848;
+  line-height: 1.7;
+  margin: 0;
+  max-width: 280px;
+}
+
+.accentText {
+  color: #10b981;
+  font-weight: 600;
+}
+
+/* ── Complete animation ── */
+
+.completeCheck {
+  margin-bottom: 4px;
+}
+
+.circleAnim {
+  stroke-dasharray: 151;
+  stroke-dashoffset: 151;
+  animation: drawCircle 650ms cubic-bezier(0.4, 0, 0.2, 1) 80ms both;
+}
+
+.checkAnim {
+  stroke-dasharray: 34;
+  stroke-dashoffset: 34;
+  animation: drawCheck 380ms cubic-bezier(0.4, 0, 0.2, 1) 580ms both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .container { animation: none; }
+  .spinner   { animation: none; }
+  .circleAnim, .checkAnim { animation: none; stroke-dashoffset: 0; }
+}

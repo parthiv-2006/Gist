@@ -127,6 +127,14 @@ export const IconExport = () => (
   </svg>
 );
 
+export const IconRecall = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74" />
+    <path d="M3 3v4h4" />
+    <path d="M12 7v5l3 3" />
+  </svg>
+);
+
 export const IconSynapse = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
     <circle cx="12" cy="5" r="2" />

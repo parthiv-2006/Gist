@@ -15,6 +15,13 @@ const MODES: { value: ComplexityLevel; label: string }[] = [
   { value: "academic", label: "Academic" },
 ];
 
+const MODE_COLORS: Record<string, string> = {
+  standard: "#10b981",
+  simple:   "#60a5fa",
+  legal:    "#f59e0b",
+  academic: "#a78bfa",
+};
+
 const DEFAULT_WIDTH  = 340;
 const DEFAULT_HEIGHT = 380;
 const MARGIN         = 12;
@@ -287,8 +294,12 @@ export function Popover({
         onMouseDown={handleHeaderMouseDown}
       >
         <div className={styles.brand}>
-          <span className={styles.brandDot} />
-          Gist
+          <svg width="15" height="15" viewBox="0 0 28 28" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+            <rect width="28" height="28" rx="6" fill="#10b981" />
+            <path d="M8 14.5C8 11.46 10.46 9 13.5 9H16v2.5h-2.5a2.5 2.5 0 0 0 0 5H16V19h-2.5C10.46 19 8 16.54 8 13.5z" fill="white" />
+            <path d="M14 14h6v2.5h-6V14z" fill="white" />
+          </svg>
+          <span className={styles.brandName}>Gist</span>
         </div>
         <div className={styles.headerActions}>
           {ttsState !== "idle" && (
@@ -318,6 +329,7 @@ export function Popover({
           >
             <BookOpen size={16} />
           </button>
+          <div className={styles.headerSep} aria-hidden="true" />
           <button
             className={styles.closeButton}
             onClick={onToggleSidebar}
@@ -352,6 +364,11 @@ export function Popover({
             <button
               key={value}
               className={`${styles.modeButton} ${mode === value ? styles.modButtonActive : ""}`}
+              style={mode === value ? {
+                color: MODE_COLORS[value],
+                background: `${MODE_COLORS[value]}14`,
+                borderColor: `${MODE_COLORS[value]}30`,
+              } : {}}
               aria-pressed={mode === value}
               disabled={state === "LOADING" || state === "STREAMING"}
               onClick={() => onModeChange(value)}
@@ -364,55 +381,20 @@ export function Popover({
 
       {/* Breadcrumb trail for drilling */}
       {drillingStack.length > 0 && (
-        <div style={{
-          fontSize: "11px",
-          color: "#888888",
-          padding: "6px 12px",
-          borderBottom: "1px solid #2a2a2a",
-          overflow: "auto",
-          whiteSpace: "nowrap",
-          display: "flex",
-          gap: "4px",
-          alignItems: "center",
-        }}>
+        <div className={styles.breadcrumb}>
           <button
+            className={styles.breadcrumbBtn}
             onClick={() => onJumpToDrillingLevel?.(-1)}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#10b981",
-              cursor: "pointer",
-              fontSize: "11px",
-              padding: "2px 6px",
-              borderRadius: "3px",
-              transition: "background 120ms",
-            }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#1d1d1d"; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
             title="Back to root explanation"
           >
             ← Root
           </button>
           {drillingStack.map((level, idx) => (
             <React.Fragment key={idx}>
-              <span style={{ opacity: 0.5 }}>›</span>
+              <span className={styles.breadcrumbSep} aria-hidden="true">›</span>
               <button
+                className={styles.breadcrumbBtn}
                 onClick={() => onJumpToDrillingLevel?.(idx)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  color: "#10b981",
-                  cursor: "pointer",
-                  fontSize: "11px",
-                  padding: "2px 6px",
-                  borderRadius: "3px",
-                  maxWidth: "120px",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  transition: "background 120ms",
-                }}
-                onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "#1d1d1d"; }}
-                onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = "none"; }}
                 title={level.term}
               >
                 {level.term}
