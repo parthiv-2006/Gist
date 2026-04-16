@@ -1,6 +1,7 @@
 // src/content/components/Popover.tsx
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
+import DOMPurify from "dompurify";
 import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus, Bookmark, Check, Network } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
@@ -447,6 +448,8 @@ export function Popover({
                 style={{ cursor: "default", userSelect: "text" }}
               >
                 <ReactMarkdown
+                  allowedElements={["p","br","strong","em","code","pre","h1","h2","h3","h4","ul","ol","li","blockquote","a"]}
+                  unwrapDisallowed={true}
                   components={{
                     code({ node, className, children, ...props }) {
                       const match = /language-(\w+)/.exec(className || "");
@@ -540,7 +543,7 @@ export function Popover({
         {state === "STREAMING" && (
           <div className={`${styles.message} ${styles.modelMessage}`}>
             <div className={`${styles.markdown} ${styles.streaming}`}>
-              <ReactMarkdown>{text}</ReactMarkdown>
+              <ReactMarkdown allowedElements={["p","br","strong","em","code","pre","h1","h2","h3","h4","ul","ol","li","blockquote"]} unwrapDisallowed={true}>{text}</ReactMarkdown>
             </div>
           </div>
         )}
@@ -595,14 +598,26 @@ export function Popover({
 }
 
 // ─── SVG sanitizer ───────────────────────────────────────────────────────────
-// mermaid.ink returns server-rendered SVG (no user content), but strip any
-// script tags and inline event handlers as a belt-and-suspenders measure.
+const _SVG_ALLOWED_TAGS = [
+  "svg", "g", "path", "rect", "text", "tspan", "circle", "ellipse",
+  "line", "polyline", "polygon", "defs", "marker", "use", "title",
+  "desc", "clipPath", "mask", "linearGradient", "radialGradient", "stop",
+];
+const _SVG_ALLOWED_ATTR = [
+  "class", "id", "d", "fill", "stroke", "stroke-width", "stroke-dasharray",
+  "cx", "cy", "r", "rx", "ry", "x", "y", "x1", "y1", "x2", "y2",
+  "width", "height", "transform", "viewBox", "xmlns", "marker-end",
+  "marker-start", "marker-mid", "refX", "refY", "markerWidth", "markerHeight",
+  "orient", "points", "opacity", "font-size", "font-family", "text-anchor",
+  "dominant-baseline", "clip-path", "mask", "href", "gradientUnits",
+  "gradientTransform", "offset", "stop-color", "stop-opacity", "preserveAspectRatio",
+];
+
 function sanitizeSvg(svg: string): string {
-  return svg
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
-    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
-    .replace(/javascript:/gi, "");
+  return DOMPurify.sanitize(svg, {
+    ALLOWED_TAGS: _SVG_ALLOWED_TAGS,
+    ALLOWED_ATTR: _SVG_ALLOWED_ATTR,
+  });
 }
 
 // ─── Positioning helpers ─────────────────────────────────────────────────────

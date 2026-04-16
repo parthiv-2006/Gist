@@ -115,12 +115,6 @@ function GistDrawer({ item, open, onClose, onDeleted }: GistDrawerProps) {
                 rel="noopener noreferrer"
                 className={styles.sourceRow}
               >
-                <img
-                  className={styles.favicon}
-                  src={`https://www.google.com/s2/favicons?domain=${domain}&sz=16`}
-                  alt=""
-                  onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }}
-                />
                 <span className={styles.sourceUrl} style={{ fontFamily: MONO }}>{domain}</span>
                 <span className={styles.externalIcon}><IconExternalLink /></span>
               </a>

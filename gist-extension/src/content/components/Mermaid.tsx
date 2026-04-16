@@ -3,6 +3,20 @@
 //   1. svg prop — renders the pre-rendered SVG string from the /api/v1/visualize backend.
 //   2. chart prop — fallback raw code block, used when ReactMarkdown emits a ```mermaid fence
 //      (bundling the mermaid JS library crashes Chrome due to KaTeX BOM / UTF-16 surrogate issues).
+import DOMPurify from "dompurify";
+
+const _SVG_ALLOWED_TAGS = [
+  "svg","g","path","rect","text","tspan","circle","ellipse","line",
+  "polyline","polygon","defs","marker","use","title","desc","clipPath",
+  "linearGradient","radialGradient","stop",
+];
+const _SVG_ALLOWED_ATTR = [
+  "class","id","d","fill","stroke","stroke-width","cx","cy","r","rx","ry",
+  "x","y","x1","y1","x2","y2","width","height","transform","viewBox","xmlns",
+  "marker-end","marker-start","refX","refY","markerWidth","markerHeight",
+  "orient","points","opacity","font-size","font-family","text-anchor",
+  "dominant-baseline","gradientUnits","offset","stop-color","preserveAspectRatio",
+];
 
 interface MermaidProps {
   chart?: string;
@@ -22,9 +36,7 @@ export const Mermaid = ({ chart, svg }: MermaidProps) => {
           overflowX: "auto",
           textAlign: "center",
         }}
-        // SVG from mermaid.ink is server-rendered, not user-supplied HTML.
-        // It contains no script tags — only path/rect/text SVG elements.
-        dangerouslySetInnerHTML={{ __html: svg }}
+        dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(svg, { ALLOWED_TAGS: _SVG_ALLOWED_TAGS, ALLOWED_ATTR: _SVG_ALLOWED_ATTR }) }}
       />
     );
   }

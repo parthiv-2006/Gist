@@ -79,6 +79,8 @@ async function ensureContentScript(tabId: number): Promise<void> {
 }
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
+  // Only accept messages from our own extension (content scripts, popup)
+  if (sender.id !== chrome.runtime.id) return;
   if (!isGistMessage(message)) return;
 
   if (message.type === "CAPTURE_VISIBLE_TAB") {

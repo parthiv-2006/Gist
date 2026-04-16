@@ -103,11 +103,6 @@ export function mountPopover(): void {
 
   shadowRoot = shadowHost.attachShadow({ mode: "open" });
 
-  const fontLink = document.createElement("link");
-  fontLink.rel = "stylesheet";
-  fontLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap";
-  shadowRoot.appendChild(fontLink);
-
   const style = document.createElement("style");
   style.textContent = `
     :host { all: initial; display: block; contain: content; }
