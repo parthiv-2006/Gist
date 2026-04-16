@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from google import genai
 from pydantic import BaseModel, field_validator
 
+from app.limiter import limiter
 from app.services.gemini import GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
@@ -139,6 +140,7 @@ async def _scan_terms(text: str, page_context: str) -> list[dict]:
 
 
 @router.post("/api/v1/scan-terms")
+@limiter.limit("30/minute")
 async def scan_terms(request: Request):
     """
     Accept a text chunk and return up to 5 difficult terms with definitions.

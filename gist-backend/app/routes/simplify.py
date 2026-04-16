@@ -6,6 +6,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import StreamingResponse, JSONResponse
 from pydantic import ValidationError
 
+from app.limiter import limiter
 from app.models.schemas import SimplifyRequest
 from app.services.gemini import stream_explanation
 
@@ -15,6 +16,7 @@ router = APIRouter()
 
 
 @router.post("/api/v1/simplify")
+@limiter.limit("30/minute")
 async def simplify(request: Request):
     # 1. Parse and validate the request body
     try:

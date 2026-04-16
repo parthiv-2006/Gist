@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from google import genai
 from pydantic import BaseModel, field_validator
 
+from app.limiter import limiter
 from app.services.gemini import GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
@@ -131,6 +132,7 @@ async def _generate_takeaways(text: str) -> list[str]:
 
 
 @router.post("/autogist")
+@limiter.limit("30/minute")
 async def autogist(request: Request):
     """
     Accepts a viewport text chunk and returns 3 key takeaways.

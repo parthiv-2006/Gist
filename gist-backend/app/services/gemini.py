@@ -111,7 +111,9 @@ def build_prompt(
     )
 
     if selected_text:
-        prompt += f"<selected_text>{selected_text}</selected_text>"
+        # Escape XML special chars so user content cannot break out of its delimiter
+        escaped = selected_text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        prompt += f"<selected_text>{escaped}</selected_text>"
     elif has_image:
         prompt += "<selected_text>User captured an area of the screen for explanation.</selected_text>"
 
@@ -238,7 +240,7 @@ _TAG_PROMPT = (
 )
 
 _TAG_MAX_CHARS = 500
-_TAG_VALID_RE = re.compile(r"^[a-z0-9][a-z0-9 -]{0,29}$")
+_TAG_VALID_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,29}$")
 
 
 def _scrub_tag_input(text: str) -> str:

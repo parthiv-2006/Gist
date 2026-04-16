@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse
 from google import genai
 from pydantic import BaseModel, field_validator
 
+from app.limiter import limiter
 from app.services.gemini import GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
@@ -81,6 +82,7 @@ async def _get_nested_definition(term: str, parent_context: str) -> str:
 
 
 @router.post("/api/v1/nested-gist")
+@limiter.limit("30/minute")
 async def nested_gist(request: Request):
     """
     Accept a term and return a concise definition for progressive disclosure.

@@ -13,6 +13,7 @@ from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app.db import get_db
+from app.limiter import limiter
 from app.services.gemini import embed_text, stream_explanation
 
 logger = logging.getLogger(__name__)
@@ -105,6 +106,7 @@ async def semantic_search(db, query_embedding: list[float], top_k: int = _TOP_K)
 
 
 @router.post("/library/ask")
+@limiter.limit("20/minute")
 async def ask_library(request: Request):
     """
     Perform a semantic RAG query over the user's saved gist library.
@@ -120,6 +122,8 @@ async def ask_library(request: Request):
     query: str = (body.get("query") or "").strip()
     if not query:
         return JSONResponse(status_code=400, content={"error": "query is required.", "code": "EMPTY_QUERY"})
+    if len(query) > 500:
+        return JSONResponse(status_code=400, content={"error": "Query too long (max 500 chars).", "code": "QUERY_TOO_LONG"})
 
     db = get_db()
     if db is None:

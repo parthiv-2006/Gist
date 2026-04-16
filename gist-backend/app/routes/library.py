@@ -9,9 +9,11 @@ from datetime import datetime, timezone
 
 from bson import ObjectId
 from bson.errors import InvalidId
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
+
+from app.limiter import limiter
 
 from app.db import get_db
 from app.services.gemini import embed_text, generate_tags
@@ -23,14 +25,15 @@ router = APIRouter()
 
 
 class SaveGistRequest(BaseModel):
-    original_text: str
-    explanation: str
-    mode: str
-    url: str
+    original_text: str = Field(max_length=10_000)
+    explanation: str = Field(max_length=10_000)
+    mode: str = Field(max_length=50)
+    url: str = Field(max_length=2048)
 
 
 @router.post("/library/save")
-async def save_gist(body: SaveGistRequest):
+@limiter.limit("10/minute")
+async def save_gist(request: Request, body: SaveGistRequest):
     """Manually save a gist to MongoDB."""
     db = get_db()
     if db is None:

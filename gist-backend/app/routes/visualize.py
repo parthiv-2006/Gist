@@ -18,11 +18,12 @@ import re
 from typing import Optional
 
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 from google import genai
 from pydantic import BaseModel, field_validator
 
+from app.limiter import limiter
 from app.services.gemini import GEMINI_MODEL
 
 logger = logging.getLogger(__name__)
@@ -195,7 +196,8 @@ async def _generate_mermaid(text: str) -> str:
 # ─── Route ────────────────────────────────────────────────────────────────────
 
 @router.post("/api/v1/visualize")
-async def visualize(body: VisualizeRequest):
+@limiter.limit("20/minute")
+async def visualize(request: Request, body: VisualizeRequest):
     """
     Generate a Mermaid.js diagram from an explanation and return the SVG.
 

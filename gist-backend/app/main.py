@@ -6,9 +6,12 @@ from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from dotenv import load_dotenv
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 logger = logging.getLogger(__name__)
 
+from app.limiter import limiter
 from app.routes.simplify import router as simplify_router
 from app.routes.library import router as library_router
 from app.routes.search import router as search_router
@@ -20,6 +23,13 @@ from app.routes.synapse import router as synapse_router
 from app.db import connect_db, disconnect_db
 
 load_dotenv()  # Load .env if present (local dev only)
+
+_DEBUG = os.environ.get("DEBUG", "").lower() in ("1", "true", "yes")
+_MOCK_LLM = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
+
+# Warn at startup if critical env vars are missing (errors will surface per-request otherwise)
+if not _MOCK_LLM and not os.environ.get("GEMINI_API_KEY"):
+    logger.warning("GEMINI_API_KEY is not set — all LLM endpoints will fail")
 
 
 @asynccontextmanager
@@ -36,6 +46,9 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 # ─── Security Headers Middleware ──────────────────────────────────────────────
 
 @app.middleware("http")
@@ -50,6 +63,7 @@ async def add_security_headers(request: Request, call_next) -> Response:
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["Referrer-Policy"] = "no-referrer"
+    response.headers["Strict-Transport-Security"] = "max-age=63072000; includeSubDomains"
     return response
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
@@ -63,9 +77,9 @@ allowed_origins = [o.strip() for o in allowed_origins_raw.split(",")]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["POST", "GET", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Accept"],
 )
 
 app.include_router(simplify_router)
@@ -80,7 +94,7 @@ app.include_router(synapse_router)
 
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-    logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=True)
+    logger.error("Unhandled exception on %s %s: %s", request.method, request.url.path, exc, exc_info=_DEBUG)
     return JSONResponse(
         status_code=500,
         content={"error": "An unexpected server error occurred.", "code": "INTERNAL_ERROR"},
