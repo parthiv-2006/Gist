@@ -109,7 +109,7 @@ if (!window.__gistMounted) {
     if (!lensActive) return; // Guard: idle callback may fire after stopLensMode()
     const root = getLensRoot();
     // Send a single chunk — 3 parallel requests hammer the API quota
-    const fullText = (root as HTMLElement).innerText?.slice(0, 2000) ?? "";
+    const fullText = (root as HTMLElement).innerText?.slice(0, 600) ?? "";
     if (!fullText.trim()) return;
 
     chrome.runtime.sendMessage({

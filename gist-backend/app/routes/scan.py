@@ -24,17 +24,18 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
-_MAX_TEXT = 2500  # characters per chunk
+_MAX_TEXT = 700  # characters per chunk — keeps token costs low on free-tier API
 
 _PROMPT_TEMPLATE = (
     "You are a reading assistant that identifies difficult technical terms for a general audience.\n"
     "The user is reading a page titled: <page_context>{page_context}</page_context>\n\n"
-    "From the text below, identify up to 5 complex technical terms, acronyms, or domain-specific "
+    "From the text below, identify up to 4 complex technical terms, acronyms, or domain-specific "
     "jargon that a curious but non-expert reader might not know.\n"
     "Rules:\n"
+    "- Strongly prefer SINGLE-WORD terms or well-known two-word phrases (e.g. 'recursion', 'API', 'cache').\n"
     "- Only include genuinely technical or domain-specific terms.\n"
     "- Do NOT include common English words, proper nouns (names of people/companies), or obvious phrases.\n"
-    "- Each definition must be exactly 1 sentence (under 25 words).\n"
+    "- Each definition must be exactly 1 sentence (under 20 words).\n"
     "- Return ONLY a valid JSON object with this exact structure, nothing else:\n"
     '  {{"terms": [{{"term": "...", "definition": "..."}}]}}\n'
     "- If no qualifying terms exist, return: {{\"terms\": []}}\n\n"
@@ -47,12 +48,16 @@ _JSON_OBJ_RE = re.compile(r"\{[\s\S]*\}")
 _MOCK_LLM: bool = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
 _MOCK_TERMS = [
     {
-        "term": "Jargon",
-        "definition": "Specialized terminology used within a particular field that may be unclear to outsiders.",
+        "term": "API",
+        "definition": "A set of rules that lets software applications communicate with each other.",
     },
     {
-        "term": "Heuristic",
-        "definition": "A practical problem-solving approach that is efficient but not guaranteed to be optimal.",
+        "term": "deprecated",
+        "definition": "A feature that still works but is discouraged and may be removed in future versions.",
+    },
+    {
+        "term": "authentication",
+        "definition": "The process of verifying that a user or system is who they claim to be.",
     },
 ]
 

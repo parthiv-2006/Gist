@@ -20,7 +20,7 @@ from app.routes.scan import router as scan_router
 from app.routes.nested import router as nested_router
 from app.routes.visualize import router as visualize_router
 from app.routes.synapse import router as synapse_router
-from app.db import connect_db, disconnect_db
+from app.db import connect_db, disconnect_db, get_db_status
 
 load_dotenv()  # Load .env if present (local dev only)
 
@@ -108,4 +108,4 @@ async def health():
     Ping this on extension install (chrome.runtime.onInstalled) to warm up
     Render's free tier and avoid the 30s cold-start delay.
     """
-    return {"status": "ok"}
+    return {"status": "ok", "db": get_db_status()}

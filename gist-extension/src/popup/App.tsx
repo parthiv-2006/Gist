@@ -315,6 +315,11 @@ function LibraryView() {
     setAskError(null);
   };
 
+  const openFullLibrary = () => {
+    chrome.tabs.create({ url: chrome.runtime.getURL("popup.html") + "#library" });
+    window.close();
+  };
+
   const searchBar = (
     <div style={{ padding: "12px 14px 0" }}>
       <div style={{
@@ -866,7 +871,45 @@ function App() {
 
       {/* Body */}
       <div style={{ overflowY: "auto", maxHeight: "500px" }}>
-        {activeTab === "capture" ? <CaptureView /> : <LibraryView />}
+        {activeTab === "capture" ? <CaptureView /> : (
+          <>
+            <div style={{ padding: "8px 14px 0", display: "flex", justifyContent: "flex-end" }}>
+              <button
+                onClick={() => {
+                  chrome.tabs.create({ url: chrome.runtime.getURL("popup.html") + "#library" });
+                  window.close();
+                }}
+                style={{
+                  background: "none",
+                  border: `1px solid ${T.border}`,
+                  borderRadius: "5px",
+                  color: T.textSub,
+                  fontSize: "10.5px",
+                  fontFamily: FONT,
+                  padding: "3px 9px",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px",
+                  letterSpacing: "0.01em",
+                  transition: "border-color 120ms ease, color 120ms ease",
+                }}
+                onMouseEnter={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = T.accentBorder;
+                  (e.currentTarget as HTMLButtonElement).style.color = T.accent;
+                }}
+                onMouseLeave={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.borderColor = T.border;
+                  (e.currentTarget as HTMLButtonElement).style.color = T.textSub;
+                }}
+              >
+                <IconLibraryTab />
+                Open full library
+              </button>
+            </div>
+            <LibraryView />
+          </>
+        )}
       </div>
 
       {/* Footer */}
