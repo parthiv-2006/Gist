@@ -21,6 +21,7 @@ from app.routes.nested import router as nested_router
 from app.routes.visualize import router as visualize_router
 from app.routes.synapse import router as synapse_router
 from app.db import connect_db, disconnect_db, get_db_status
+from app.services.gemini import embed_text
 
 load_dotenv()  # Load .env if present (local dev only)
 
@@ -109,3 +110,13 @@ async def health():
     Render's free tier and avoid the 30s cold-start delay.
     """
     return {"status": "ok", "db": get_db_status()}
+
+
+@app.get("/health/embedding")
+async def health_embedding():
+    """Diagnostic: attempt a real embed_text call and report success or the exact error."""
+    try:
+        vec = await embed_text("test")
+        return {"status": "ok", "dim": len(vec), "sample": vec[:3]}
+    except Exception as exc:
+        return {"status": "error", "error": str(exc), "type": type(exc).__name__}

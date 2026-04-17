@@ -136,10 +136,14 @@ async def ask_library(request: Request):
     try:
         query_embedding = await embed_text(query)
     except Exception as exc:
-        logger.warning("embed_text failed for ask query: %s", exc)
+        err_detail = str(exc)
+        logger.warning("embed_text failed for ask query: %s", err_detail)
         return JSONResponse(
             status_code=503,
-            content={"error": "Search unavailable — could not embed query.", "code": "LLM_UNAVAILABLE"},
+            content={
+                "error": f"Search unavailable — could not embed query: {err_detail}",
+                "code": "LLM_UNAVAILABLE",
+            },
         )
 
     # 2. Find the most semantically similar gists.
