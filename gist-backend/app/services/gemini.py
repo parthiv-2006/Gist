@@ -22,10 +22,20 @@ GEMINI_MODEL = "gemini-2.5-flash"
 _MOCK_LLM: bool = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
 
 _MOCK_EXPLANATIONS: dict[str, str] = {
-    "text":   "✓ Text gist working — mock mode active. No Gemini API call was made.",
-    "visual": "✓ Visual gist working — mock mode active. No Gemini API call was made.",
+    "text":   "Mock mode active — this is a placeholder explanation for local development and testing. No Gemini API call was made.",
+    "visual": "Mock mode active — this is a placeholder visual explanation for local development. No Gemini API call was made.",
 }
 _MOCK_EMBEDDING_DIM = 768
+
+
+def _mock_embedding(text: str) -> list[float]:
+    """Return a deterministic, non-zero embedding for mock mode.
+    Uses a seeded hash so identical text produces identical vectors
+    and cosine similarity is meaningful in local tests.
+    """
+    import random
+    rng = random.Random(hash(text) & 0xFFFFFFFF)
+    return [rng.gauss(0, 1) for _ in range(_MOCK_EMBEDDING_DIM)]
 
 
 async def _mock_stream_explanation(feature_type: str = "text") -> AsyncGenerator[str, None]:
@@ -132,14 +142,13 @@ async def embed_text(text: str) -> list[float]:
     Runs the synchronous SDK call in a thread executor to avoid blocking the event loop.
     """
     if _MOCK_LLM:
-        return [0.0] * _MOCK_EMBEDDING_DIM
+        return _mock_embedding(text)
 
     api_key = os.environ.get("GEMINI_API_KEY")
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set")
 
-    # Force v1 (not v1beta) — text-embedding-004 is not available in v1beta.
-    client = genai.Client(api_key=api_key, http_options={"api_version": "v1"})
+    client = genai.Client(api_key=api_key)
     truncated = text[:_EMBED_MAX_CHARS]
 
     loop = asyncio.get_running_loop()

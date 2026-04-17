@@ -161,6 +161,47 @@ async def get_library_tags():
         )
 
 
+@router.post("/library/backfill")
+async def backfill_embeddings_and_categories():
+    """
+    Retroactively generate embeddings and fix categories for gists saved without them.
+    Safe to call multiple times — only processes documents missing the embedding field.
+    """
+    db = get_db()
+    if db is None:
+        return JSONResponse(
+            status_code=503,
+            content={"error": "Library unavailable — database not connected.", "code": "DB_UNAVAILABLE"},
+        )
+
+    cursor = db["gists"].find(
+        {"embedding": {"$exists": False}},
+        {"_id": 1, "original_text": 1, "explanation": 1},
+    )
+    docs = await cursor.to_list(length=500)
+
+    if not docs:
+        return {"backfilled": 0, "message": "All gists already have embeddings."}
+
+    success = 0
+    failed = 0
+    for doc in docs:
+        try:
+            combined = f"{doc.get('original_text', '')} {doc.get('explanation', '')}"
+            embedding = await embed_text(combined)
+            category = categorize_text(combined)
+            await db["gists"].update_one(
+                {"_id": doc["_id"]},
+                {"$set": {"embedding": embedding, "category": category}},
+            )
+            success += 1
+        except Exception as exc:
+            logger.warning("Backfill failed for %s: %s", doc["_id"], exc)
+            failed += 1
+
+    return {"backfilled": success, "failed": failed, "total": len(docs)}
+
+
 @router.delete("/library/{gist_id}")
 async def delete_gist(gist_id: str):
     """Delete a single gist by its MongoDB ObjectId string."""
