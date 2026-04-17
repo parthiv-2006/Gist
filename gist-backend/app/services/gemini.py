@@ -132,7 +132,7 @@ def build_prompt(
 
 # ─── Embedding ────────────────────────────────────────────────────────────────
 
-EMBEDDING_MODEL = "text-embedding-004"
+EMBEDDING_MODEL = "embedding-001"
 _EMBED_MAX_CHARS = 8000  # safety truncation before sending to the API
 
 
@@ -148,8 +148,7 @@ async def embed_text(text: str) -> list[float]:
     if not api_key:
         raise RuntimeError("GEMINI_API_KEY is not set")
 
-    # text-embedding-004 is only available on the v1 endpoint, not v1beta (the default).
-    client = genai.Client(api_key=api_key, http_options=_genai_types.HttpOptions(api_version="v1"))
+    client = genai.Client(api_key=api_key)
     truncated = text[:_EMBED_MAX_CHARS]
 
     loop = asyncio.get_running_loop()
