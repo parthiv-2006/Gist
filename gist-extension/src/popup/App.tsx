@@ -96,15 +96,6 @@ const IconX = () => (
   </svg>
 );
 
-const IconLens = () => (
-  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="7" />
-    <line x1="11" y1="8" x2="11" y2="14" strokeDasharray="2 1.5" />
-    <line x1="8" y1="11" x2="14" y2="11" strokeDasharray="2 1.5" />
-    <line x1="16.5" y1="16.5" x2="21" y2="21" />
-  </svg>
-);
-
 const IconChevron = ({ open }: { open: boolean }) => (
   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
     strokeLinecap="round" strokeLinejoin="round"
@@ -584,12 +575,10 @@ function FeatureCard({
 
 function CaptureView() {
   const [autoGistEnabled, setAutoGistEnabled] = useState(false);
-  const [lensEnabled, setLensEnabled] = useState(false);
 
   useEffect(() => {
-    chrome.storage.local.get(["autoGistEnabled", "lensEnabled"], (result) => {
+    chrome.storage.local.get(["autoGistEnabled"], (result) => {
       setAutoGistEnabled(result["autoGistEnabled"] === true);
-      setLensEnabled(result["lensEnabled"] === true);
     });
   }, []);
 
@@ -597,12 +586,6 @@ function CaptureView() {
     const next = !autoGistEnabled;
     setAutoGistEnabled(next);
     chrome.storage.local.set({ autoGistEnabled: next });
-  };
-
-  const handleLensToggle = () => {
-    const next = !lensEnabled;
-    setLensEnabled(next);
-    chrome.storage.local.set({ lensEnabled: next });
   };
 
   const Toggle = () => (
@@ -694,34 +677,6 @@ function CaptureView() {
         subtitle="Ambient scroll summary"
         accent={autoGistEnabled}
         rightSlot={<Toggle />}
-      />
-
-      <FeatureCard
-        icon={<IconLens />}
-        title="Gist Lens"
-        subtitle="Auto-highlight jargon on the page"
-        accent={lensEnabled}
-        rightSlot={
-          <button
-            onClick={(e) => { e.stopPropagation(); handleLensToggle(); }}
-            aria-label={lensEnabled ? "Disable Gist Lens" : "Enable Gist Lens"}
-            style={{
-              width: "34px", height: "19px", borderRadius: "10px",
-              background: lensEnabled ? T.accent : T.bgActive,
-              border: `1px solid ${lensEnabled ? T.accent : T.borderMid}`,
-              cursor: "pointer", position: "relative",
-              transition: "all 200ms ease", padding: 0, outline: "none",
-            }}
-          >
-            <div style={{
-              position: "absolute", top: "2px",
-              left: lensEnabled ? "15px" : "2px",
-              width: "13px", height: "13px", borderRadius: "50%",
-              background: "#fff", transition: "left 200ms ease",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
-            }} />
-          </button>
-        }
       />
 
       {/* Keyboard shortcut */}

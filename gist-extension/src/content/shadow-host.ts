@@ -195,23 +195,6 @@ export function updatePopover(update: PopoverUpdate): void {
 }
 
 /**
- * Open the popover instantly with a pre-computed Lens definition.
- * Bypasses streaming — renders directly into DONE state.
- */
-export function showLensDefinition(term: string, definition: string, rect: DOMRect): void {
-  if (!reactRoot) return;
-  messages = [{ role: "model", content: definition }];
-  accumulatedText = "";
-  currentOriginalText = term;
-  currentPosition = rect;
-  currentPageContext = document.title;
-  currentImageData = undefined;
-  saveStatus = "unsaved";
-  isVisible = true;
-  renderPopover({ state: "DONE" });
-}
-
-/**
  * Drill into a nested gist (progressive disclosure).
  * Pushes the term onto the drilling stack and shows breadcrumbs.
  */

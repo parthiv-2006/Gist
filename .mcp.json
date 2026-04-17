@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "qmd": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["C:/Users/Parthiv Paul/AppData/Roaming/npm/node_modules/@tobilu/qmd/dist/cli/qmd.js", "mcp"],
+      "env": {}
+    }
+  }
+}

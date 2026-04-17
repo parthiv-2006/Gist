@@ -23,10 +23,6 @@ async function resolveBase(): Promise<string> {
 const _lastAutoGistTime = new Map<number, number>();
 const AUTOGIST_COOLDOWN_MS = 8_000;
 
-// Per-tab rate limit for lens scans: at most 1 scan every 45 seconds.
-const _lastLensScanTime = new Map<number, number>();
-const LENS_COOLDOWN_MS = 45_000;
-
 chrome.runtime.onInstalled.addListener((details) => {
   chrome.contextMenus.create({
     id: "gist-this",
@@ -141,20 +137,6 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
 
     console.log("[Gist BG] AUTOGIST_REQUEST", { tabId, chars: textChunk.length });
     fetchAutoGist(tabId, textChunk, url ?? "");
-  } else if (message.type === "LENS_SCAN_REQUEST") {
-    const { textChunk, pageContext } = message.payload;
-    if (!textChunk) return;
-
-    const now = Date.now();
-    const last = _lastLensScanTime.get(tabId) ?? 0;
-    if (now - last < LENS_COOLDOWN_MS) {
-      console.log("[Gist BG] LENS_SCAN_REQUEST rate-limited for tab", tabId);
-      return;
-    }
-    _lastLensScanTime.set(tabId, now);
-
-    console.log("[Gist BG] LENS_SCAN_REQUEST", { tabId, chars: textChunk.length });
-    fetchLensTerms(tabId, textChunk, pageContext ?? "");
   } else if (message.type === "NESTED_GIST_REQUEST") {
     const { term, parentContext } = message.payload;
     if (!term) return;
@@ -324,35 +306,6 @@ async function fetchAutoGist(tabId: number, textChunk: string, url: string): Pro
     // AutoGist is best-effort — silently fail so it never disrupts the user, but tell UI to reset
     console.warn("[Gist BG] AutoGist fetch error:", err);
     chrome.tabs.sendMessage(tabId, { type: "AUTOGIST_ERROR", payload: {} });
-  }
-}
-
-async function fetchLensTerms(tabId: number, textChunk: string, pageContext: string): Promise<void> {
-  const base = await resolveBase();
-  try {
-    const response = await fetch(`${base}/api/v1/scan-terms`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text_content: textChunk, page_context: pageContext }),
-    });
-
-    if (!response.ok) {
-      console.warn("[Gist BG] LensScan non-OK:", response.status);
-      chrome.tabs.sendMessage(tabId, { type: "LENS_SCAN_ERROR", payload: {} });
-      return;
-    }
-
-    const data = await response.json() as { terms?: Array<{ term: string; definition: string }> };
-    if (!Array.isArray(data.terms) || data.terms.length === 0) return;
-
-    const msg: GistMessage = {
-      type: "LENS_SCAN_RESPONSE",
-      payload: { terms: data.terms },
-    };
-    chrome.tabs.sendMessage(tabId, msg);
-  } catch (err) {
-    console.warn("[Gist BG] LensScan fetch error:", err);
-    chrome.tabs.sendMessage(tabId, { type: "LENS_SCAN_ERROR", payload: {} });
   }
 }
 

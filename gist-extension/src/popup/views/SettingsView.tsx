@@ -35,7 +35,6 @@ function ToggleRow({ label, sub, enabled, onToggle, ariaLabel }: {
 
 export function SettingsView() {
   const [autoGist, setAutoGist]     = useState(false);
-  const [lensEnabled, setLens]      = useState(false);
   const [sidebarMode, setSidebar]   = useState(false);
   const [clearConfirm, setClear]    = useState(false);
   const [clearing, setClearing]     = useState(false);
@@ -43,9 +42,8 @@ export function SettingsView() {
 
   // Load from storage on mount
   useEffect(() => {
-    chrome.storage.local.get(["autoGistEnabled", "lensEnabled", "sidebarMode"], (res) => {
+    chrome.storage.local.get(["autoGistEnabled", "sidebarMode"], (res) => {
       setAutoGist(!!res.autoGistEnabled);
-      setLens(!!res.lensEnabled);
       setSidebar(!!res.sidebarMode);
     });
   }, []);
@@ -110,13 +108,6 @@ export function SettingsView() {
           enabled={autoGist}
           onToggle={() => toggle("autoGistEnabled", !autoGist, setAutoGist)}
           ariaLabel="Toggle AutoGist"
-        />
-        <ToggleRow
-          label="Gist Lens"
-          sub="Highlight jargon and technical terms on any page for quick lookup."
-          enabled={lensEnabled}
-          onToggle={() => toggle("lensEnabled", !lensEnabled, setLens)}
-          ariaLabel="Toggle Gist Lens"
         />
       </section>
 
