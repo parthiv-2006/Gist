@@ -3,48 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { Dashboard } from "./Dashboard";
-
-// Try local dev server first (600 ms timeout); fall back to Render.
-const BACKEND_BASE: Promise<string> = (async () => {
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 600);
-    const r = await fetch("http://localhost:8000/health", { signal: ctrl.signal });
-    clearTimeout(t);
-    if (r.ok) return "http://localhost:8000";
-  } catch { /* no local server */ }
-  return "https://gist-vc8m.onrender.com";
-})();
-
-const FONT = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif";
-const MONO = "'Space Mono', 'Fira Code', monospace";
-
-// ── Design Tokens ──────────────────────────────────────────────────────────────
-const T = {
-  bg:           "#080808",
-  bgElevated:   "#0f0f0f",
-  bgHover:      "#161616",
-  bgActive:     "#1d1d1d",
-  border:       "#1e1e1e",
-  borderMid:    "#2a2a2a",
-  borderStrong: "#353535",
-  text:         "#f0f0f0",
-  textSub:      "#888888",
-  textMuted:    "#484848",
-  accent:       "#10b981",
-  accentDim:    "rgba(16,185,129,0.09)",
-  accentBorder: "rgba(16,185,129,0.20)",
-  accentGlow:   "rgba(16,185,129,0.30)",
-};
-
-const CATEGORY_COLORS: Record<string, string> = {
-  Code:    "#60a5fa",
-  Legal:   "#f59e0b",
-  Medical: "#f87171",
-  Finance: "#a78bfa",
-  Science: "#34d399",
-  General: "#666666",
-};
+import { T, FONT, MONO, CATEGORY_COLORS, BACKEND_BASE } from "./tokens";
 
 // ── SVG Icon Components ────────────────────────────────────────────────────────
 
@@ -159,8 +118,8 @@ function GistCard({
   const color = CATEGORY_COLORS[item.category] ?? T.textMuted;
   const date  = new Date(item.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 
-  const bg     = expanded ? T.bgHover : hovered ? "#131313" : T.bgElevated;
-  const border = expanded ? T.borderMid : hovered ? T.border : "#191919";
+  const bg     = expanded ? T.bgHover : hovered ? T.bgHover : T.bgElevated;
+  const border = expanded ? T.borderMid : hovered ? T.borderMid : T.border;
 
   return (
     <div
@@ -183,20 +142,22 @@ function GistCard({
             fontSize: "9px", fontWeight: 700, letterSpacing: "0.07em",
             textTransform: "uppercase" as const,
             color,
-            background: `${color}14`,
-            border: `1px solid ${color}32`,
-            borderRadius: "4px",
-            padding: "1.5px 5px",
+            fontFamily: MONO,
+            display: "inline-flex", alignItems: "center", height: "16px",
+            padding: "0 5px",
+            borderRadius: "2px",
+            borderLeft: `2px solid ${color}`,
+            background: `${color}18`,
           }}>
             {item.category}
           </span>
-          <span style={{ fontSize: "9.5px", color: T.textMuted, fontFamily: MONO, letterSpacing: "0.02em" }}>
+          <span style={{ fontSize: "9.5px", color: T.textDim, fontFamily: MONO, letterSpacing: "0.02em" }}>
             {item.mode}
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "5px" }}>
-          <span style={{ fontSize: "9.5px", color: T.textMuted }}>{date}</span>
-          <span style={{ color: T.textMuted, display: "flex" }}>
+          <span style={{ fontSize: "9.5px", color: T.textDim, fontFamily: MONO }}>{date}</span>
+          <span style={{ color: T.textDim, display: "flex" }}>
             <IconChevron open={expanded} />
           </span>
         </div>
@@ -206,7 +167,7 @@ function GistCard({
       <p style={{
         margin: 0,
         fontSize: "11.5px",
-        color: T.textSub,
+        color: T.textMuted,
         lineHeight: 1.5,
         overflow: "hidden",
         display: "-webkit-box",
@@ -224,7 +185,7 @@ function GistCard({
           </p>
           {item.url && item.url !== "Unknown page" && (
             <p style={{
-              margin: 0, fontSize: "10px", color: T.textMuted,
+              margin: 0, fontSize: "10px", color: T.textDim,
               fontFamily: MONO, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
             }}>
               {item.url}
@@ -306,11 +267,6 @@ function LibraryView() {
     setAskError(null);
   };
 
-  const openFullLibrary = () => {
-    chrome.tabs.create({ url: chrome.runtime.getURL("popup.html") + "#library" });
-    window.close();
-  };
-
   const searchBar = (
     <div style={{ padding: "12px 14px 0" }}>
       <div style={{
@@ -320,9 +276,9 @@ function LibraryView() {
         borderRadius: "8px",
         padding: "8px 10px",
         transition: "border-color 200ms ease, box-shadow 200ms ease",
-        boxShadow: askState === "searching" ? `0 0 0 3px ${T.accentDim}` : "none",
+        boxShadow: askState === "searching" ? `0 0 0 3px ${T.accentGlow}` : "none",
       }}>
-        <span style={{ color: askState === "searching" ? T.accent : T.textMuted, display: "flex", flexShrink: 0, transition: "color 200ms ease" }}>
+        <span style={{ color: askState === "searching" ? T.accent : T.textDim, display: "flex", flexShrink: 0, transition: "color 200ms ease" }}>
           <IconSearch />
         </span>
         <input
@@ -346,19 +302,19 @@ function LibraryView() {
         {(askState === "done" || askState === "error") && (
           <button
             onClick={handleClearAsk}
-            style={{ background: "none", border: "none", cursor: "pointer", color: T.textMuted, padding: 0, display: "flex" }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = T.textSub; }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = T.textMuted; }}
+            style={{ background: "none", border: "none", cursor: "pointer", color: T.textDim, padding: 0, display: "flex" }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.color = T.textMuted; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.color = T.textDim; }}
           >
             <IconX />
           </button>
         )}
         {askState === "idle" && query.trim() && (
           <button onClick={handleAsk} style={{
-            background: T.accent, border: "none", borderRadius: "5px",
-            color: "#000", fontSize: "9px", fontWeight: 700, fontFamily: FONT,
+            background: T.accent, border: "none", borderRadius: "4px",
+            color: T.accentInk, fontSize: "9px", fontWeight: 700, fontFamily: MONO,
             padding: "3px 7px", cursor: "pointer", flexShrink: 0,
-            letterSpacing: "0.06em", textTransform: "uppercase" as const,
+            letterSpacing: "0.08em", textTransform: "uppercase" as const,
           }}>
             ASK
           </button>
@@ -375,14 +331,14 @@ function LibraryView() {
         {searchBar}
         <div style={{ display: "flex", flexDirection: "column", gap: "8px", padding: "10px 14px" }}>
           <div style={{
-            background: T.accentDim,
+            background: T.accentBg,
             border: `1px solid ${T.accentBorder}`,
             borderRadius: "8px",
             padding: "12px 14px",
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "8px" }}>
               <span style={{ color: T.accent, display: "flex" }}><IconSparkle /></span>
-              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase" as const, color: T.accent }}>
+              <span style={{ fontSize: "9px", fontWeight: 700, letterSpacing: "0.09em", textTransform: "uppercase" as const, color: T.accent, fontFamily: MONO }}>
                 Answer
               </span>
             </div>
@@ -393,7 +349,7 @@ function LibraryView() {
 
           {askResult.sources.length > 0 && (
             <div>
-              <p style={{ margin: "0 0 6px", fontSize: "9px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: T.textMuted }}>
+              <p style={{ margin: "0 0 6px", fontSize: "9px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, color: T.textDim, fontFamily: MONO }}>
                 Sources · {askResult.sources.length}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "5px" }}>
@@ -405,7 +361,7 @@ function LibraryView() {
           )}
 
           {askResult.sources.length === 0 && (
-            <p style={{ textAlign: "center", padding: "10px 0", fontSize: "11.5px", color: T.textMuted, margin: 0 }}>
+            <p style={{ textAlign: "center", padding: "10px 0", fontSize: "11.5px", color: T.textDim, margin: 0 }}>
               No matching gists — save more content to build your library.
             </p>
           )}
@@ -420,9 +376,10 @@ function LibraryView() {
         {searchBar}
         <div style={{ padding: "10px 14px" }}>
           <div style={{
-            background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.18)",
-            borderLeft: "2px solid #f87171", borderRadius: "7px",
-            padding: "10px 12px", fontSize: "12px", color: "#f87171", lineHeight: 1.5,
+            background: "oklch(0.25 0.05 25 / 0.15)", border: "1px solid oklch(0.50 0.12 25 / 0.3)",
+            borderLeft: "2px solid oklch(0.65 0.15 25)",
+            borderRadius: "7px", padding: "10px 12px",
+            fontSize: "12px", color: "oklch(0.72 0.15 25)", lineHeight: 1.5,
           }}>
             {askError ?? "Search failed."}
           </div>
@@ -435,7 +392,7 @@ function LibraryView() {
     return (
       <div>
         {searchBar}
-        <div style={{ padding: "40px 16px", textAlign: "center", color: T.textMuted, fontSize: "12px" }}>
+        <div style={{ padding: "40px 16px", textAlign: "center", color: T.textDim, fontSize: "12px", fontFamily: MONO }}>
           Loading…
         </div>
       </div>
@@ -448,16 +405,17 @@ function LibraryView() {
         {searchBar}
         <div style={{ padding: "10px 14px" }}>
           <div style={{
-            background: "rgba(248,113,113,0.06)", border: "1px solid rgba(248,113,113,0.18)",
-            borderLeft: "2px solid #f87171", borderRadius: "7px",
-            padding: "12px 14px", fontSize: "12px", color: "#f87171", lineHeight: 1.5,
+            background: "oklch(0.25 0.05 25 / 0.15)", border: "1px solid oklch(0.50 0.12 25 / 0.3)",
+            borderLeft: "2px solid oklch(0.65 0.15 25)",
+            borderRadius: "7px", padding: "12px 14px",
+            fontSize: "12px", color: "oklch(0.72 0.15 25)", lineHeight: 1.5,
           }}>
             <div style={{ marginBottom: "10px" }}>{error}</div>
             <button
               onClick={() => setRetryCount((n) => n + 1)}
               style={{
-                background: "none", border: "1px solid rgba(248,113,113,0.35)",
-                borderRadius: "5px", color: "#f87171", fontSize: "11px",
+                background: "none", border: "1px solid oklch(0.50 0.12 25 / 0.4)",
+                borderRadius: "5px", color: "oklch(0.72 0.15 25)", fontSize: "11px",
                 padding: "4px 10px", cursor: "pointer", fontFamily: FONT,
               }}
             >
@@ -474,13 +432,13 @@ function LibraryView() {
       <div>
         {searchBar}
         <div style={{ padding: "36px 16px", textAlign: "center", display: "flex", flexDirection: "column", alignItems: "center", gap: "12px" }}>
-          <span style={{ color: T.textMuted, opacity: 0.45, display: "flex" }}>
+          <span style={{ color: T.textDim, opacity: 0.45, display: "flex" }}>
             <IconEmptyLibrary />
           </span>
-          <div style={{ fontSize: "12px", color: T.textMuted, lineHeight: 1.7 }}>
+          <div style={{ fontSize: "12px", color: T.textDim, lineHeight: 1.7 }}>
             Your library is empty.
             <br />
-            <span style={{ color: T.textSub }}>Highlight text on any page to save your first gist.</span>
+            <span style={{ color: T.textMuted }}>Highlight text on any page to save your first gist.</span>
           </div>
         </div>
       </div>
@@ -524,11 +482,11 @@ function FeatureCard({
     : hovered && isClickable ? T.borderMid : T.border;
 
   const iconBg = accent
-    ? T.accentDim
-    : hovered && isClickable ? "rgba(255,255,255,0.025)" : "rgba(255,255,255,0.015)";
+    ? T.accentBg
+    : hovered && isClickable ? T.bgActive : T.bgHover;
 
   const iconBorder = accent ? T.accentBorder : T.border;
-  const iconColor  = accent ? T.accent : hovered && isClickable ? T.textSub : T.textMuted;
+  const iconColor  = accent ? T.accent : hovered && isClickable ? T.textMuted : T.textDim;
 
   return (
     <div
@@ -561,7 +519,7 @@ function FeatureCard({
           <div style={{ fontSize: "12px", fontWeight: 600, color: T.text, lineHeight: 1.2, marginBottom: "2px" }}>
             {title}
           </div>
-          <div style={{ fontSize: "10.5px", color: T.textSub, lineHeight: 1.3 }}>
+          <div style={{ fontSize: "10.5px", color: T.textMuted, lineHeight: 1.3 }}>
             {subtitle}
           </div>
         </div>
@@ -604,8 +562,9 @@ function CaptureView() {
         position: "absolute", top: "2px",
         left: autoGistEnabled ? "15px" : "2px",
         width: "13px", height: "13px", borderRadius: "50%",
-        background: "#fff", transition: "left 200ms ease",
-        boxShadow: "0 1px 3px rgba(0,0,0,0.4)",
+        background: autoGistEnabled ? T.accentInk : T.textSub,
+        transition: "left 200ms ease",
+        boxShadow: "0 1px 3px oklch(0 0 0 / 0.4)",
       }} />
     </button>
   );
@@ -614,17 +573,17 @@ function CaptureView() {
     <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
       {keys.map((key, i) => (
         <React.Fragment key={key}>
-          {i > 0 && <span style={{ fontSize: "9px", color: T.textMuted, margin: "0 1px" }}>+</span>}
+          {i > 0 && <span style={{ fontSize: "9px", color: T.textDim, margin: "0 1px" }}>+</span>}
           <kbd style={{
             background: T.bgActive,
-            border: `1px solid ${T.borderStrong}`,
+            border: `1px solid ${T.borderMid}`,
             borderBottomWidth: "2px",
             borderRadius: "4px",
             padding: "2px 5px",
             fontSize: "10px",
             fontFamily: MONO,
-            color: T.text,
-            fontWeight: 600,
+            color: T.textSub,
+            fontWeight: 500,
             lineHeight: 1.5,
             display: "inline-block",
           }}>{key}</kbd>
@@ -636,7 +595,7 @@ function CaptureView() {
   return (
     <main style={{ padding: "12px 14px", display: "flex", flexDirection: "column", gap: "7px" }}>
 
-      <p style={{ margin: "0 0 5px", fontSize: "12px", color: T.textSub, lineHeight: 1.6 }}>
+      <p style={{ margin: "0 0 5px", fontSize: "12px", color: T.textMuted, lineHeight: 1.6 }}>
         Highlight text on any page for an instant AI&#8209;powered explanation.
       </p>
 
@@ -685,7 +644,7 @@ function CaptureView() {
         background: T.bgElevated, border: `1px solid ${T.border}`,
         borderRadius: "8px", padding: "9px 12px",
       }}>
-        <span style={{ fontSize: "11.5px", color: T.textSub, fontWeight: 500 }}>Quick text gist</span>
+        <span style={{ fontSize: "11.5px", color: T.textMuted, fontWeight: 500 }}>Quick text gist</span>
         <KbdSet keys={["Ctrl", "⇧", "E"]} />
       </div>
 
@@ -695,10 +654,10 @@ function CaptureView() {
         background: T.bgElevated, border: `1px solid ${T.border}`,
         borderRadius: "8px", padding: "9px 12px",
       }}>
-        <span style={{ color: T.textMuted, display: "flex", flexShrink: 0, marginTop: "1px" }}>
+        <span style={{ color: T.textDim, display: "flex", flexShrink: 0, marginTop: "1px" }}>
           <IconGrip />
         </span>
-        <p style={{ margin: 0, fontSize: "11.5px", color: T.textSub, lineHeight: 1.55 }}>
+        <p style={{ margin: 0, fontSize: "11.5px", color: T.textMuted, lineHeight: 1.55 }}>
           The panel is <strong style={{ color: T.text, fontWeight: 600 }}>draggable</strong> and{" "}
           <strong style={{ color: T.text, fontWeight: 600 }}>resizable</strong> — grab the header or corner.
         </p>
@@ -712,28 +671,29 @@ function CaptureView() {
 
 type Tab = "capture" | "library";
 
-function GistLogo() {
+function GistMark() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
       <div style={{
         width: "22px", height: "22px",
-        borderRadius: "6px",
-        background: T.accentDim,
-        border: `1px solid ${T.accentBorder}`,
+        borderRadius: "5px",
+        background: T.accent,
         display: "flex", alignItems: "center", justifyContent: "center",
         flexShrink: 0,
+        fontFamily: MONO,
+        fontWeight: 700,
+        fontSize: "14px",
+        color: T.accentInk,
+        letterSpacing: "-0.5px",
+        lineHeight: 1,
       }}>
-        {/* Text-distillation mark: three lines of descending width */}
-        <svg width="12" height="10" viewBox="0 0 12 10" fill="none">
-          <rect x="0" y="0"   width="12" height="2" rx="1" fill={T.accent} opacity="0.45" />
-          <rect x="0" y="4"   width="9"  height="2" rx="1" fill={T.accent} />
-          <rect x="0" y="8"   width="6"  height="2" rx="1" fill={T.accent} opacity="0.45" />
-        </svg>
+        g
       </div>
       <span style={{
-        fontSize: "13px", fontWeight: 700, letterSpacing: "0.01em", color: T.text,
+        fontSize: "13px", fontWeight: 600, letterSpacing: "-0.2px",
+        color: T.text, fontFamily: MONO,
       }}>
-        Gist
+        gist
       </span>
     </div>
   );
@@ -772,17 +732,17 @@ function App() {
       {/* Header */}
       <header style={{
         display: "flex", alignItems: "center", justifyContent: "space-between",
-        padding: "12px 14px",
+        padding: "11px 14px",
         borderBottom: `1px solid ${T.border}`,
       }}>
-        <GistLogo />
+        <GistMark />
         <span style={{
-          fontSize: "10px", color: T.textMuted, fontFamily: MONO,
+          fontSize: "9.5px", color: T.textDim, fontFamily: MONO,
           padding: "2px 6px",
           background: T.bgElevated,
           border: `1px solid ${T.border}`,
-          borderRadius: "4px",
-          letterSpacing: "0.03em",
+          borderRadius: "3px",
+          letterSpacing: "0.04em",
         }}>
           v1.0
         </span>
@@ -812,7 +772,7 @@ function App() {
               }}
             >
               <span style={{
-                color: active ? T.accent : T.textMuted,
+                color: active ? T.accent : T.textDim,
                 display: "flex",
                 transition: "color 120ms ease",
               }}>
@@ -838,7 +798,7 @@ function App() {
                   background: "none",
                   border: `1px solid ${T.border}`,
                   borderRadius: "5px",
-                  color: T.textSub,
+                  color: T.textMuted,
                   fontSize: "10.5px",
                   fontFamily: FONT,
                   padding: "3px 9px",
@@ -855,7 +815,7 @@ function App() {
                 }}
                 onMouseLeave={(e) => {
                   (e.currentTarget as HTMLButtonElement).style.borderColor = T.border;
-                  (e.currentTarget as HTMLButtonElement).style.color = T.textSub;
+                  (e.currentTarget as HTMLButtonElement).style.color = T.textMuted;
                 }}
               >
                 <IconLibraryTab />
@@ -869,14 +829,22 @@ function App() {
 
       {/* Footer */}
       <footer style={{
-        padding: "9px 14px",
+        padding: "8px 14px",
         borderTop: `1px solid ${T.border}`,
-        fontSize: "10.5px",
-        color: T.textMuted,
-        textAlign: "center" as const,
-        letterSpacing: "0.01em",
+        display: "flex", alignItems: "center", gap: "8px",
       }}>
-        {activeTab === "capture" ? "Select text on any page to begin" : "Your personal knowledge base"}
+        <div style={{
+          width: "6px", height: "6px", borderRadius: "50%",
+          background: T.accent,
+          boxShadow: `0 0 6px ${T.accentGlow}`,
+          flexShrink: 0,
+        }} />
+        <span style={{
+          fontSize: "10.5px", color: T.textDim,
+          fontFamily: MONO, letterSpacing: "0.02em",
+        }}>
+          {activeTab === "capture" ? "Select text on any page to begin" : "Your personal knowledge base"}
+        </span>
       </footer>
     </div>
   );

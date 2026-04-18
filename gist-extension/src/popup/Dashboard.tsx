@@ -9,21 +9,44 @@ import { SettingsView } from "./views/SettingsView";
 import { SynapseView } from "./views/SynapseView";
 import styles from "./Dashboard.module.css";
 
-// ── GistLogo ─────────────────────────────────────────────────────────────────
+// ── GistMark ──────────────────────────────────────────────────────────────────
 
-function GistLogo() {
+function GistMark() {
+  return <div className={styles.sidebarLogoMark}>g</div>;
+}
+
+// ── Search icon ───────────────────────────────────────────────────────────────
+
+function IconSearch() {
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <svg width="22" height="22" viewBox="0 0 28 28" fill="none">
-        <rect width="28" height="28" rx="7" fill="#10b981" />
-        <path d="M8 14.5C8 11.46 10.46 9 13.5 9H16v2.5h-2.5a2.5 2.5 0 0 0 0 5H16V19h-2.5C10.46 19 8 16.54 8 13.5z" fill="white" />
-        <path d="M14 14h6v2.5h-6V14z" fill="white" />
-      </svg>
-      <span style={{ fontSize: "15px", fontWeight: 700, color: "#f0f0f0", letterSpacing: "-0.01em" }}>
-        Gist
-      </span>
-    </div>
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+    </svg>
   );
+}
+
+// ── Streak helpers ────────────────────────────────────────────────────────────
+
+function dayKey(date: Date): string {
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+function computeStreak(items: GistItem[]): { streak: number; last7: boolean[] } {
+  const days = new Set(items.map((item) => dayKey(new Date(item.created_at))));
+  const now = new Date();
+  const last7 = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - (6 - i));
+    return days.has(dayKey(d));
+  });
+  const todayHasGist = days.has(dayKey(now));
+  let streak = 0;
+  for (let i = todayHasGist ? 0 : 1; i < 365; i++) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    if (days.has(dayKey(d))) { streak++; } else { break; }
+  }
+  return { streak, last7 };
 }
 
 // ── Recall queue helpers ──────────────────────────────────────────────────────
@@ -60,11 +83,13 @@ const NAV_ITEMS: { id: DashboardRoute; label: string; icon: React.ReactNode }[] 
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 export function Dashboard() {
-  const [route, setRoute]         = useState<DashboardRoute>("home");
-  const [pendingTag, setPendingTag] = useState<string | null>(null);
-  const [recallDue, setRecallDue] = useState(0);
+  const [route, setRoute]           = useState<DashboardRoute>("home");
+  const [pendingTag, setPendingTag]  = useState<string | null>(null);
+  const [recallDue, setRecallDue]    = useState(0);
+  const [streak, setStreak]          = useState(0);
+  const [last7, setLast7]            = useState<boolean[]>(Array(7).fill(false));
 
-  const refreshRecallBadge = () => {
+  const refreshData = () => {
     BACKEND_BASE.then((base) =>
       fetch(`${base}/library`)
         .then((r) => (r.ok ? r.json() : { items: [] }))
@@ -72,13 +97,15 @@ export function Dashboard() {
           chrome.storage.local.get(null, (stored) => {
             setRecallDue(countRecallDue(items, stored as Record<string, unknown>));
           });
+          const { streak: s, last7: l7 } = computeStreak(items);
+          setStreak(s);
+          setLast7(l7);
         })
         .catch(() => {})
     );
   };
 
-  // Compute badge on mount
-  useEffect(() => { refreshRecallBadge(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { refreshData(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleTagClick = (tag: string) => {
     setPendingTag(tag);
@@ -89,10 +116,27 @@ export function Dashboard() {
     <div className={styles.layout}>
       {/* Sidebar */}
       <aside className={styles.sidebar}>
+        {/* Logo */}
         <div className={styles.sidebarLogo}>
-          <GistLogo />
+          <GistMark />
+          <div className={styles.sidebarLogoText}>
+            <span className={styles.sidebarWordmark}>gist</span>
+            <span className={styles.sidebarSubLabel}>knowledge garden</span>
+          </div>
         </div>
 
+        {/* Search button */}
+        <button className={styles.searchBtn} onClick={() => setRoute("library")}>
+          <IconSearch />
+          <span className={styles.searchBtnLabel}>Search library…</span>
+          <div className={styles.searchBtnKbds}>
+            <kbd className={styles.kbd}>⌘</kbd>
+            <kbd className={styles.kbd}>K</kbd>
+          </div>
+        </button>
+
+        {/* Nav */}
+        <p className={styles.workspaceLabel}>Workspace</p>
         <nav className={styles.navList}>
           {NAV_ITEMS.map(({ id, label, icon }) => (
             <button
@@ -111,8 +155,28 @@ export function Dashboard() {
           ))}
         </nav>
 
-        <div className={styles.sidebarFooter} style={{ fontFamily: "'Space Mono', 'Fira Code', monospace" }}>
-          v1.0 · gist
+        <div className={styles.sidebarSpacer} />
+
+        {/* Streak card */}
+        {streak > 0 && (
+          <div className={styles.streakCard}>
+            <p className={styles.streakLabel}>Streak</p>
+            <div className={styles.streakNumber}>
+              <span className={styles.streakValue}>{streak}</span>
+              <span className={styles.streakUnit}>days</span>
+            </div>
+            <div className={styles.streakBars}>
+              {last7.map((active, i) => (
+                <div key={i} className={active ? styles.streakBar : styles.streakBarDim} />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Footer */}
+        <div className={styles.sidebarFooter}>
+          <span className={styles.sidebarFooterText}>v1.0 · gist</span>
+          <div className={styles.sidebarFooterDot} />
         </div>
       </aside>
 

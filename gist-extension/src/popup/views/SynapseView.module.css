@@ -17,7 +17,7 @@
   height: 100vh;
   max-height: 100vh;
   overflow: hidden;
-  background: #080808;
+  background: oklch(0.16 0.004 120);
   animation: fadeIn 200ms ease both;
 }
 
@@ -37,8 +37,8 @@
 .spinner {
   width: 30px;
   height: 30px;
-  border: 2px solid rgba(16, 185, 129, 0.18);
-  border-top-color: #10b981;
+  border: 2px solid oklch(0.55 0.09 150 / 0.22);
+  border-top-color: oklch(0.75 0.11 150);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
 }
@@ -47,8 +47,8 @@
   display: inline-block;
   width: 11px;
   height: 11px;
-  border: 1.5px solid rgba(16, 185, 129, 0.25);
-  border-top-color: #10b981;
+  border: 1.5px solid oklch(0.55 0.09 150 / 0.28);
+  border-top-color: oklch(0.75 0.11 150);
   border-radius: 50%;
   animation: spin 0.75s linear infinite;
   vertical-align: middle;
@@ -57,7 +57,7 @@
 
 .stateText {
   font-size: 13px;
-  color: #666;
+  color: oklch(0.42 0.008 95);
   margin: 0;
 }
 
@@ -70,13 +70,13 @@
 .emptyTitle {
   font-size: 15px;
   font-weight: 600;
-  color: #e0e0e0;
+  color: oklch(0.95 0.005 95);
   margin: 0;
 }
 
 .emptySubtext {
   font-size: 12.5px;
-  color: #555;
+  color: oklch(0.42 0.008 95);
   margin: 0;
   max-width: 280px;
   line-height: 1.55;
@@ -84,7 +84,7 @@
 
 .errorText {
   font-size: 12.5px;
-  color: #f87171;
+  color: oklch(0.72 0.15 25);
   margin: 0;
   text-align: center;
   max-width: 300px;
@@ -97,10 +97,10 @@
   align-items: center;
   gap: 6px;
   padding: 8px 18px;
-  background: rgba(16, 185, 129, 0.09);
-  border: 1px solid rgba(16, 185, 129, 0.28);
+  background: oklch(0.30 0.05 150 / 0.12);
+  border: 1px solid oklch(0.55 0.09 150 / 0.35);
   border-radius: 8px;
-  color: #10b981;
+  color: oklch(0.75 0.11 150);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -111,8 +111,8 @@
 }
 
 .computeBtn:hover:not(:disabled) {
-  background: rgba(16, 185, 129, 0.15);
-  border-color: rgba(16, 185, 129, 0.45);
+  background: oklch(0.30 0.05 150 / 0.20);
+  border-color: oklch(0.55 0.09 150 / 0.55);
 }
 
 .computeBtn:disabled {
@@ -127,7 +127,7 @@
   align-items: center;
   justify-content: space-between;
   padding: 15px 20px 11px;
-  border-bottom: 1px solid #181818;
+  border-bottom: 1px solid oklch(0.23 0.005 120);
   flex-shrink: 0;
 }
 
@@ -141,7 +141,7 @@
 .title {
   font-size: 15px;
   font-weight: 700;
-  color: #f0f0f0;
+  color: oklch(0.95 0.005 95);
   margin: 0;
   letter-spacing: -0.02em;
 }
@@ -154,21 +154,21 @@
 
 .metaBadge {
   font-size: 10.5px;
-  color: #4a4a4a;
+  color: oklch(0.42 0.008 95);
   padding: 2px 7px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid #1e1e1e;
+  background: oklch(0.23 0.005 120 / 0.5);
+  border: 1px solid oklch(0.30 0.006 120);
   border-radius: 4px;
-  font-family: 'Space Mono', 'Fira Code', monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   letter-spacing: 0.01em;
 }
 
 .staleBadge {
   font-size: 10.5px;
-  color: #f59e0b;
+  color: oklch(0.78 0.12 80);
   padding: 2px 8px;
-  background: rgba(245, 158, 11, 0.07);
-  border: 1px solid rgba(245, 158, 11, 0.18);
+  background: oklch(0.30 0.04 80 / 0.1);
+  border: 1px solid oklch(0.78 0.12 80 / 0.22);
   border-radius: 4px;
 }
 
@@ -179,7 +179,7 @@
   align-items: center;
   gap: 10px;
   padding: 9px 20px;
-  border-bottom: 1px solid #141414;
+  border-bottom: 1px solid oklch(0.20 0.005 120);
   flex-shrink: 0;
   flex-wrap: wrap;
 }
@@ -200,7 +200,7 @@
   left: 10px;
   width: 12px;
   height: 12px;
-  color: #444;
+  color: oklch(0.42 0.008 95);
   pointer-events: none;
   flex-shrink: 0;
 }
@@ -208,10 +208,10 @@
 .filterInput {
   width: 100%;
   padding: 6px 28px 6px 30px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid #1e1e1e;
+  background: oklch(0.23 0.005 120 / 0.4);
+  border: 1px solid oklch(0.30 0.006 120);
   border-radius: 7px;
-  color: #e8e8e8;
+  color: oklch(0.95 0.005 95);
   font-size: 12px;
   font-family: inherit;
   outline: none;
@@ -219,11 +219,11 @@
 }
 
 .filterInput:focus-visible {
-  border-color: rgba(16, 185, 129, 0.28);
+  border-color: oklch(0.55 0.09 150 / 0.35);
 }
 
 .filterInput::placeholder {
-  color: #3c3c3c;
+  color: oklch(0.36 0.008 120);
 }
 
 .clearX {
@@ -231,7 +231,7 @@
   right: 8px;
   background: none;
   border: none;
-  color: #555;
+  color: oklch(0.42 0.008 95);
   cursor: pointer;
   font-size: 15px;
   line-height: 1;
@@ -240,7 +240,7 @@
 }
 
 .clearX:hover {
-  color: #aaa;
+  color: oklch(0.78 0.006 95);
 }
 
 /* Timeline */
@@ -259,7 +259,7 @@
 
 .tlSlider {
   width: 110px;
-  accent-color: #10b981;
+  accent-color: oklch(0.75 0.11 150);
   cursor: pointer;
   height: 2px;
   margin: 0;
@@ -267,8 +267,8 @@
 
 .tlLabel {
   font-size: 10px;
-  color: #4a4a4a;
-  font-family: 'Space Mono', monospace;
+  color: oklch(0.42 0.008 95);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   white-space: nowrap;
   letter-spacing: 0.02em;
 }
@@ -282,7 +282,7 @@
   overflow: hidden;
   cursor: grab;
   background:
-    radial-gradient(ellipse 55% 55% at 50% 50%, rgba(16, 185, 129, 0.022) 0%, transparent 70%);
+    radial-gradient(ellipse 55% 55% at 50% 50%, oklch(0.75 0.11 150 / 0.025) 0%, transparent 70%);
 }
 
 .canvasDragging {
@@ -308,14 +308,14 @@
   position: absolute;
   pointer-events: none;
   z-index: 50;
-  background: rgba(12, 12, 12, 0.96);
-  border: 1px solid #262626;
+  background: oklch(0.16 0.004 120 / 0.97);
+  border: 1px solid oklch(0.30 0.006 120);
   border-radius: 10px;
   padding: 10px 13px;
   max-width: 210px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55);
+  box-shadow: 0 12px 40px oklch(0 0 0 / 0.55);
   animation: fadeIn 80ms ease both;
 }
 
@@ -325,13 +325,13 @@
   letter-spacing: 0.07em;
   text-transform: uppercase;
   margin-bottom: 5px;
-  font-family: 'Space Mono', monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 .ttTitle {
   font-size: 12px;
   font-weight: 600;
-  color: #ebebeb;
+  color: oklch(0.95 0.005 95);
   margin-bottom: 5px;
   line-height: 1.35;
   display: -webkit-box;
@@ -342,7 +342,7 @@
 
 .ttSnippet {
   font-size: 11px;
-  color: #777;
+  color: oklch(0.58 0.008 95);
   line-height: 1.45;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -353,8 +353,8 @@
 
 .ttDate {
   font-size: 9.5px;
-  color: #484848;
-  font-family: 'Space Mono', monospace;
+  color: oklch(0.42 0.008 95);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   letter-spacing: 0.02em;
 }
 
@@ -373,10 +373,10 @@
 .zBtn {
   width: 30px;
   height: 30px;
-  background: rgba(18, 18, 18, 0.92);
-  border: 1px solid #282828;
+  background: oklch(0.20 0.005 120 / 0.94);
+  border: 1px solid oklch(0.30 0.006 120);
   border-radius: 7px;
-  color: #777;
+  color: oklch(0.58 0.008 95);
   font-size: 15px;
   cursor: pointer;
   display: flex;
@@ -389,9 +389,9 @@
 }
 
 .zBtn:hover {
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.28);
-  background: rgba(16, 185, 129, 0.06);
+  color: oklch(0.75 0.11 150);
+  border-color: oklch(0.55 0.09 150 / 0.35);
+  background: oklch(0.30 0.05 150 / 0.1);
 }
 
 /* ── Cluster legend ── */
@@ -400,13 +400,13 @@
   display: flex;
   gap: 5px;
   padding: 8px 20px;
-  border-top: 1px solid #141414;
+  border-top: 1px solid oklch(0.20 0.005 120);
   flex-shrink: 0;
   flex-wrap: wrap;
   max-height: 76px;
   overflow-y: auto;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a2a transparent;
+  scrollbar-color: oklch(0.36 0.008 120) transparent;
 }
 
 .legendChip {
@@ -415,9 +415,9 @@
   gap: 5px;
   padding: 3px 9px;
   border-radius: 6px;
-  border: 1px solid #1e1e1e;
-  background: rgba(255, 255, 255, 0.02);
-  color: #666;
+  border: 1px solid oklch(0.30 0.006 120);
+  background: oklch(0.20 0.005 120 / 0.4);
+  color: oklch(0.42 0.008 95);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -427,14 +427,14 @@
 }
 
 .legendChip:hover {
-  border-color: #303030;
-  color: #bbb;
+  border-color: oklch(0.36 0.008 120);
+  color: oklch(0.78 0.006 95);
 }
 
 .legendChipActive {
-  border-color: rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.05);
-  color: #e8e8e8;
+  border-color: oklch(0.36 0.008 120);
+  background: oklch(0.23 0.005 120);
+  color: oklch(0.95 0.005 95);
 }
 
 .legendDot {
@@ -445,14 +445,14 @@
 }
 
 .legendSz {
-  color: #484848;
+  color: oklch(0.42 0.008 95);
   font-size: 9.5px;
-  font-family: 'Space Mono', monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 /* ── Accessibility ── */
 
 @media (prefers-reduced-motion: reduce) {
-  .spinner, .spinnerInline { animation: none; border-color: #10b981; }
+  .spinner, .spinnerInline { animation: none; border-color: oklch(0.75 0.11 150); }
   .container, .tooltip     { animation: none; }
 }

@@ -28,30 +28,35 @@
 /* ── Section title ── */
 
 .sectionTitle {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.11em;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: #484848;
+  color: oklch(0.78 0.006 95);
   margin: 0 0 14px;
 }
 
 /* ── Hero ── */
 
 .heroNumber {
-  font-size: 80px;
-  font-weight: 900;
-  color: #f0f0f0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 72px;
+  font-weight: 600;
+  color: oklch(0.95 0.005 95);
   letter-spacing: -0.04em;
-  line-height: 0.88;
+  line-height: 0.9;
   margin-bottom: 10px;
   font-variant-numeric: tabular-nums;
 }
 
 .heroLabel {
-  font-size: 13px;
-  color: #484848;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
+  color: oklch(0.42 0.008 95);
   font-weight: 500;
+  letter-spacing: 1px;
+  text-transform: uppercase;
   margin-bottom: 12px;
 }
 
@@ -64,17 +69,17 @@
 
 .heroMetaItem {
   font-size: 12px;
-  color: #888;
+  color: oklch(0.58 0.008 95);
 }
 
 .heroMetaHi {
-  color: #c8c8c8;
+  color: oklch(0.95 0.005 95);
   font-weight: 600;
 }
 
 .heroMetaDot {
   font-size: 12px;
-  color: #2a2a2a;
+  color: oklch(0.30 0.006 120);
 }
 
 .heroSkeleton {
@@ -90,91 +95,95 @@
   align-items: center;
   gap: 10px;
   padding: 11px 14px;
-  background: rgba(16, 185, 129, 0.04);
-  border: 1px solid rgba(16, 185, 129, 0.12);
-  border-radius: 9px;
+  background: oklch(0.30 0.05 150 / 0.15);
+  border: 1px solid oklch(0.55 0.09 150 / 0.3);
+  border-radius: 6px;
 }
 
 .recallDot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: #10b981;
+  background: oklch(0.75 0.11 150);
   flex-shrink: 0;
-  box-shadow: 0 0 5px rgba(16, 185, 129, 0.45);
+  box-shadow: 0 0 5px oklch(0.75 0.11 150 / 0.4);
   animation: pulse 2.2s ease infinite;
 }
 
 .recallText {
   flex: 1;
   font-size: 12.5px;
-  color: #888;
+  color: oklch(0.58 0.008 95);
 }
 
 .recallCount {
-  color: #10b981;
+  color: oklch(0.75 0.11 150);
   font-weight: 600;
 }
 
 .recallBtn {
-  font-size: 11.5px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 11px;
   font-weight: 600;
-  color: #10b981;
+  color: oklch(0.75 0.11 150);
   background: none;
   border: none;
   cursor: pointer;
   padding: 4px 0;
-  font-family: inherit;
   transition: opacity 150ms ease;
   white-space: nowrap;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.3px;
 }
 
-.recallBtn:hover {
-  opacity: 0.7;
-}
+.recallBtn:hover { opacity: 0.7; }
 
 /* ── Category breakdown ── */
 
 .catList {
   display: flex;
   flex-direction: column;
-  gap: 10px;
 }
 
 .catRow {
-  display: flex;
+  display: grid;
+  grid-template-columns: 100px 1fr 40px;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid oklch(0.30 0.006 120);
 }
 
 .catLabel {
-  font-size: 11px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
   font-weight: 600;
-  width: 58px;
   flex-shrink: 0;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.6px;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 2px;
+  border-left: 2px solid currentColor;
 }
 
 .catBarTrack {
-  flex: 1;
-  height: 3px;
-  background: #161616;
-  border-radius: 2px;
+  height: 6px;
+  background: oklch(0.23 0.005 120);
+  border-radius: 1px;
   overflow: hidden;
 }
 
 .catBar {
   height: 100%;
-  border-radius: 2px;
-  opacity: 0.7;
+  border-radius: 1px;
   transition: width 700ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .catCount {
-  font-size: 11px;
-  color: #484848;
-  width: 22px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 12px;
+  color: oklch(0.78 0.006 95);
   text-align: right;
   font-variant-numeric: tabular-nums;
   flex-shrink: 0;
@@ -207,24 +216,25 @@
 .bar {
   width: 100%;
   max-width: 26px;
-  background: #1e1e1e;
+  background: oklch(0.23 0.005 120);
   border-radius: 3px 3px 1px 1px;
   min-height: 2px;
   transition: height 550ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .barToday {
-  background: rgba(16, 185, 129, 0.5);
+  background: oklch(0.75 0.11 150 / 0.55);
 }
 
 .barLabel {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 9.5px;
-  color: #363636;
+  color: oklch(0.42 0.008 95);
   font-weight: 500;
 }
 
 .barLabelToday {
-  color: #10b981;
+  color: oklch(0.75 0.11 150);
 }
 
 .barsSkeletonRow {
@@ -242,54 +252,72 @@
   gap: 20px;
 }
 
-.feedGroup {
-  /* no card wrapper — intentionally flat */
-}
+.feedGroup {}
 
 .feedDayLabel {
-  font-size: 9.5px;
-  font-weight: 700;
-  letter-spacing: 0.09em;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
-  color: #2e2e2e;
+  color: oklch(0.42 0.008 95);
   margin: 0 0 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed oklch(0.30 0.006 120);
 }
 
 .feedItem {
-  display: flex;
-  align-items: baseline;
-  gap: 9px;
-  padding: 7px 0;
-  border-bottom: 1px solid #0f0f0f;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 12px;
+  padding: 10px 0;
+  align-items: flex-start;
+  cursor: pointer;
+  border-bottom: 1px solid oklch(0.30 0.006 120);
 }
 
 .feedItem:last-child {
   border-bottom: none;
 }
 
-.feedCat {
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  padding: 2px 7px;
-  border-radius: 4px;
+.feedCatChip {
+  display: inline-flex;
+  align-items: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  height: 16px;
+  padding: 0 5px;
+  border-radius: 2px;
+  border-left: 2px solid currentColor;
   flex-shrink: 0;
-  white-space: nowrap;
 }
 
 .feedSnippet {
-  font-size: 12.5px;
-  color: #888;
+  font-size: 12px;
+  color: oklch(0.58 0.008 95);
   line-height: 1.5;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
   min-width: 0;
+}
+
+.feedSource {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px;
+  color: oklch(0.42 0.008 95);
+  white-space: nowrap;
+  padding-top: 2px;
 }
 
 /* ── Heatmap ── */
 
 .heatmapOuter {
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px solid #161616;
+  background: oklch(0.20 0.005 120);
+  border: 1px solid oklch(0.30 0.006 120);
   border-radius: 10px;
   padding: 16px 18px;
   overflow-x: auto;
@@ -309,9 +337,7 @@
   cursor: default;
 }
 
-.heatCell:hover {
-  opacity: 0.75;
-}
+.heatCell:hover { opacity: 0.75; }
 
 .heatmapLegend {
   display: flex;
@@ -322,8 +348,9 @@
 }
 
 .legendLabel {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 9px;
-  color: #363636;
+  color: oklch(0.42 0.008 95);
 }
 
 .legendCell {
@@ -345,10 +372,11 @@
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid #1a1a1a;
-  border-radius: 6px;
-  color: #888;
+  background: oklch(0.20 0.005 120);
+  border: 1px solid oklch(0.30 0.006 120);
+  border-radius: 4px;
+  color: oklch(0.78 0.006 95);
+  font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -356,19 +384,19 @@
 }
 
 .tagCloudChip:hover {
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.24);
-  background: rgba(16, 185, 129, 0.05);
+  color: oklch(0.75 0.11 150);
+  border-color: oklch(0.55 0.09 150 / 0.4);
+  background: oklch(0.30 0.05 150 / 0.15);
 }
 
 .tagCloudChip:focus-visible {
-  outline: 1.5px solid rgba(16, 185, 129, 0.5);
+  outline: 1.5px solid oklch(0.75 0.11 150 / 0.5);
   outline-offset: 2px;
 }
 
 .tagCloudCount {
   font-size: 9px;
-  color: #484848;
+  color: oklch(0.42 0.008 95);
 }
 
 .tagSkeletonRow {
@@ -391,11 +419,12 @@
 
 .emptyIcon {
   opacity: 0.25;
+  color: oklch(0.58 0.008 95);
 }
 
 .emptyText {
   font-size: 13px;
-  color: #484848;
+  color: oklch(0.42 0.008 95);
   line-height: 1.7;
   margin: 0;
 }
@@ -404,26 +433,19 @@
 
 .skeletonLine {
   border-radius: 4px;
-  background: linear-gradient(90deg, #0e0e0e 25%, #1c1c1c 50%, #0e0e0e 75%);
+  background: linear-gradient(
+    90deg,
+    oklch(0.20 0.005 120) 25%,
+    oklch(0.27 0.006 120) 50%,
+    oklch(0.20 0.005 120) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.5s linear infinite;
 }
 
-.skHeroNum {
-  height: 68px;
-  width: 110px;
-}
-
-.skHeroSub {
-  height: 12px;
-  width: 80px;
-}
-
-.skHeroMeta {
-  height: 12px;
-  width: 200px;
-  margin-top: 2px;
-}
+.skHeroNum  { height: 60px; width: 110px; }
+.skHeroSub  { height: 12px; width: 80px; }
+.skHeroMeta { height: 12px; width: 200px; margin-top: 2px; }
 
 .skBar {
   flex: 1;
@@ -432,11 +454,11 @@
 
 .skTagChip {
   height: 27px !important;
-  border-radius: 6px !important;
+  border-radius: 4px !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .container    { animation: none; }
-  .skeletonLine { animation: none; background: #111; }
+  .skeletonLine { animation: none; background: oklch(0.20 0.005 120); }
   .recallDot    { animation: none; }
 }

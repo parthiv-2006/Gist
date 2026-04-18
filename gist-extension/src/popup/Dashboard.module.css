@@ -3,94 +3,179 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.3; }
+}
+
 .layout {
   display: flex;
   min-height: 100vh;
-  background: #080808;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: #f0f0f0;
+  background: oklch(0.16 0.004 120);
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  color: oklch(0.95 0.005 95);
 }
 
 /* ── Sidebar ── */
 
 .sidebar {
-  width: 210px;
+  width: 220px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   position: sticky;
   top: 0;
   height: 100vh;
-  background: rgba(255, 255, 255, 0.013);
-  border-right: 1px solid #1e1e1e;
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: oklch(0.16 0.004 120);
+  border-right: 1px solid oklch(0.30 0.006 120);
   overflow: hidden;
+  padding: 20px 14px;
 }
 
 .sidebarLogo {
-  padding: 22px 18px 20px;
-  border-bottom: 1px solid #1e1e1e;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 20px;
   flex-shrink: 0;
 }
 
-.navList {
-  flex: 1;
-  padding: 10px 8px;
+.sidebarLogoMark {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  background: oklch(0.75 0.11 150);
+  display: grid;
+  place-items: center;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-weight: 700;
+  font-size: 15px;
+  color: oklch(0.22 0.03 150);
+  letter-spacing: -0.5px;
+  flex-shrink: 0;
+}
+
+.sidebarLogoText {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  overflow-y: auto;
+}
+
+.sidebarWordmark {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.2px;
+  color: oklch(0.95 0.005 95);
+  line-height: 1;
+}
+
+.sidebarSubLabel {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  color: oklch(0.42 0.008 95);
+  margin-top: 1px;
+}
+
+/* Search button */
+
+.searchBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 16px;
+  background: oklch(0.23 0.005 120);
+  border: 1px solid oklch(0.36 0.008 120);
+  border-radius: 6px;
+  cursor: pointer;
+  color: oklch(0.78 0.006 95);
+  font-family: "Inter", -apple-system, system-ui, sans-serif;
+  font-size: 12px;
+  flex-shrink: 0;
+  transition: background 150ms ease;
+}
+
+.searchBtn:hover {
+  background: oklch(0.27 0.006 120);
+}
+
+.searchBtnLabel {
+  flex: 1;
+  text-align: left;
+}
+
+.searchBtnKbds {
+  display: flex;
+  gap: 3px;
+}
+
+/* Workspace label */
+
+.workspaceLabel {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: oklch(0.42 0.008 95);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 0 10px 6px;
+  flex-shrink: 0;
+}
+
+/* Nav */
+
+.navList {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-shrink: 0;
 }
 
 .navItem {
   display: flex;
   align-items: center;
-  gap: 9px;
-  padding: 9px 12px;
-  border-radius: 7px;
-  border: 1px solid transparent;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 5px;
+  border: none;
   background: none;
   cursor: pointer;
-  transition: background 150ms ease, color 150ms ease, border-color 150ms ease;
+  transition: background 150ms ease, color 150ms ease;
   width: 100%;
   text-align: left;
-  font-family: inherit;
+  font-family: "Inter", -apple-system, system-ui, sans-serif;
   font-size: 13px;
   font-weight: 500;
-  letter-spacing: 0.01em;
   position: relative;
 }
 
 .navItemActive {
-  background: rgba(16, 185, 129, 0.09);
-  border-color: rgba(16, 185, 129, 0.18);
-  color: #10b981;
+  background: oklch(0.23 0.005 120);
+  color: oklch(0.95 0.005 95);
 }
 
 .navItemActive::before {
   content: '';
   position: absolute;
-  left: -8px;
-  top: 50%;
-  transform: translateY(-50%);
+  left: -14px;
+  top: 6px;
+  bottom: 6px;
   width: 2px;
-  height: 16px;
-  background: #10b981;
-  border-radius: 0 2px 2px 0;
+  background: oklch(0.75 0.11 150);
+  border-radius: 0 1px 1px 0;
 }
 
 .navItemInactive {
-  color: #888888;
+  color: oklch(0.78 0.006 95);
 }
 
 .navItemInactive:hover {
-  color: #f0f0f0;
-  background: rgba(255, 255, 255, 0.04);
+  background: oklch(0.20 0.005 120);
+  color: oklch(0.95 0.005 95);
 }
 
 .navItem:focus-visible {
-  outline: 1.5px solid rgba(16, 185, 129, 0.5);
+  outline: 1.5px solid oklch(0.75 0.11 150 / 0.5);
   outline-offset: -2px;
 }
 
@@ -99,24 +184,13 @@
   flex-shrink: 0;
 }
 
-.sidebarFooter {
-  padding: 14px 18px;
-  border-top: 1px solid #1e1e1e;
-  font-size: 10px;
-  color: #2e2e2e;
-  letter-spacing: 0.04em;
-  flex-shrink: 0;
-}
-
-/* ── Nav badge ── */
-
 .navBadge {
   margin-left: auto;
   min-width: 17px;
   height: 17px;
   border-radius: 9px;
-  background: #10b981;
-  color: #060606;
+  background: oklch(0.75 0.11 150);
+  color: oklch(0.22 0.03 150);
   font-size: 9px;
   font-weight: 700;
   display: flex;
@@ -124,7 +198,117 @@
   justify-content: center;
   padding: 0 4px;
   font-variant-numeric: tabular-nums;
-  letter-spacing: 0;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* Spacer */
+
+.sidebarSpacer {
+  flex: 1;
+}
+
+/* Streak card */
+
+.streakCard {
+  padding: 10px 12px;
+  background: oklch(0.20 0.005 120);
+  border: 1px solid oklch(0.30 0.006 120);
+  border-radius: 6px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
+}
+
+.streakLabel {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 9.5px;
+  font-weight: 600;
+  color: oklch(0.42 0.008 95);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.streakNumber {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.streakValue {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 22px;
+  font-weight: 600;
+  color: oklch(0.95 0.005 95);
+}
+
+.streakUnit {
+  font-size: 11px;
+  color: oklch(0.58 0.008 95);
+}
+
+.streakBars {
+  display: flex;
+  gap: 2px;
+}
+
+.streakBar {
+  flex: 1;
+  height: 4px;
+  border-radius: 1px;
+  background: oklch(0.75 0.11 150);
+}
+
+.streakBarDim {
+  flex: 1;
+  height: 4px;
+  border-radius: 1px;
+  background: oklch(0.55 0.09 150);
+  opacity: 0.35;
+}
+
+/* Footer */
+
+.sidebarFooter {
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.sidebarFooterText {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  color: oklch(0.42 0.008 95);
+}
+
+.sidebarFooterDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: oklch(0.75 0.11 150);
+  margin-left: auto;
+  animation: pulse 2.5s ease infinite;
+}
+
+/* ── Kbd component used in search button ── */
+
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  background: oklch(0.27 0.006 120);
+  border: 1px solid oklch(0.36 0.008 120);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  color: oklch(0.78 0.006 95);
 }
 
 /* ── Main content area ── */
@@ -132,6 +316,10 @@
 .content {
   flex: 1;
   overflow-y: auto;
-  background: radial-gradient(ellipse 80% 50% at 50% -5%, rgba(16, 185, 129, 0.06) 0%, #080808 55%);
+  background: oklch(0.16 0.004 120);
   min-height: 100vh;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebarFooterDot { animation: none; }
 }
