@@ -12,7 +12,16 @@ import styles from "./Dashboard.module.css";
 // ── GistMark ──────────────────────────────────────────────────────────────────
 
 function GistMark() {
-  return <div className={styles.sidebarLogoMark}>g</div>;
+  return (
+    <div className={styles.sidebarLogoMark}>
+      <svg width="26" height="26" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <rect width="32" height="32" rx="6" fill="oklch(0.75 0.11 150)" />
+        <path d="M 20.8 11.5 A 7 7 0 1 0 20.8 15.2 H 24 V 21.5 Q 24 26.2 18.4 26.2 Q 13.8 26.2 13.4 22.7" stroke="oklch(0.22 0.03 150)" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M 14 7.5 C 19 9.2 20 17 14 19.5 C 8 17 9 9.2 14 7.5 Z" fill="oklch(0.30 0.07 150)" />
+        <path d="M 14 8.5 Q 14.5 13.5 14 18.5" stroke="oklch(0.20 0.04 150)" strokeWidth="0.5" fill="none" strokeLinecap="round" />
+      </svg>
+    </div>
+  );
 }
 
 // ── Search icon ───────────────────────────────────────────────────────────────

@@ -674,21 +674,12 @@ type Tab = "capture" | "library";
 function GistMark() {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-      <div style={{
-        width: "22px", height: "22px",
-        borderRadius: "5px",
-        background: T.accent,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        flexShrink: 0,
-        fontFamily: MONO,
-        fontWeight: 700,
-        fontSize: "14px",
-        color: T.accentInk,
-        letterSpacing: "-0.5px",
-        lineHeight: 1,
-      }}>
-        g
-      </div>
+      <svg width="22" height="22" viewBox="0 0 32 32" fill="none" aria-hidden="true" style={{ flexShrink: 0 }}>
+        <rect width="32" height="32" rx="6" fill="oklch(0.75 0.11 150)" />
+        <path d="M 20.8 11.5 A 7 7 0 1 0 20.8 15.2 H 24 V 21.5 Q 24 26.2 18.4 26.2 Q 13.8 26.2 13.4 22.7" stroke="oklch(0.22 0.03 150)" strokeWidth="1.6" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M 14 7.5 C 19 9.2 20 17 14 19.5 C 8 17 9 9.2 14 7.5 Z" fill="oklch(0.30 0.07 150)" />
+        <path d="M 14 8.5 Q 14.5 13.5 14 18.5" stroke="oklch(0.20 0.04 150)" strokeWidth="0.5" fill="none" strokeLinecap="round" />
+      </svg>
       <span style={{
         fontSize: "13px", fontWeight: 600, letterSpacing: "-0.2px",
         color: T.text, fontFamily: MONO,
