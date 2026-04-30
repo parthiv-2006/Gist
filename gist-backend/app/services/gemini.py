@@ -198,11 +198,7 @@ async def embed_text(text: str, api_key: str | None = None) -> list[float]:
     if _MOCK_LLM:
         return _mock_embedding(text)
 
-    from google.genai import types as _gt
-    client = genai.Client(
-        api_key=_resolve_api_key(api_key),
-        http_options=_gt.HttpOptions(api_version="v1"),
-    )
+    client = genai.Client(api_key=_resolve_api_key(api_key))
     truncated = text[:_EMBED_MAX_CHARS]
 
     loop = asyncio.get_running_loop()
