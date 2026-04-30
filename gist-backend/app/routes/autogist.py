@@ -18,7 +18,7 @@ from google import genai
 from pydantic import BaseModel, field_validator
 
 from app.limiter import limiter
-from app.services.gemini import GEMINI_MODEL
+from app.services.gemini import GEMINI_MODEL, _resolve_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ _MOCK_TAKEAWAYS = [
 ]
 
 
-async def _generate_takeaways(text: str) -> list[str]:
+async def _generate_takeaways(text: str, api_key: str | None = None) -> list[str]:
     """
     Call Gemini and return a list of 3 takeaway strings.
     Uses run_in_executor so the synchronous SDK call doesn't block the event loop.
@@ -111,11 +111,7 @@ async def _generate_takeaways(text: str) -> list[str]:
     if _MOCK_LLM:
         return _MOCK_TAKEAWAYS
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set")
-
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=_resolve_api_key(api_key))
     prompt = _PROMPT_TEMPLATE.format(text=text)
 
     loop = asyncio.get_running_loop()
@@ -170,8 +166,9 @@ async def autogist(request: Request):
             content={"error": "Validation error.", "code": "VALIDATION_ERROR"},
         )
 
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
     try:
-        takeaways = await _generate_takeaways(payload.text_chunk)
+        takeaways = await _generate_takeaways(payload.text_chunk, user_api_key)
     except RuntimeError as exc:
         logger.warning("AutoGist LLM error: %s", exc)
         return JSONResponse(

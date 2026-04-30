@@ -29,6 +29,7 @@ class SaveGistRequest(BaseModel):
     explanation: str = Field(max_length=10_000)
     mode: str = Field(max_length=50)
     url: str = Field(max_length=2048)
+    gist_type: str = "text"
 
 
 @router.post("/library/save")
@@ -42,6 +43,7 @@ async def save_gist(request: Request, body: SaveGistRequest):
             content={"error": "Library unavailable — database not connected.", "code": "DB_UNAVAILABLE"},
         )
 
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
     try:
         # Combine selected text + explanation for better keyword coverage
         category = categorize_text(f"{body.original_text}\n{body.explanation}")
@@ -49,10 +51,10 @@ async def save_gist(request: Request, body: SaveGistRequest):
         # Run embedding and tag generation concurrently
         import asyncio as _asyncio
         embedding_task = _asyncio.create_task(
-            embed_text(f"{body.original_text} {body.explanation}")
+            embed_text(f"{body.original_text} {body.explanation}", user_api_key)
         )
         tags_task = _asyncio.create_task(
-            generate_tags(body.original_text, body.explanation)
+            generate_tags(body.original_text, body.explanation, user_api_key)
         )
 
         embedding = None
@@ -74,6 +76,7 @@ async def save_gist(request: Request, body: SaveGistRequest):
             "url": body.url,
             "category": category,
             "tags": tags,
+            "gist_type": body.gist_type,
             "created_at": datetime.now(timezone.utc),
         }
         if embedding is not None:
@@ -105,7 +108,7 @@ async def get_library():
     try:
         cursor = db["gists"].find(
             {},
-            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "tags": 1, "created_at": 1},
+            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "tags": 1, "gist_type": 1, "created_at": 1},
         ).sort("created_at", -1).limit(100)
 
         raw_items = await cursor.to_list(length=100)
@@ -124,6 +127,7 @@ async def get_library():
         doc["id"] = str(doc.pop("_id"))
         # Ensure tags is always a list (older docs without the field get [])
         doc.setdefault("tags", [])
+        doc.setdefault("gist_type", "text")
         items.append(doc)
 
     return {"items": items}

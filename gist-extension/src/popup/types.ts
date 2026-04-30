@@ -8,6 +8,7 @@ export interface GistItem {
   created_at:    string;
   score?:        number;
   tags?:         string[];
+  gist_type?:    string;
 }
 
 export interface TagCount {

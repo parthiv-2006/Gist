@@ -21,6 +21,14 @@ GEMINI_MODEL = "gemini-2.5-flash"
 # Responses are instant and deterministic — no quota consumed.
 _MOCK_LLM: bool = os.environ.get("MOCK_LLM", "").lower() in ("1", "true", "yes")
 
+
+def _resolve_api_key(override: str | None = None) -> str:
+    """Return the API key to use: override takes priority, then the env var."""
+    key = override or os.environ.get("GEMINI_API_KEY", "")
+    if not key:
+        raise RuntimeError("GEMINI_API_KEY is not set")
+    return key
+
 _MOCK_EXPLANATIONS: dict[str, str] = {
     "text":   "Mock mode active — this is a placeholder explanation for local development and testing. No Gemini API call was made.",
     "visual": "Mock mode active — this is a placeholder visual explanation for local development. No Gemini API call was made.",
@@ -136,7 +144,7 @@ EMBEDDING_MODEL = "embedding-001"
 _EMBED_MAX_CHARS = 8000  # safety truncation before sending to the API
 
 
-async def embed_text(text: str) -> list[float]:
+async def embed_text(text: str, api_key: str | None = None) -> list[float]:
     """
     Generate a 768-dimensional embedding for the given text using text-embedding-004.
     Runs the synchronous SDK call in a thread executor to avoid blocking the event loop.
@@ -144,11 +152,7 @@ async def embed_text(text: str) -> list[float]:
     if _MOCK_LLM:
         return _mock_embedding(text)
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set")
-
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=_resolve_api_key(api_key))
     truncated = text[:_EMBED_MAX_CHARS]
 
     loop = asyncio.get_running_loop()
@@ -159,6 +163,8 @@ async def embed_text(text: str) -> list[float]:
             contents=truncated,
         ),
     )
+    if hasattr(result, 'embedding') and result.embedding is not None:
+        return result.embedding.values
     return result.embeddings[0].values
 
 
@@ -196,7 +202,7 @@ def _scrub_excerpt(text: str) -> str:
     return cleaned[:200]
 
 
-async def generate_cluster_label(excerpts: list[str]) -> str:
+async def generate_cluster_label(excerpts: list[str], api_key: str | None = None) -> str:
     """
     Generate a short topic label for a semantic cluster via Gemini (non-streaming).
     Excerpts are sanitised before being sent to the model. Returns at most 40 chars.
@@ -205,17 +211,13 @@ async def generate_cluster_label(excerpts: list[str]) -> str:
     if _MOCK_LLM:
         return "Mock Topic"
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set")
-
     # Each excerpt wrapped in XML delimiters to prevent delimiter confusion attacks
     wrapped = "\n".join(
         f"<excerpt>{_scrub_excerpt(e)}</excerpt>" for e in excerpts[:8]
     )
     prompt = _CLUSTER_LABEL_PROMPT.format(excerpts=wrapped)
 
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=_resolve_api_key(api_key))
     loop = asyncio.get_running_loop()
     result = await loop.run_in_executor(
         None,
@@ -263,7 +265,7 @@ def _scrub_tag_input(text: str) -> str:
     return cleaned[:_TAG_MAX_CHARS]
 
 
-async def generate_tags(original_text: str, explanation: str) -> list[str]:
+async def generate_tags(original_text: str, explanation: str, api_key: str | None = None) -> list[str]:
     """
     Generate 2-4 specific semantic tags for a saved gist via Gemini.
     Returns an empty list on any error — tags are enrichment, not critical.
@@ -271,17 +273,14 @@ async def generate_tags(original_text: str, explanation: str) -> list[str]:
     if _MOCK_LLM:
         return ["mock", "tags"]
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        return []
-
     prompt = _TAG_PROMPT.format(
         original_text=_scrub_tag_input(original_text),
         explanation=_scrub_tag_input(explanation),
     )
 
     try:
-        client = genai.Client(api_key=api_key)
+        resolved_key = _resolve_api_key(api_key)
+        client = genai.Client(api_key=resolved_key)
         loop = asyncio.get_running_loop()
         result = await loop.run_in_executor(
             None,
@@ -312,7 +311,8 @@ async def stream_explanation(
     complexity_level: str = "standard",
     messages: list[dict] | None = None,
     image_data: Optional[str] = None,
-    image_mime_type: Optional[str] = "image/png"
+    image_mime_type: Optional[str] = "image/png",
+    api_key: str | None = None,
 ) -> AsyncGenerator[str, None]:
     """
     Call the Gemini API with streaming enabled.
@@ -324,11 +324,7 @@ async def stream_explanation(
             yield chunk
         return
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set")
-
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=_resolve_api_key(api_key))
 
     # Construct contents
     if not messages:

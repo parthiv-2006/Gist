@@ -48,6 +48,7 @@ export interface GistMessage {
     // Save gist fields
     explanation?: string;
     success?: boolean;
+    gist_type?: "text" | "visual";
     // Nested Gist (Progressive Disclosure) fields
     term?: string;
     parentContext?: string;

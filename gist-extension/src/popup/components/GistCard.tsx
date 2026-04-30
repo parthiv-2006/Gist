@@ -54,6 +54,14 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
           <span className={styles.modeTag} style={{ fontFamily: MONO }}>
             {item.mode}
           </span>
+          {item.gist_type === "visual" && (
+            <span
+              className={styles.visualBadge}
+              title="Visual capture"
+            >
+              Visual
+            </span>
+          )}
         </div>
         <div className={styles.topRight}>
           <span className={styles.dateText}>{date}</span>

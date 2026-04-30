@@ -9,7 +9,7 @@ import math
 from datetime import datetime, timezone
 
 import numpy as np
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from app.db import get_db
@@ -37,10 +37,10 @@ _STALENESS_NEW_GISTS  = 5
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-async def _label_or_fallback(cid: int, excerpts: list[str]) -> str:
+async def _label_or_fallback(cid: int, excerpts: list[str], api_key: str | None = None) -> str:
     """Generate a cluster label, falling back to 'Topic N' on any failure."""
     try:
-        label = await generate_cluster_label(excerpts)
+        label = await generate_cluster_label(excerpts, api_key)
         return label or f"Topic {cid + 1}"
     except Exception as exc:
         logger.warning("Cluster label failed for cluster %s: %s", cid, exc)
@@ -103,7 +103,7 @@ async def get_graph():
 
 
 @router.post("/synapse/compute")
-async def compute_graph():
+async def compute_graph(request: Request):
     """
     Run the full Synapse pipeline and persist the result.
     Rate-limited to 1 call per 60 s per process.
@@ -113,6 +113,7 @@ async def compute_graph():
     503: { error, code: "DB_UNAVAILABLE" | "INSUFFICIENT_DATA" | "COMPUTE_ERROR" }
     """
     global _last_compute_at
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
 
     # Narrow lock: guards only the rate-limit check + slot reservation.
     # Reserving _last_compute_at up front ensures concurrent callers get 429
@@ -202,7 +203,7 @@ async def compute_graph():
             for cid in range(k):
                 member_idxs = [i for i, c in enumerate(cluster_ids) if c == cid]
                 excerpts    = [docs[i]["original_text"][:200] for i in member_idxs[:8]]
-                label_tasks.append(_label_or_fallback(cid, excerpts))
+                label_tasks.append(_label_or_fallback(cid, excerpts, user_api_key))
 
             labels = await asyncio.gather(*label_tasks)
 

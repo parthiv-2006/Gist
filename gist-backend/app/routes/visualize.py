@@ -24,7 +24,7 @@ from google import genai
 from pydantic import BaseModel, field_validator
 
 from app.limiter import limiter
-from app.services.gemini import GEMINI_MODEL
+from app.services.gemini import GEMINI_MODEL, _resolve_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -167,16 +167,12 @@ async def _render_with_fallback(mermaid_src: str) -> str | None:
 
 # ─── LLM call ─────────────────────────────────────────────────────────────────
 
-async def _generate_mermaid(text: str) -> str:
+async def _generate_mermaid(text: str, api_key: str | None = None) -> str:
     """Ask Gemini to produce Mermaid syntax, then extract + sanitise the result."""
     if _MOCK_LLM:
         return _MOCK_MERMAID
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set")
-
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=_resolve_api_key(api_key))
     prompt = _PROMPT_TEMPLATE.format(text=text)
 
     loop = asyncio.get_running_loop()
@@ -207,8 +203,9 @@ async def visualize(request: Request, body: VisualizeRequest):
     svg is null when mermaid.ink is unavailable — the extension falls back to
     displaying the raw Mermaid source as a formatted code block.
     """
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
     try:
-        mermaid_src = await _generate_mermaid(body.text)
+        mermaid_src = await _generate_mermaid(body.text, user_api_key)
     except RuntimeError as exc:
         logger.warning("Visualize LLM error: %s", exc)
         return JSONResponse(

@@ -19,6 +19,14 @@ async function resolveBase(): Promise<string> {
   return RENDER_BASE;
 }
 
+async function getStoredApiKey(): Promise<string | null> {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(["geminiApiKey"], (res) => {
+      resolve(res["geminiApiKey"] || null);
+    });
+  });
+}
+
 // Per-tab rate limit: at most 1 auto-gist request every 8 seconds.
 const _lastAutoGistTime = new Map<number, number>();
 const AUTOGIST_COOLDOWN_MS = 8_000;
@@ -119,9 +127,9 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     sendResponse({ success: true });
     return true;
   } else if (message.type === "SAVE_GIST") {
-    const { selectedText, explanation, complexityLevel, pageContext } = message.payload;
-    if (!selectedText || !explanation) return;
-    saveGistToLibrary(tabId, selectedText, explanation, complexityLevel ?? "standard", pageContext ?? "");
+    const { selectedText, explanation, complexityLevel, pageContext, gist_type } = message.payload;
+    if (!explanation) return;
+    saveGistToLibrary(tabId, selectedText ?? "", explanation, complexityLevel ?? "standard", pageContext ?? "", gist_type ?? "text");
     return true;
   } else if (message.type === "AUTOGIST_REQUEST") {
     const { textChunk, url } = message.payload;
@@ -162,10 +170,13 @@ async function streamFromBackend(
   const base = await resolveBase();
   const url = `${base}/api/v1/simplify`;
   console.log("[Gist BG] fetch →", url);
+  const apiKey = await getStoredApiKey();
+  const streamHeaders: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) streamHeaders["X-Gemini-Api-Key"] = apiKey;
   try {
     const response = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: streamHeaders,
       body: JSON.stringify({
         selected_text: selectedText || undefined,
         page_context: pageContext,
@@ -261,14 +272,18 @@ async function saveGistToLibrary(
   selectedText: string,
   explanation: string,
   mode: string,
-  url: string
+  url: string,
+  gist_type: string = "text"
 ): Promise<void> {
   const base = await resolveBase();
+  const apiKey = await getStoredApiKey();
   try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
     const response = await fetch(`${base}/library/save`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ original_text: selectedText, explanation, mode, url }),
+      headers,
+      body: JSON.stringify({ original_text: selectedText, explanation, mode, url, gist_type }),
     });
     const success = response.ok;
     const resultMsg: GistMessage = { type: "SAVE_GIST_RESULT", payload: { success } };
@@ -281,10 +296,13 @@ async function saveGistToLibrary(
 
 async function fetchAutoGist(tabId: number, textChunk: string, url: string): Promise<void> {
   const base = await resolveBase();
+  const apiKey = await getStoredApiKey();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
   try {
     const response = await fetch(`${base}/autogist`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ text_chunk: textChunk, url }),
     });
 
@@ -311,10 +329,13 @@ async function fetchAutoGist(tabId: number, textChunk: string, url: string): Pro
 
 async function fetchNestedGist(tabId: number, term: string, parentContext: string): Promise<void> {
   const base = await resolveBase();
+  const apiKey = await getStoredApiKey();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
   try {
     const response = await fetch(`${base}/api/v1/nested-gist`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ term, parent_context: parentContext }),
     });
 
@@ -343,10 +364,13 @@ async function fetchNestedGist(tabId: number, term: string, parentContext: strin
 
 async function fetchVisualize(tabId: number, text: string, pageContext: string): Promise<void> {
   const base = await resolveBase();
+  const apiKey = await getStoredApiKey();
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
   try {
     const response = await fetch(`${base}/api/v1/visualize`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers,
       body: JSON.stringify({ text, page_context: pageContext }),
     });
 

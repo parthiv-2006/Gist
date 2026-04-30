@@ -16,7 +16,7 @@ from google import genai
 from pydantic import BaseModel, field_validator
 
 from app.limiter import limiter
-from app.services.gemini import GEMINI_MODEL
+from app.services.gemini import GEMINI_MODEL, _resolve_api_key
 
 logger = logging.getLogger(__name__)
 
@@ -53,16 +53,12 @@ class NestedGistRequest(BaseModel):
         return v
 
 
-async def _get_nested_definition(term: str, parent_context: str) -> str:
+async def _get_nested_definition(term: str, parent_context: str, api_key: str | None = None) -> str:
     """Call Gemini to get a concise definition of the term."""
     if _MOCK_LLM:
         return _MOCK_DEFINITION
 
-    api_key = os.environ.get("GEMINI_API_KEY")
-    if not api_key:
-        raise RuntimeError("GEMINI_API_KEY is not set")
-
-    client = genai.Client(api_key=api_key)
+    client = genai.Client(api_key=_resolve_api_key(api_key))
     prompt = _PROMPT_TEMPLATE.format(
         context=(parent_context or "An explanation")[:_MAX_CONTEXT_LEN],
         term=term,
@@ -120,8 +116,9 @@ async def nested_gist(request: Request):
             content={"error": "Validation error.", "code": "VALIDATION_ERROR"},
         )
 
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
     try:
-        definition = await _get_nested_definition(payload.term, payload.parent_context or "An explanation")
+        definition = await _get_nested_definition(payload.term, payload.parent_context or "An explanation", user_api_key)
     except RuntimeError as exc:
         logger.warning("Nested gist LLM error: %s", exc)
         return JSONResponse(

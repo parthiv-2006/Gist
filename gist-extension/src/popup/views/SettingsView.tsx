@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { BACKEND_BASE } from "../tokens";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { IconExport, IconTrash } from "../icons";
@@ -38,15 +39,25 @@ export function SettingsView() {
   const [sidebarMode, setSidebar]   = useState(false);
   const [clearConfirm, setClear]    = useState(false);
   const [clearing, setClearing]     = useState(false);
+  const [apiKey, setApiKey]         = useState("");
+  const [apiKeyShown, setShown]     = useState(false);
+  const [apiKeySaved, setKeySaved]  = useState(false);
   const toast = useToast();
 
   // Load from storage on mount
   useEffect(() => {
-    chrome.storage.local.get(["autoGistEnabled", "sidebarMode"], (res) => {
+    chrome.storage.local.get(["autoGistEnabled", "sidebarMode", "geminiApiKey"], (res) => {
       setAutoGist(!!res.autoGistEnabled);
       setSidebar(!!res.sidebarMode);
+      setApiKey(res.geminiApiKey || "");
     });
   }, []);
+
+  const handleSaveApiKey = () => {
+    chrome.storage.local.set({ geminiApiKey: apiKey.trim() });
+    setKeySaved(true);
+    setTimeout(() => setKeySaved(false), 2000);
+  };
 
   const toggle = (key: string, val: boolean, setter: (v: boolean) => void) => {
     setter(val);
@@ -172,6 +183,45 @@ export function SettingsView() {
             </button>
           </div>
         )}
+      </section>
+
+      {/* ── API Configuration ── */}
+      <section className={styles.section}>
+        <p className={styles.sectionTitle}>API Configuration</p>
+        <div className={styles.row}>
+          <div className={styles.rowInfo}>
+            <div className={styles.rowLabel}>Gemini API Key</div>
+            <div className={styles.rowSub}>Required for production. Get yours at aistudio.google.com.</div>
+          </div>
+        </div>
+        <div className={styles.apiKeyRow}>
+          <div className={styles.apiKeyInputWrap}>
+            <input
+              type={apiKeyShown ? "text" : "password"}
+              className={styles.apiKeyInput}
+              value={apiKey}
+              onChange={(e) => { setApiKey(e.target.value); setKeySaved(false); }}
+              placeholder="AIza..."
+              spellCheck={false}
+              autoComplete="off"
+            />
+            <button
+              className={styles.apiKeyVisToggle}
+              onClick={() => setShown(v => !v)}
+              aria-label={apiKeyShown ? "Hide key" : "Show key"}
+              type="button"
+            >
+              {apiKeyShown ? <EyeOff size={13} /> : <Eye size={13} />}
+            </button>
+          </div>
+          <button
+            className={`${styles.actionBtn} ${apiKeySaved ? styles.actionBtnSaved : styles.actionBtnDefault}`}
+            onClick={handleSaveApiKey}
+            disabled={!apiKey.trim()}
+          >
+            {apiKeySaved ? "Saved ✓" : "Save"}
+          </button>
+        </div>
       </section>
 
       {/* ── Appearance ── */}

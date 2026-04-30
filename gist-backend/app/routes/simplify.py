@@ -62,6 +62,7 @@ async def simplify(request: Request):
     # 2. Attempt to fetch the first chunk to catch RuntimeError before we
     #    commit to a StreamingResponse — lets us still return a proper 503.
     first_chunk: str | None = None
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
     try:
         gen = stream_explanation(
             payload.selected_text,
@@ -69,7 +70,8 @@ async def simplify(request: Request):
             payload.complexity_level,
             [m.model_dump() for m in payload.messages] if payload.messages else None,
             payload.image_data,
-            payload.image_mime_type
+            payload.image_mime_type,
+            user_api_key,
         )
         async for chunk in gen:
             first_chunk = chunk
