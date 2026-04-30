@@ -186,7 +186,7 @@ def build_prompt(
 
 # ─── Embedding ────────────────────────────────────────────────────────────────
 
-EMBEDDING_MODEL = "embedding-001"
+EMBEDDING_MODEL = "text-embedding-004"
 _EMBED_MAX_CHARS = 8000  # safety truncation before sending to the API
 
 
@@ -198,7 +198,11 @@ async def embed_text(text: str, api_key: str | None = None) -> list[float]:
     if _MOCK_LLM:
         return _mock_embedding(text)
 
-    client = genai.Client(api_key=_resolve_api_key(api_key))
+    from google.genai import types as _gt
+    client = genai.Client(
+        api_key=_resolve_api_key(api_key),
+        http_options=_gt.HttpOptions(api_version="v1"),
+    )
     truncated = text[:_EMBED_MAX_CHARS]
 
     loop = asyncio.get_running_loop()
