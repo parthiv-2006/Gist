@@ -18,7 +18,7 @@ from google import genai
 from pydantic import BaseModel, field_validator
 
 from app.limiter import limiter
-from app.services.gemini import GEMINI_MODEL, _resolve_api_key
+from app.services.gemini import GEMINI_MODEL, _resolve_api_key, classify_gemini_error
 
 logger = logging.getLogger(__name__)
 
@@ -170,11 +170,9 @@ async def autogist(request: Request):
     try:
         takeaways = await _generate_takeaways(payload.text_chunk, user_api_key)
     except RuntimeError as exc:
-        logger.warning("AutoGist LLM error: %s", exc)
-        return JSONResponse(
-            status_code=503,
-            content={"error": str(exc), "code": "LLM_UNAVAILABLE"},
-        )
+        http_status, code, msg = classify_gemini_error(exc)
+        logger.warning("AutoGist LLM error [%s]: %s", code, exc)
+        return JSONResponse(status_code=http_status, content={"error": msg, "code": code})
     except (json.JSONDecodeError, ValueError) as exc:
         logger.warning("AutoGist parse error: %s", exc)
         return JSONResponse(
@@ -182,10 +180,8 @@ async def autogist(request: Request):
             content={"error": "Model returned unexpected format.", "code": "PARSE_ERROR"},
         )
     except Exception as exc:
-        logger.error("AutoGist unexpected error: %s", exc, exc_info=True)
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Unexpected error generating takeaways.", "code": "LLM_UNAVAILABLE"},
-        )
+        http_status, code, msg = classify_gemini_error(exc)
+        logger.error("AutoGist unexpected error [%s]: %s", code, exc, exc_info=True)
+        return JSONResponse(status_code=http_status, content={"error": msg, "code": code})
 
     return {"takeaways": takeaways[:3]}

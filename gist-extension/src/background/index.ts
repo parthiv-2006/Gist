@@ -27,6 +27,32 @@ async function getStoredApiKey(): Promise<string | null> {
   });
 }
 
+const ERROR_MESSAGES: Record<string, string> = {
+  API_KEY_INVALID:       "Your Gemini API key is not valid. Check it in Settings → API Configuration.",
+  API_KEY_MISSING:       "No API key configured. Go to Settings → API Configuration to add your Gemini key.",
+  QUOTA_EXCEEDED:        "Your Gemini API quota has been exceeded. Check your usage at aistudio.google.com.",
+  API_PERMISSION_DENIED: "Your API key doesn't have permission for this model. Check Google AI Studio.",
+  LLM_TIMEOUT:           "The AI took too long to respond. Try again with shorter text.",
+  LLM_UNAVAILABLE:       "The AI service is temporarily unavailable. Try again in a moment.",
+  LLM_ERROR:             "The AI service returned an unexpected error. Please try again.",
+  RATE_LIMITED:          "Too many requests — please wait a moment and try again.",
+  EMPTY_TEXT:            "No text was selected. Highlight some text and try again.",
+  TEXT_TOO_LONG:         "Selected text is too long (max 2,000 characters). Try highlighting less.",
+  PARSE_ERROR:           "The AI returned an unexpected response format. Try again.",
+};
+
+function resolveError(backendCode: string | null | undefined, httpStatus: number, backendMsg: string | null | undefined): { message: string; code: string } {
+  if (backendCode && ERROR_MESSAGES[backendCode]) {
+    return { message: ERROR_MESSAGES[backendCode], code: backendCode };
+  }
+  if (httpStatus === 401) return { message: ERROR_MESSAGES.API_KEY_INVALID, code: "API_KEY_INVALID" };
+  if (httpStatus === 403) return { message: ERROR_MESSAGES.API_PERMISSION_DENIED, code: "API_PERMISSION_DENIED" };
+  if (httpStatus === 429) return { message: ERROR_MESSAGES.RATE_LIMITED, code: "RATE_LIMITED" };
+  if (httpStatus === 503) return { message: ERROR_MESSAGES.LLM_UNAVAILABLE, code: "LLM_UNAVAILABLE" };
+  if (httpStatus === 400) return { message: "Invalid request. Try selecting different text.", code: "INVALID_REQUEST" };
+  return { message: backendMsg ?? "Something went wrong. Please try again.", code: "UNKNOWN" };
+}
+
 // Per-tab rate limit: at most 1 auto-gist request every 8 seconds.
 const _lastAutoGistTime = new Map<number, number>();
 const AUTOGIST_COOLDOWN_MS = 8_000;
@@ -192,21 +218,10 @@ async function streamFromBackend(
     if (!response.ok) {
       const err = await response.json().catch(() => ({ error: null, code: null }));
       console.warn("[Gist BG] non-OK response:", response.status, err);
-      let userMessage: string;
-      if (err.error) {
-        userMessage = err.error;
-      } else if (response.status === 400) {
-        userMessage = "Invalid request. Try selecting different text.";
-      } else if (response.status === 429) {
-        userMessage = "Too many requests — please wait a moment before trying again.";
-      } else if (response.status === 503) {
-        userMessage = "AI service is temporarily unavailable. Try again shortly.";
-      } else {
-        userMessage = `Something went wrong (${response.status}). Please try again.`;
-      }
+      const { message, code } = resolveError(err.code, response.status, err.error);
       const errorMsg: GistMessage = {
         type: "GIST_ERROR",
-        payload: { error: userMessage },
+        payload: { error: message, errorCode: code },
       };
       chrome.tabs.sendMessage(tabId, errorMsg);
       return;
@@ -261,7 +276,7 @@ async function streamFromBackend(
     console.error("[Gist BG] fetch error:", err);
     const errorMsg: GistMessage = {
       type: "GIST_ERROR",
-      payload: { error: "Network error. Check your connection and try again." },
+      payload: { error: "Network error — check your internet connection.", errorCode: "NETWORK_ERROR" },
     };
     chrome.tabs.sendMessage(tabId, errorMsg);
   }

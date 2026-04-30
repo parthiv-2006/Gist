@@ -36,6 +36,8 @@ let isVisible = false;
 let lastState: PopoverState = "IDLE";
 let saveStatus: "unsaved" | "saving" | "saved" | "error" = "unsaved";
 
+let currentErrorCode: string | undefined = undefined;
+
 // Visualize (Mermaid diagram) state
 let diagramSvg: string | undefined = undefined;
 let diagramSource: string | undefined = undefined;
@@ -69,6 +71,7 @@ export interface PopoverUpdate {
   state: PopoverState;
   chunk?: string;
   error?: string;
+  errorCode?: string;
   position?: DOMRect;
   mode?: ComplexityLevel;
   imageData?: string;
@@ -161,6 +164,7 @@ export function updatePopover(update: PopoverUpdate): void {
       diagramSvg = undefined;
       diagramSource = undefined;
       diagramState = "idle";
+      currentErrorCode = undefined;
     }
     if (update.mode) currentMode = update.mode;
     if (update.position) currentPosition = update.position;
@@ -187,7 +191,8 @@ export function updatePopover(update: PopoverUpdate): void {
   }
 
   if (update.state === "ERROR") {
-    renderPopover({ state: "ERROR", error: update.error });
+    currentErrorCode = update.errorCode;
+    renderPopover({ state: "ERROR", error: update.error, errorCode: update.errorCode });
     return;
   }
 
@@ -406,9 +411,10 @@ interface RenderOptions {
   state: PopoverState;
   text?: string;
   error?: string;
+  errorCode?: string;
 }
 
-function renderPopover({ state, text = "", error }: RenderOptions): void {
+function renderPopover({ state, text = "", error, errorCode }: RenderOptions): void {
   if (!reactRoot) return;
   lastState = state;
 
@@ -418,6 +424,7 @@ function renderPopover({ state, text = "", error }: RenderOptions): void {
       text,
       messages,
       error,
+      errorCode: errorCode ?? currentErrorCode,
       position: currentPosition,
       mode: currentMode,
       imageData: currentImageData,

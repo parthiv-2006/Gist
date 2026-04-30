@@ -16,7 +16,7 @@ from google import genai
 from pydantic import BaseModel, field_validator
 
 from app.limiter import limiter
-from app.services.gemini import GEMINI_MODEL, _resolve_api_key
+from app.services.gemini import GEMINI_MODEL, _resolve_api_key, classify_gemini_error
 
 logger = logging.getLogger(__name__)
 
@@ -120,16 +120,12 @@ async def nested_gist(request: Request):
     try:
         definition = await _get_nested_definition(payload.term, payload.parent_context or "An explanation", user_api_key)
     except RuntimeError as exc:
-        logger.warning("Nested gist LLM error: %s", exc)
-        return JSONResponse(
-            status_code=503,
-            content={"error": str(exc), "code": "LLM_UNAVAILABLE"},
-        )
+        http_status, code, msg = classify_gemini_error(exc)
+        logger.warning("Nested gist LLM error [%s]: %s", code, exc)
+        return JSONResponse(status_code=http_status, content={"error": msg, "code": code})
     except Exception as exc:
-        logger.error("Nested gist unexpected error: %s", exc, exc_info=True)
-        return JSONResponse(
-            status_code=503,
-            content={"error": "Unexpected error generating definition.", "code": "LLM_UNAVAILABLE"},
-        )
+        http_status, code, msg = classify_gemini_error(exc)
+        logger.error("Nested gist unexpected error [%s]: %s", code, exc, exc_info=True)
+        return JSONResponse(status_code=http_status, content={"error": msg, "code": code})
 
     return {"definition": definition}

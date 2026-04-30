@@ -2,12 +2,45 @@
 import React, { useEffect, useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import DOMPurify from "dompurify";
-import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus, Bookmark, Check, Network } from "lucide-react";
+import { X, Send, Volume2, Pause, Square, PanelRight, BookOpen, Minus, Bookmark, Check, Network, AlertTriangle, WifiOff, Clock, Key, Scissors, CloudOff, RefreshCw } from "lucide-react";
 import styles from "./Popover.module.css";
 import { Mermaid } from "./Mermaid";
 import type { ComplexityLevel, ChatMessage } from "../../utils/messages";
 
 export type PopoverState = "IDLE" | "LOADING" | "STREAMING" | "DONE" | "ERROR";
+
+// ─── Error metadata ──────────────────────────────────────────────────────────
+
+type ErrorVariant = "auth" | "quota" | "rate" | "network" | "timeout" | "service" | "generic";
+interface ErrorMeta { Icon: React.ComponentType<{ size?: number }>; title: string; hint: string; variant: ErrorVariant; }
+
+function getErrorMeta(error?: string, code?: string): ErrorMeta {
+  const codeMap: Record<string, ErrorMeta> = {
+    API_KEY_INVALID:       { Icon: Key,           title: "Invalid API Key",       hint: "Open the extension popup → Settings → API Configuration to update your key.", variant: "auth" },
+    API_KEY_MISSING:       { Icon: Key,           title: "API Key Required",      hint: "Open the extension popup → Settings → API Configuration to add your Gemini key.", variant: "auth" },
+    QUOTA_EXCEEDED:        { Icon: Clock,         title: "Quota Exceeded",        hint: "Your free Gemini quota is full. Visit aistudio.google.com to check your limits.", variant: "quota" },
+    API_PERMISSION_DENIED: { Icon: Key,           title: "Permission Denied",     hint: "Your API key lacks access to this model. Check your Google AI Studio project settings.", variant: "auth" },
+    RATE_LIMITED:          { Icon: Clock,         title: "Too Many Requests",     hint: "You're sending requests too quickly. Wait a moment and try again.", variant: "rate" },
+    LLM_TIMEOUT:           { Icon: Clock,         title: "Request Timed Out",     hint: "The AI took too long. Try selecting a shorter passage.", variant: "timeout" },
+    LLM_UNAVAILABLE:       { Icon: CloudOff,      title: "Service Unavailable",   hint: "Gemini may be warming up or under maintenance. Try again in a moment.", variant: "service" },
+    LLM_ERROR:             { Icon: AlertTriangle, title: "AI Error",              hint: "The AI returned an error. Try again or select different text.", variant: "service" },
+    NETWORK_ERROR:         { Icon: WifiOff,       title: "No Connection",         hint: "Check your internet connection and try again.", variant: "network" },
+    TEXT_TOO_LONG:         { Icon: Scissors,      title: "Text Too Long",         hint: "Highlight a shorter passage — maximum 2,000 characters.", variant: "generic" },
+    EMPTY_TEXT:            { Icon: AlertTriangle, title: "Nothing Selected",      hint: "Highlight some text on the page first.", variant: "generic" },
+  };
+  if (code && codeMap[code]) return codeMap[code];
+
+  // Fallback: keyword detection in error string
+  const msg = (error ?? "").toLowerCase();
+  if (msg.includes("api key") || msg.includes("invalid key") || msg.includes("unauthenticated")) return codeMap.API_KEY_INVALID;
+  if (msg.includes("quota") || msg.includes("exhausted")) return codeMap.QUOTA_EXCEEDED;
+  if (msg.includes("too many") || msg.includes("rate limit") || msg.includes("slow down")) return codeMap.RATE_LIMITED;
+  if (msg.includes("too long") || msg.includes("2,000") || msg.includes("characters")) return codeMap.TEXT_TOO_LONG;
+  if (msg.includes("network") || msg.includes("connection") || msg.includes("offline")) return codeMap.NETWORK_ERROR;
+  if (msg.includes("unavailable") || msg.includes("starting up")) return codeMap.LLM_UNAVAILABLE;
+  if (msg.includes("timed out") || msg.includes("timeout")) return codeMap.LLM_TIMEOUT;
+  return { Icon: AlertTriangle, title: "Something Went Wrong", hint: "Try selecting different text or try again.", variant: "generic" };
+}
 
 const MODES: { value: ComplexityLevel; label: string }[] = [
   { value: "standard", label: "Standard" },
@@ -37,6 +70,7 @@ export interface PopoverProps {
   text: string;
   messages?: ChatMessage[];
   error?: string;
+  errorCode?: string;
   position?: DOMRect;
   mode?: ComplexityLevel;
   imageData?: string;
@@ -63,6 +97,7 @@ export function Popover({
   text,
   messages = [],
   error,
+  errorCode,
   position,
   mode = "standard",
   imageData,
@@ -548,12 +583,21 @@ export function Popover({
           </div>
         )}
 
-        {state === "ERROR" && (
-          <div className={styles.errorCard} role="alert">
-            <p>{error ?? "Something went wrong."}</p>
-            <p className={styles.errorHint}>Try highlighting a shorter passage.</p>
-          </div>
-        )}
+        {state === "ERROR" && (() => {
+          const meta = getErrorMeta(error, errorCode);
+          return (
+            <div className={`${styles.errorCard} ${styles[`errorVariant_${meta.variant}`]}`} role="alert">
+              <div className={styles.errorHeader}>
+                <span className={styles.errorIconWrap}>
+                  <meta.Icon size={13} />
+                </span>
+                <span className={styles.errorTitle}>{meta.title}</span>
+              </div>
+              <p className={styles.errorMessage}>{error ?? "Something went wrong."}</p>
+              <p className={styles.errorHint}>{meta.hint}</p>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Input bar */}

@@ -39,6 +39,7 @@ export interface GistMessage {
     query?: string;
     chunk?: string;
     error?: string;
+    errorCode?: string;
     imageData?: string;
     imageMimeType?: string;
     // AutoGist fields

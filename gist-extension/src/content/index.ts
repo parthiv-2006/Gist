@@ -124,7 +124,7 @@ if (!window.__gistMounted) {
       }
 
       case "GIST_ERROR": {
-        updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong." });
+        updatePopover({ state: "ERROR", error: msg.payload.error ?? "Something went wrong.", errorCode: msg.payload.errorCode });
         break;
       }
 

@@ -29,6 +29,52 @@ def _resolve_api_key(override: str | None = None) -> str:
         raise RuntimeError("GEMINI_API_KEY is not set")
     return key
 
+
+def classify_gemini_error(exc: Exception) -> tuple[int, str, str]:
+    """Map a Gemini SDK exception to (http_status, error_code, user_message)."""
+    msg = str(exc).lower()
+
+    if any(kw in msg for kw in [
+        "api key not valid", "api_key_invalid", "invalid api key",
+        "unauthenticated", "provide an api key", "invalid_api_key",
+    ]):
+        return 401, "API_KEY_INVALID", (
+            "Your Gemini API key is not valid. "
+            "Check it in Settings → API Configuration."
+        )
+
+    if ("api_key" in msg or "gemini_api_key" in msg) and "not set" in msg:
+        return 503, "API_KEY_MISSING", (
+            "No Gemini API key is configured. "
+            "Add yours in Settings → API Configuration."
+        )
+
+    if any(kw in msg for kw in ["resource_exhausted", "quota", "ratequota"]):
+        return 429, "QUOTA_EXCEEDED", (
+            "Your Gemini API quota has been exceeded. "
+            "Check your usage at aistudio.google.com."
+        )
+
+    if any(kw in msg for kw in ["permission_denied", "permissiondenied", "forbidden"]):
+        return 403, "API_PERMISSION_DENIED", (
+            "Your API key doesn't have permission for this model. "
+            "Check your Google AI Studio project settings."
+        )
+
+    if any(kw in msg for kw in ["deadline_exceeded", "timed out", "timeout"]):
+        return 503, "LLM_TIMEOUT", (
+            "The AI took too long to respond. "
+            "Try again with a shorter text selection."
+        )
+
+    if any(kw in msg for kw in ["unavailable", "service_unavailable", "overloaded"]):
+        return 503, "LLM_UNAVAILABLE", (
+            "Gemini is temporarily unavailable. Please try again in a moment."
+        )
+
+    return 503, "LLM_ERROR", "The AI service returned an unexpected error. Please try again."
+
+
 _MOCK_EXPLANATIONS: dict[str, str] = {
     "text":   "Mock mode active — this is a placeholder explanation for local development and testing. No Gemini API call was made.",
     "visual": "Mock mode active — this is a placeholder visual explanation for local development. No Gemini API call was made.",

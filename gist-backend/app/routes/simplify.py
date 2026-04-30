@@ -8,7 +8,7 @@ from pydantic import ValidationError
 
 from app.limiter import limiter
 from app.models.schemas import SimplifyRequest
-from app.services.gemini import stream_explanation
+from app.services.gemini import stream_explanation, classify_gemini_error
 
 logger = logging.getLogger(__name__)
 
@@ -77,13 +77,8 @@ async def simplify(request: Request):
             first_chunk = chunk
             break
     except RuntimeError as e:
-        return JSONResponse(
-            status_code=503,
-            content={
-                "error": f"The LLM service is temporarily unavailable. Detail: {e}",
-                "code": "LLM_UNAVAILABLE",
-            },
-        )
+        http_status, code, msg = classify_gemini_error(e)
+        return JSONResponse(status_code=http_status, content={"error": msg, "code": code})
 
     # 3. Define the SSE generator — yields the first chunk, then continues the same generator.
     async def event_generator():
