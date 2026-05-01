@@ -102,8 +102,18 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
       {/* Expanded body — list mode only */}
       {expanded && variant === "list" && (
         <div className={styles.expandedBody}>
-          <p className={styles.originalLabel}>Original</p>
-          <p className={styles.explanationText}>{item.original_text}</p>
+          <p className={styles.originalLabel}>
+            {item.gist_type === "visual" ? "Screenshot" : "Original"}
+          </p>
+          {item.gist_type === "visual" && item.image_data ? (
+            <img
+              src={`data:image/png;base64,${item.image_data}`}
+              alt="Visual capture"
+              className={styles.captureImage}
+            />
+          ) : (
+            <p className={styles.explanationText}>{item.original_text}</p>
+          )}
           {item.url && item.url !== "Unknown page" && (
             <p className={styles.urlText} style={{ fontFamily: MONO }}>{item.url}</p>
           )}

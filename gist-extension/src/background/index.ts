@@ -153,9 +153,9 @@ chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) =>
     sendResponse({ success: true });
     return true;
   } else if (message.type === "SAVE_GIST") {
-    const { selectedText, explanation, complexityLevel, pageContext, gist_type } = message.payload;
+    const { selectedText, explanation, complexityLevel, pageContext, gist_type, imageData } = message.payload;
     if (!explanation) return;
-    saveGistToLibrary(tabId, selectedText ?? "", explanation, complexityLevel ?? "standard", pageContext ?? "", gist_type ?? "text");
+    saveGistToLibrary(tabId, selectedText ?? "", explanation, complexityLevel ?? "standard", pageContext ?? "", gist_type ?? "text", imageData);
     return true;
   } else if (message.type === "AUTOGIST_REQUEST") {
     const { textChunk, url } = message.payload;
@@ -288,17 +288,20 @@ async function saveGistToLibrary(
   explanation: string,
   mode: string,
   url: string,
-  gist_type: string = "text"
+  gist_type: string = "text",
+  imageData?: string
 ): Promise<void> {
   const base = await resolveBase();
   const apiKey = await getStoredApiKey();
   try {
     const headers: Record<string, string> = { "Content-Type": "application/json" };
     if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
+    const body: Record<string, unknown> = { original_text: selectedText, explanation, mode, url, gist_type };
+    if (imageData) body["image_data"] = imageData;
     const response = await fetch(`${base}/library/save`, {
       method: "POST",
       headers,
-      body: JSON.stringify({ original_text: selectedText, explanation, mode, url, gist_type }),
+      body: JSON.stringify(body),
     });
     const success = response.ok;
     const resultMsg: GistMessage = { type: "SAVE_GIST_RESULT", payload: { success } };

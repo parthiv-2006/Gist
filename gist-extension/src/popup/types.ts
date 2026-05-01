@@ -9,6 +9,7 @@ export interface GistItem {
   score?:        number;
   tags?:         string[];
   gist_type?:    string;
+  image_data?:   string;
 }
 
 export interface TagCount {

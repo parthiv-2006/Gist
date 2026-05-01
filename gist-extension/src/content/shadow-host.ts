@@ -334,6 +334,7 @@ const stableOnSaveGist = (explanation: string) => {
       complexityLevel: currentMode,
       pageContext: currentPageContext,
       gist_type: currentImageData ? "visual" : "text",
+      imageData: currentImageData ?? undefined,
     },
   });
 };
