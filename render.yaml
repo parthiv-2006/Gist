@@ -11,6 +11,8 @@ services:
     envVars:
       - key: GEMINI_API_KEY
         sync: false           # Set manually in Render dashboard — NEVER commit this value
+      - key: MONGODB_URI
+        sync: false           # Set manually in Render dashboard — NEVER commit this value
       - key: ALLOWED_ORIGINS
         # ⚠️ SECURITY: Replace "*" with your extension's origin before publishing.
         # Example: chrome-extension://fiofemaagodcciffhpmpbdjlhbbbaegm
