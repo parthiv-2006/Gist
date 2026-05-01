@@ -225,10 +225,14 @@ export function RecallView({ onQueueSize }: RecallViewProps) {
           </button>
         </div>
 
-        {/* Original text */}
+        {/* Question side */}
         <div className={styles.cardSection}>
-          <p className={styles.sectionLabel}>Original text</p>
-          <p className={styles.originalText}>{card.original_text}</p>
+          <p className={styles.sectionLabel}>
+            {card.recall_card ? "Question" : "Original text"}
+          </p>
+          <p className={styles.originalText}>
+            {card.recall_card ? card.recall_card.front : card.original_text}
+          </p>
         </div>
 
         {/* Answer section */}
@@ -236,12 +240,16 @@ export function RecallView({ onQueueSize }: RecallViewProps) {
           <div className={styles.answerDivider} />
           {revealed ? (
             <div className={`${styles.cardSection} ${styles.answerReveal}`}>
-              <p className={styles.sectionLabel}>Explanation</p>
-              <p className={styles.explanationText}>{card.explanation}</p>
+              <p className={styles.sectionLabel}>
+                {card.recall_card ? "Answer" : "Explanation"}
+              </p>
+              <p className={styles.explanationText}>
+                {card.recall_card ? card.recall_card.back : card.explanation}
+              </p>
             </div>
           ) : (
             <button className={styles.showAnswerBtn} onClick={handleShowAnswer}>
-              Show explanation
+              {card.recall_card ? "Show answer" : "Show explanation"}
               <span className={styles.showAnswerArrow}>↓</span>
             </button>
           )}

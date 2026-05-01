@@ -10,6 +10,7 @@ export interface GistItem {
   tags?:         string[];
   gist_type?:    string;
   image_data?:   string;
+  recall_card?:  { front: string; back: string; is_custom: boolean; created_at: string };
 }
 
 export interface TagCount {

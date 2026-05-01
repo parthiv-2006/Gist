@@ -166,6 +166,226 @@
   margin-bottom: 8px;
 }
 
+.captureImage {
+  display: block;
+  width: 100%;
+  max-height: 280px;
+  object-fit: contain;
+  border-radius: 4px;
+  border: 1px solid #1e1e1e;
+  background: #0a0a0a;
+  margin-bottom: 8px;
+}
+
+/* ── Recall Card Section ── */
+
+.recallSection {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #1e1e1e;
+}
+
+.recallSectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.recallSectionLabel {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #363636;
+  margin: 0;
+}
+
+.customTag {
+  font-size: 8.5px;
+  color: oklch(0.72 0.10 230);
+  background: oklch(0.72 0.10 230 / 0.10);
+  border: 1px solid oklch(0.72 0.10 230 / 0.22);
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.recallLoading {
+  font-size: 11px;
+  color: #484848;
+  margin: 0;
+}
+
+.recallQA {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.recallSide {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.recallSideLabel {
+  font-size: 9px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  color: oklch(0.75 0.11 150);
+  min-width: 12px;
+  padding-top: 1px;
+}
+
+.recallText {
+  font-size: 11.5px;
+  color: #b0b0b0;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.recallEditor {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.recallFieldLabel {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #363636;
+}
+
+.recallTextarea {
+  width: 100%;
+  background: #0d0d0d;
+  border: 1px solid #252525;
+  border-radius: 5px;
+  color: #c8c8c8;
+  font-size: 11.5px;
+  font-family: inherit;
+  line-height: 1.5;
+  padding: 6px 8px;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 120ms ease;
+}
+
+.recallTextarea:focus {
+  outline: none;
+  border-color: oklch(0.55 0.09 150 / 0.5);
+}
+
+.recallError {
+  font-size: 10.5px;
+  color: #f87171;
+  margin: 2px 0 0;
+}
+
+.recallActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.recallAutoBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid oklch(0.55 0.09 150 / 0.4);
+  background: oklch(0.30 0.05 150 / 0.2);
+  color: oklch(0.75 0.11 150);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.recallAutoBtn:hover { background: oklch(0.30 0.05 150 / 0.35); }
+
+.recallCustomBtn {
+  font-size: 10.5px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid #252525;
+  background: #141414;
+  color: #666;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.recallCustomBtn:hover { background: #1a1a1a; color: #999; }
+
+.recallSaveBtn {
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 5px;
+  border: none;
+  background: oklch(0.75 0.11 150);
+  color: oklch(0.22 0.03 150);
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+.recallSaveBtn:disabled { opacity: 0.4; cursor: default; }
+.recallSaveBtn:not(:disabled):hover { opacity: 0.88; }
+
+.recallCancelBtn {
+  font-size: 10.5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid #252525;
+  background: none;
+  color: #555;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.recallCancelBtn:hover { color: #888; }
+
+.recallEditBtn {
+  font-size: 10.5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid #252525;
+  background: #141414;
+  color: #666;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.recallEditBtn:hover { background: #1a1a1a; color: #999; }
+
+.recallRemoveBtn {
+  font-size: 10.5px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  border: 1px solid #2a1010;
+  background: none;
+  color: #5a3030;
+  cursor: pointer;
+  transition: color 120ms ease;
+}
+.recallRemoveBtn:hover { color: #f87171; border-color: #4a1515; }
+
+.recallBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: oklch(0.75 0.11 150);
+  background: oklch(0.75 0.11 150 / 0.10);
+  border: 1px solid oklch(0.75 0.11 150 / 0.22);
+}
+
 .visualBadge {
   display: inline-flex;
   align-items: center;
