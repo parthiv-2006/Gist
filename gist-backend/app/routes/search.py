@@ -132,9 +132,11 @@ async def ask_library(request: Request):
             content={"error": "Library unavailable — database not connected.", "code": "DB_UNAVAILABLE"},
         )
 
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
+
     # 1. Embed the user's query.
     try:
-        query_embedding = await embed_text(query)
+        query_embedding = await embed_text(query, user_api_key)
     except Exception as exc:
         err_detail = str(exc)
         logger.warning("embed_text failed for ask query: %s", err_detail)
@@ -184,6 +186,7 @@ async def ask_library(request: Request):
             page_context="",
             complexity_level="standard",
             messages=[{"role": "user", "content": rag_prompt}],
+            api_key=user_api_key,
         ):
             chunks.append(chunk)
     except Exception as exc:

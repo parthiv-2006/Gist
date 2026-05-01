@@ -30,6 +30,7 @@ class SaveGistRequest(BaseModel):
     mode: str = Field(max_length=50)
     url: str = Field(max_length=2048)
     gist_type: str = "text"
+    image_data: str | None = Field(default=None, max_length=2_000_000)
 
 
 @router.post("/library/save")
@@ -81,6 +82,8 @@ async def save_gist(request: Request, body: SaveGistRequest):
         }
         if embedding is not None:
             doc["embedding"] = embedding
+        if body.image_data is not None:
+            doc["image_data"] = body.image_data
 
         await db["gists"].insert_one(doc)
         return {"success": True}
@@ -108,7 +111,7 @@ async def get_library():
     try:
         cursor = db["gists"].find(
             {},
-            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "tags": 1, "gist_type": 1, "created_at": 1},
+            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "tags": 1, "gist_type": 1, "image_data": 1, "created_at": 1},
         ).sort("created_at", -1).limit(100)
 
         raw_items = await cursor.to_list(length=100)
@@ -166,10 +169,11 @@ async def get_library_tags():
 
 
 @router.post("/library/backfill")
-async def backfill_embeddings_and_categories():
+async def backfill_embeddings_and_categories(request: Request):
     """
     Retroactively generate embeddings and fix categories for gists saved without them.
     Safe to call multiple times — only processes documents missing the embedding field.
+    Accepts X-Gemini-Api-Key header to use the caller's API key.
     """
     db = get_db()
     if db is None:
@@ -177,6 +181,8 @@ async def backfill_embeddings_and_categories():
             status_code=503,
             content={"error": "Library unavailable — database not connected.", "code": "DB_UNAVAILABLE"},
         )
+
+    user_api_key = request.headers.get("X-Gemini-Api-Key") or None
 
     cursor = db["gists"].find(
         {"embedding": {"$exists": False}},
@@ -189,10 +195,11 @@ async def backfill_embeddings_and_categories():
 
     success = 0
     failed = 0
+    first_error: str | None = None
     for doc in docs:
         try:
             combined = f"{doc.get('original_text', '')} {doc.get('explanation', '')}"
-            embedding = await embed_text(combined)
+            embedding = await embed_text(combined, user_api_key)
             category = categorize_text(combined)
             await db["gists"].update_one(
                 {"_id": doc["_id"]},
@@ -201,9 +208,11 @@ async def backfill_embeddings_and_categories():
             success += 1
         except Exception as exc:
             logger.warning("Backfill failed for %s: %s", doc["_id"], exc)
+            if first_error is None:
+                first_error = str(exc)
             failed += 1
 
-    return {"backfilled": success, "failed": failed, "total": len(docs)}
+    return {"backfilled": success, "failed": failed, "total": len(docs), "first_error": first_error}
 
 
 @router.delete("/library/{gist_id}")
