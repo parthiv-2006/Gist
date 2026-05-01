@@ -6,8 +6,13 @@ export const BACKEND_BASE: Promise<string> = (async () => {
     const t = setTimeout(() => ctrl.abort(), 600);
     const r = await fetch("http://localhost:8000/health", { signal: ctrl.signal });
     clearTimeout(t);
-    if (r.ok) return "http://localhost:8000";
-  } catch { /* no local server */ }
+    if (r.ok) {
+      const data = await r.json().catch(() => null);
+      // Only use local backend when DB is also connected — avoids routing
+      // library requests to a local server that can't reach MongoDB Atlas.
+      if (data?.db?.connected !== false) return "http://localhost:8000";
+    }
+  } catch { /* no local server or DB unavailable */ }
   return "https://gist-vc8m.onrender.com";
 })();
 

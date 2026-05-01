@@ -4,7 +4,9 @@ const LOCAL_BASE  = "http://localhost:8000";
 const RENDER_BASE = "https://gist-vc8m.onrender.com";
 
 // Resolve the backend base URL once at startup: try localhost (600 ms timeout),
-// fall back to Render. Result is cached for the lifetime of the service worker.
+// fall back to Render. Uses localhost only when the server is up AND the DB is
+// connected — avoids routing library requests to a local backend with no DB.
+// Result is cached for the lifetime of the service worker.
 let _resolvedBase: string | null = null;
 async function resolveBase(): Promise<string> {
   if (_resolvedBase) return _resolvedBase;
@@ -13,8 +15,14 @@ async function resolveBase(): Promise<string> {
     const t = setTimeout(() => ctrl.abort(), 600);
     const r = await fetch(`${LOCAL_BASE}/health`, { signal: ctrl.signal });
     clearTimeout(t);
-    if (r.ok) { _resolvedBase = LOCAL_BASE; return LOCAL_BASE; }
-  } catch { /* local server not running */ }
+    if (r.ok) {
+      const data = await r.json().catch(() => null);
+      if (data?.db?.connected !== false) {
+        _resolvedBase = LOCAL_BASE;
+        return LOCAL_BASE;
+      }
+    }
+  } catch { /* local server not running or DB unavailable */ }
   _resolvedBase = RENDER_BASE;
   return RENDER_BASE;
 }
