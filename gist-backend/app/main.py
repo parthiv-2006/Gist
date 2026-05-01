@@ -19,6 +19,7 @@ from app.routes.autogist import router as autogist_router
 from app.routes.nested import router as nested_router
 from app.routes.visualize import router as visualize_router
 from app.routes.synapse import router as synapse_router
+from app.routes.recall import router as recall_router
 from app.db import connect_db, disconnect_db, get_db_status
 from app.services.gemini import embed_text
 
@@ -78,8 +79,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=False,
-    allow_methods=["POST", "GET", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Accept"],
+    allow_methods=["POST", "GET", "PUT", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Accept", "X-Gemini-Api-Key"],
 )
 
 app.include_router(simplify_router)
@@ -89,6 +90,7 @@ app.include_router(autogist_router)
 app.include_router(nested_router)
 app.include_router(visualize_router)
 app.include_router(synapse_router)
+app.include_router(recall_router)
 
 
 @app.exception_handler(Exception)

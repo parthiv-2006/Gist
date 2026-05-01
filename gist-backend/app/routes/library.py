@@ -111,7 +111,7 @@ async def get_library():
     try:
         cursor = db["gists"].find(
             {},
-            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "tags": 1, "gist_type": 1, "image_data": 1, "created_at": 1},
+            {"_id": 1, "original_text": 1, "explanation": 1, "mode": 1, "url": 1, "category": 1, "tags": 1, "gist_type": 1, "image_data": 1, "recall_card": 1, "created_at": 1},
         ).sort("created_at", -1).limit(100)
 
         raw_items = await cursor.to_list(length=100)
