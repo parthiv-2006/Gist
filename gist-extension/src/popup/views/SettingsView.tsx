@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
-import { BACKEND_BASE } from "../tokens";
+import { getBackendBase } from "../tokens";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { IconExport, IconTrash } from "../icons";
 import styles from "./SettingsView.module.css";
@@ -66,7 +66,7 @@ export function SettingsView() {
 
   const handleExport = async () => {
     try {
-      const base = await BACKEND_BASE;
+      const base = await getBackendBase();
       const r = await fetch(`${base}/library`);
       if (!r.ok) throw new Error("Failed to fetch library.");
       const data = await r.json();
@@ -86,7 +86,7 @@ export function SettingsView() {
   const handleClearAll = async () => {
     setClearing(true);
     try {
-      const base = await BACKEND_BASE;
+      const base = await getBackendBase();
       // Fetch all, then delete each by id
       const r = await fetch(`${base}/library`);
       if (!r.ok) throw new Error();

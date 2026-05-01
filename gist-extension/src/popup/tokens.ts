@@ -1,20 +1,40 @@
 // Gist design tokens — warm paper-dark, sage accent, JetBrains Mono + Inter
 
-export const BACKEND_BASE: Promise<string> = (async () => {
+const _LOCAL = "http://localhost:8000";
+const _RENDER = "https://gist-vc8m.onrender.com";
+let _cachedBase: string | null = null;
+let _cachedAt = 0;
+const _BASE_TTL = 60_000; // re-probe after 60 s — session can recover if server starts/stops
+
+/**
+ * Resolve the backend base URL.
+ * Tries localhost:8000/health (800 ms timeout). Uses local only when the
+ * server is up AND the DB is connected (db.connected !== false).
+ * Result is cached for 60 seconds; call again to get a fresh probe.
+ */
+export async function getBackendBase(): Promise<string> {
+  if (_cachedBase && (Date.now() - _cachedAt) < _BASE_TTL) return _cachedBase;
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 600);
-    const r = await fetch("http://localhost:8000/health", { signal: ctrl.signal });
-    clearTimeout(t);
+    const r = await fetch(`${_LOCAL}/health`, {
+      signal: AbortSignal.timeout(800),
+    });
     if (r.ok) {
       const data = await r.json().catch(() => null);
-      // Only use local backend when DB is also connected — avoids routing
-      // library requests to a local server that can't reach MongoDB Atlas.
-      if (data?.db?.connected !== false) return "http://localhost:8000";
+      if (data?.db?.connected !== false) {
+        _cachedBase = _LOCAL;
+        _cachedAt = Date.now();
+        return _LOCAL;
+      }
     }
   } catch { /* no local server or DB unavailable */ }
-  return "https://gist-vc8m.onrender.com";
-})();
+  _cachedBase = _RENDER;
+  _cachedAt = Date.now();
+  return _RENDER;
+}
+
+// Backwards-compatible alias: existing `await BACKEND_BASE` callsites still work,
+// but they get the initial resolution (no re-probe). Use getBackendBase() for fresh lookups.
+export const BACKEND_BASE: Promise<string> = getBackendBase();
 
 export const FONT = '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif';
 export const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';

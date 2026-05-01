@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { GistItem, AskResult, AskState } from "../types";
-import { BACKEND_BASE, CATEGORY_COLORS, MONO } from "../tokens";
+import { getBackendBase, CATEGORY_COLORS, MONO } from "../tokens";
 import { GistCard } from "../components/GistCard";
 import { IconSearch, IconX, IconSparkle, IconEmptyLibrary, IconChevron, IconTrash, IconExternalLink } from "../icons";
 import styles from "./LibraryView.module.css";
@@ -42,7 +42,7 @@ function GistDrawer({ item, open, onClose, onDeleted }: GistDrawerProps) {
     setDeleting(true);
     setDeleteError(null);
     try {
-      const base = await BACKEND_BASE;
+      const base = await getBackendBase();
       const r = await fetch(`${base}/library/${item.id}`, { method: "DELETE" });
       if (r.ok) {
         onDeleted(item);
@@ -209,7 +209,7 @@ export function LibraryView({ initialTag, onTagConsumed }: LibraryViewProps = {}
     let cancelled = false;
     setLoading(true);
     setError(null);
-    BACKEND_BASE.then((base) => {
+    getBackendBase().then((base) => {
       fetch(`${base}/library`)
         .then(async (r) => {
           if (!r.ok) {
@@ -242,7 +242,7 @@ export function LibraryView({ initialTag, onTagConsumed }: LibraryViewProps = {}
     setAskState("searching");
     setAskResult(null);
     setAskError(null);
-    const base = await BACKEND_BASE;
+    const base = await getBackendBase();
     fetch(`${base}/library/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

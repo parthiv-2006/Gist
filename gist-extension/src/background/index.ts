@@ -8,22 +8,29 @@ const RENDER_BASE = "https://gist-vc8m.onrender.com";
 // connected — avoids routing library requests to a local backend with no DB.
 // Result is cached for the lifetime of the service worker.
 let _resolvedBase: string | null = null;
+let _resolvedAt = 0;
+const BASE_CACHE_TTL_MS = 60_000; // re-probe after 60 s so session can recover
+
 async function resolveBase(): Promise<string> {
-  if (_resolvedBase) return _resolvedBase;
+  if (_resolvedBase && (Date.now() - _resolvedAt) < BASE_CACHE_TTL_MS) {
+    return _resolvedBase;
+  }
   try {
     const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 600);
+    const t = setTimeout(() => ctrl.abort(), 800);
     const r = await fetch(`${LOCAL_BASE}/health`, { signal: ctrl.signal });
     clearTimeout(t);
     if (r.ok) {
       const data = await r.json().catch(() => null);
       if (data?.db?.connected !== false) {
         _resolvedBase = LOCAL_BASE;
+        _resolvedAt = Date.now();
         return LOCAL_BASE;
       }
     }
   } catch { /* local server not running or DB unavailable */ }
   _resolvedBase = RENDER_BASE;
+  _resolvedAt = Date.now();
   return RENDER_BASE;
 }
 
@@ -299,25 +306,44 @@ async function saveGistToLibrary(
   gist_type: string = "text",
   imageData?: string
 ): Promise<void> {
-  const base = await resolveBase();
+  const primary = await resolveBase();
   const apiKey = await getStoredApiKey();
-  try {
-    const headers: Record<string, string> = { "Content-Type": "application/json" };
-    if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
-    const body: Record<string, unknown> = { original_text: selectedText, explanation, mode, url, gist_type };
-    if (imageData) body["image_data"] = imageData;
-    const response = await fetch(`${base}/library/save`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify(body),
-    });
-    const success = response.ok;
-    const resultMsg: GistMessage = { type: "SAVE_GIST_RESULT", payload: { success } };
-    chrome.tabs.sendMessage(tabId, resultMsg);
-  } catch {
-    const resultMsg: GistMessage = { type: "SAVE_GIST_RESULT", payload: { success: false } };
-    chrome.tabs.sendMessage(tabId, resultMsg);
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
+  const bodyRecord: Record<string, unknown> = { original_text: selectedText, explanation, mode, url, gist_type };
+  if (imageData) bodyRecord["image_data"] = imageData;
+  const bodyJson = JSON.stringify(bodyRecord);
+
+  // Try primary backend first, then fall back to the other one.
+  // This ensures saves survive even if the local backend is hung or Render is cold-starting.
+  const fallback = primary === LOCAL_BASE ? RENDER_BASE : LOCAL_BASE;
+  const targets = [primary, fallback];
+
+  for (const target of targets) {
+    try {
+      console.log(`[Gist BG] saveGist → ${target}`);
+      const response = await fetch(`${target}/library/save`, {
+        method: "POST",
+        headers,
+        body: bodyJson,
+        signal: AbortSignal.timeout(15_000),
+      });
+      if (response.ok) {
+        console.log(`[Gist BG] saveGist succeeded on ${target}`);
+        // Evict the cache so next resolveBase() picks the working backend
+        if (target !== primary) { _resolvedBase = null; _resolvedAt = 0; }
+        chrome.tabs.sendMessage(tabId, { type: "SAVE_GIST_RESULT", payload: { success: true } } as GistMessage);
+        return;
+      }
+      console.warn(`[Gist BG] saveGist non-OK on ${target}:`, response.status);
+    } catch (err) {
+      console.warn(`[Gist BG] saveGist fetch error on ${target}:`, err);
+    }
   }
+
+  // Both backends failed
+  console.error("[Gist BG] saveGist failed on all backends");
+  chrome.tabs.sendMessage(tabId, { type: "SAVE_GIST_RESULT", payload: { success: false } } as GistMessage);
 }
 
 async function fetchAutoGist(tabId: number, textChunk: string, url: string): Promise<void> {

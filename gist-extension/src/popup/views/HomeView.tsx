@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { GistItem, TagCount } from "../types";
-import { BACKEND_BASE, CATEGORY_COLORS, MONO } from "../tokens";
+import { getBackendBase, CATEGORY_COLORS, MONO } from "../tokens";
 import { IconEmptyLibrary } from "../icons";
 import styles from "./HomeView.module.css";
 
@@ -70,7 +70,7 @@ export function HomeView({ onTagClick, onRecallClick, recallDue = 0 }: HomeViewP
 
   useEffect(() => {
     let cancelled = false;
-    BACKEND_BASE.then((base) => {
+    getBackendBase().then((base) => {
       Promise.all([
         fetch(`${base}/library`).then((r) => (r.ok ? r.json() : Promise.reject())),
         fetch(`${base}/library/tags`).then((r) => (r.ok ? r.json() : { tags: [] })),

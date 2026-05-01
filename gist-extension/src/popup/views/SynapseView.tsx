@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SynapseNode, SynapseResponse } from "../types";
-import { BACKEND_BASE } from "../tokens";
+import { getBackendBase } from "../tokens";
 import styles from "./SynapseView.module.css";
 
 // 12-color palette for clusters
@@ -43,7 +43,7 @@ export function SynapseView() {
     setNoCache(false);
     (async () => {
       try {
-        const base = await BACKEND_BASE;
+        const base = await getBackendBase();
         const r = await fetch(`${base}/synapse/graph`);
         if (r.status === 404) {
           if (!cancelled) { setNoCache(true); setLoading(false); }
@@ -68,7 +68,7 @@ export function SynapseView() {
     setComputing(true);
     setError(null);
     try {
-      const base = await BACKEND_BASE;
+      const base = await getBackendBase();
       const r = await fetch(`${base}/synapse/compute`, { method: "POST" });
       const b = await r.json() as { graph?: SynapseResponse["graph"]; meta?: SynapseResponse["meta"]; retry_after?: number; error?: string };
       if (!r.ok) {

@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { GistItem } from "../types";
-import { BACKEND_BASE, CATEGORY_COLORS, MONO } from "../tokens";
+import { getBackendBase, CATEGORY_COLORS, MONO } from "../tokens";
 import styles from "./RecallView.module.css";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ export function RecallView({ onQueueSize }: RecallViewProps) {
   cardStateRef.current = cardState;
 
   useEffect(() => {
-    BACKEND_BASE.then((base) =>
+    getBackendBase().then((base) =>
       fetch(`${base}/library`)
         .then((r) => (r.ok ? r.json() : { items: [] }))
         .then(({ items }: { items: GistItem[] }) => {

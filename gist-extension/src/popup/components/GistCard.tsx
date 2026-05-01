@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { GistItem } from "../types";
-import { BACKEND_BASE, CATEGORY_COLORS, MONO } from "../tokens";
+import { getBackendBase, CATEGORY_COLORS, MONO } from "../tokens";
 import { IconChevron } from "../icons";
 import styles from "./GistCard.module.css";
 
@@ -50,7 +50,7 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
     setRecallState("loading");
     setRecallError(null);
     try {
-      const [base, apiKey] = await Promise.all([BACKEND_BASE, getApiKey()]);
+      const [base, apiKey] = await Promise.all([getBackendBase(), getApiKey()]);
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (apiKey) headers["X-Gemini-Api-Key"] = apiKey;
       const res = await fetch(`${base}/library/${item.id}/recall`, { method: "POST", headers });
@@ -70,7 +70,7 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
     setRecallState("loading");
     setRecallError(null);
     try {
-      const base = await BACKEND_BASE;
+      const base = await getBackendBase();
       const res = await fetch(`${base}/library/${item.id}/recall`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -90,7 +90,7 @@ export function GistCard({ item, variant = "list", expanded = false, onToggle, o
     e.stopPropagation();
     if (!item.id) return;
     try {
-      const base = await BACKEND_BASE;
+      const base = await getBackendBase();
       await fetch(`${base}/library/${item.id}/recall`, { method: "DELETE" });
       setRecallCard(null);
     } catch { /* silent */ }

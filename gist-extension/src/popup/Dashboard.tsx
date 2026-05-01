@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { DashboardRoute, GistItem } from "./types";
 import { IconHome, IconLibraryTab, IconRecall, IconSettings, IconSynapse } from "./icons";
-import { BACKEND_BASE } from "./tokens";
+import { getBackendBase } from "./tokens";
 import { HomeView } from "./views/HomeView";
 import { LibraryView } from "./views/LibraryView";
 import { RecallView } from "./views/RecallView";
@@ -99,7 +99,7 @@ export function Dashboard() {
   const [last7, setLast7]            = useState<boolean[]>(Array(7).fill(false));
 
   const refreshData = () => {
-    BACKEND_BASE.then((base) =>
+    getBackendBase().then((base) =>
       fetch(`${base}/library`)
         .then((r) => (r.ok ? r.json() : { items: [] }))
         .then(({ items }: { items: GistItem[] }) => {

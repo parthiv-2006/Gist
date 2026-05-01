@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { Dashboard } from "./Dashboard";
-import { T, FONT, MONO, CATEGORY_COLORS, BACKEND_BASE } from "./tokens";
+import { T, FONT, MONO, CATEGORY_COLORS, getBackendBase } from "./tokens";
 
 // ── SVG Icon Components ────────────────────────────────────────────────────────
 
@@ -218,7 +218,7 @@ function LibraryView() {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    BACKEND_BASE.then((base) => {
+    getBackendBase().then((base) => {
       if (cancelled) return;
       fetch(`${base}/library`)
         .then(async (r) => {
@@ -243,7 +243,7 @@ function LibraryView() {
     setAskResult(null);
     setAskError(null);
     setSrcExpanded(null);
-    const base = await BACKEND_BASE;
+    const base = await getBackendBase();
     fetch(`${base}/library/ask`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
