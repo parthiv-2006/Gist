@@ -9,6 +9,7 @@ import os
 import logging
 from typing import Optional
 
+import certifi
 from motor.motor_asyncio import AsyncIOMotorClient, AsyncIOMotorDatabase
 
 logger = logging.getLogger(__name__)
@@ -41,7 +42,7 @@ async def connect_db() -> None:
         _connection_error = "MONGODB_URI not set"
         return
     try:
-        _client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000)
+        _client = AsyncIOMotorClient(uri, serverSelectionTimeoutMS=5000, tlsCAFile=certifi.where())
         await _client.admin.command("ping")
         _db = _client["gist"]
         await _db["gists"].create_index([("created_at", -1)])
