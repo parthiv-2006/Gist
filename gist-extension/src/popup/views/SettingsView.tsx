@@ -282,9 +282,8 @@ export function SettingsView() {
           <button
             className={`${styles.actionBtn} ${apiKeySaved ? styles.actionBtnSaved : styles.actionBtnDefault}`}
             onClick={handleSaveApiKey}
-            disabled={!apiKey.trim()}
           >
-            {apiKeySaved ? "Saved ✓" : "Save"}
+            {apiKeySaved ? (apiKey.trim() ? "Saved ✓" : "Cleared ✓") : "Save"}
           </button>
         </div>
       </section>
