@@ -126,6 +126,22 @@ export function SynapseView() {
     );
   }, [data, timeRange, minTs, maxTs, textFilter, focusCluster]);
 
+  // ── Auto-fit view ───────────────────────────────────────────────────────────
+
+  const autoFit = useCallback(() => {
+    if (!data?.graph?.canvas || !containerRef.current) return;
+    const cw = containerRef.current.clientWidth || 600;
+    const ch = containerRef.current.clientHeight || 400;
+    const svgW = data.graph.canvas.width + 120; // PAD * 2 = 120
+    const svgH = data.graph.canvas.height + 120;
+    const fitScale = Math.max(0.1, Math.min(6, (cw / svgW) * 0.95, (ch / svgH) * 0.95, 1));
+    setTxfm({ x: 0, y: 0, scale: fitScale });
+  }, [data]);
+
+  useEffect(() => {
+    autoFit();
+  }, [autoFit]);
+
   // ── Pan / zoom handlers ─────────────────────────────────────────────────────
 
   // Non-passive wheel listener — React's synthetic onWheel is passive by default
@@ -448,7 +464,7 @@ export function SynapseView() {
         <div className={styles.zoomCtrl}>
           <button className={styles.zBtn} title="Zoom in"  aria-label="Zoom in"  onClick={() => setTxfm((p) => ({ ...p, scale: Math.min(6, p.scale * 1.25) }))}>+</button>
           <button className={styles.zBtn} title="Zoom out" aria-label="Zoom out" onClick={() => setTxfm((p) => ({ ...p, scale: Math.max(0.1, p.scale * 0.8) }))}>−</button>
-          <button className={styles.zBtn} title="Reset view" aria-label="Reset view" onClick={() => setTxfm({ x: 0, y: 0, scale: 1 })}>
+          <button className={styles.zBtn} title="Reset view" aria-label="Reset view" onClick={autoFit}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" /><circle cx="12" cy="12" r="9" />
             </svg>
