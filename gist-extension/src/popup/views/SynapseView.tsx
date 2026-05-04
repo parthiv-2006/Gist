@@ -279,7 +279,7 @@ export function SynapseView() {
         {minTs !== maxTs && (
           <div className={styles.timeline}>
             <span className={styles.tlLabel}>
-              {new Date(minTs + (timeRange[0] / 100) * (maxTs - minTs)).toLocaleDateString(undefined, { month: "short", year: "2-digit" })}
+              {new Date(minTs + (timeRange[0] / 100) * (maxTs - minTs)).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
             </span>
             <div className={styles.sliderStack}>
               <input
@@ -296,7 +296,7 @@ export function SynapseView() {
               />
             </div>
             <span className={styles.tlLabel}>
-              {new Date(minTs + (timeRange[1] / 100) * (maxTs - minTs)).toLocaleDateString(undefined, { month: "short", year: "2-digit" })}
+              {new Date(minTs + (timeRange[1] / 100) * (maxTs - minTs)).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}
             </span>
           </div>
         )}
