@@ -38,6 +38,35 @@ let saveStatus: "unsaved" | "saving" | "saved" | "error" = "unsaved";
 
 let currentErrorCode: string | undefined = undefined;
 
+// ── Theme ─────────────────────────────────────────────────────────────────────
+type ThemePref = "dark" | "light" | "system";
+let currentIsLightTheme = false;
+
+function resolveIsLight(pref: ThemePref): boolean {
+  if (pref === "system") {
+    return window.matchMedia("(prefers-color-scheme: light)").matches;
+  }
+  return pref === "light";
+}
+
+function initTheme(): void {
+  chrome.storage.local.get(["gistTheme"], (res) => {
+    const pref = (res.gistTheme as ThemePref) || "dark";
+    currentIsLightTheme = resolveIsLight(pref);
+    renderPopover({ state: lastState });
+  });
+
+  chrome.storage.onChanged.addListener(
+    (changes: Record<string, chrome.storage.StorageChange>) => {
+      if (changes.gistTheme) {
+        const pref = (changes.gistTheme.newValue as ThemePref) || "dark";
+        currentIsLightTheme = resolveIsLight(pref);
+        renderPopover({ state: lastState });
+      }
+    }
+  );
+}
+
 // Visualize (Mermaid diagram) state
 let diagramSvg: string | undefined = undefined;
 let diagramSource: string | undefined = undefined;
@@ -125,6 +154,7 @@ export function mountPopover(): void {
 
   reactRoot = createRoot(mountPoint);
   widgetReactRoot = createRoot(widgetMountPoint);
+  initTheme();
   renderPopover({ state: "IDLE" });
   renderWidget();
 }
@@ -432,6 +462,7 @@ function renderPopover({ state, text = "", error, errorCode }: RenderOptions): v
       isSidebarMode,
       isVisible,
       saveStatus,
+      isLightTheme: currentIsLightTheme,
       drillingStack: drillingStack.map((level) => ({ term: level.term, level: level.level })),
       onToggleSidebar: toggleSidebar,
       onOpenLibrary: stableOnOpenLibrary,

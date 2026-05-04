@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import { Dashboard } from "./Dashboard";
 import { T, FONT, MONO, CATEGORY_COLORS, getBackendBase } from "./tokens";
+import { applyTheme, type ThemePref } from "./hooks/useTheme";
+import "../ui/tokens.css";
 
 // ── SVG Icon Components ────────────────────────────────────────────────────────
 
@@ -845,9 +847,18 @@ const root = document.getElementById("root");
 if (root) {
   document.body.style.margin = "0";
   document.body.style.background = T.bg;
-  ReactDOM.createRoot(root).render(
-    <React.StrictMode>
-      <App />
-    </React.StrictMode>
-  );
+
+  // Apply dark as immediate default to avoid any unstyled flash,
+  // then load the real preference from storage before first render.
+  document.documentElement.dataset.theme = "dark";
+
+  chrome.storage.local.get(["gistTheme"], (res) => {
+    const pref = (res.gistTheme as ThemePref) || "dark";
+    applyTheme(pref);
+    ReactDOM.createRoot(root).render(
+      <React.StrictMode>
+        <App />
+      </React.StrictMode>
+    );
+  });
 }

@@ -1,0 +1,79 @@
+/* Gist design tokens — warm paper-dark, sage accent */
+
+:root {
+  /* ── Dark theme (default) ── */
+
+  /* Surfaces */
+  --bg:         oklch(0.16 0.004 120);
+  --surface:    oklch(0.20 0.005 120);
+  --surface-2:  oklch(0.23 0.005 120);
+  --surface-3:  oklch(0.27 0.006 120);
+  --hairline:   oklch(0.30 0.006 120);
+  --hairline-2: oklch(0.36 0.008 120);
+
+  /* Ink */
+  --ink:   oklch(0.95 0.005 95);
+  --ink-2: oklch(0.78 0.006 95);
+  --ink-3: oklch(0.58 0.008 95);
+  --ink-4: oklch(0.42 0.008 95);
+
+  /* Accent — sage/moss */
+  --accent:        oklch(0.75 0.11 150);
+  --accent-dim:    oklch(0.55 0.09 150);
+  --accent-bg:     oklch(0.30 0.05 150 / 0.3);
+  --accent-ink:    oklch(0.22 0.03 150);
+  --accent-border: oklch(0.55 0.09 150 / 0.4);
+  --accent-glow:   oklch(0.75 0.11 150 / 0.25);
+
+  /* Secondary — warm ochre */
+  --ochre:    oklch(0.78 0.11 80);
+  --ochre-bg: oklch(0.30 0.04 80 / 0.3);
+
+  /* Category tints */
+  --cat-code:    oklch(0.72 0.10 230);
+  --cat-legal:   oklch(0.74 0.10 30);
+  --cat-general: oklch(0.72 0.02 150);
+  --cat-media:   oklch(0.74 0.10 300);
+  --cat-science: oklch(0.74 0.10 180);
+  --cat-medical: oklch(0.74 0.10 10);
+  --cat-finance: oklch(0.74 0.10 270);
+
+  /* Radii */
+  --r1: 4px;
+  --r2: 6px;
+  --r3: 10px;
+
+  /* Typography */
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+}
+
+/* ── Light theme overrides ──────────────────────────────────────────────────── */
+
+[data-theme="light"] {
+  /* Surfaces */
+  --bg:         oklch(0.97 0.003 95);
+  --surface:    oklch(0.93 0.004 95);
+  --surface-2:  oklch(0.89 0.005 95);
+  --surface-3:  oklch(0.84 0.006 95);
+  --hairline:   oklch(0.82 0.006 95);
+  --hairline-2: oklch(0.74 0.008 95);
+
+  /* Ink */
+  --ink:   oklch(0.15 0.005 95);
+  --ink-2: oklch(0.32 0.006 95);
+  --ink-3: oklch(0.50 0.008 95);
+  --ink-4: oklch(0.62 0.008 95);
+
+  /* Accent — darker sage for contrast on light bg */
+  --accent:        oklch(0.48 0.11 150);
+  --accent-dim:    oklch(0.38 0.09 150);
+  --accent-bg:     oklch(0.88 0.05 150 / 0.35);
+  --accent-ink:    oklch(0.96 0.02 150);
+  --accent-border: oklch(0.45 0.09 150 / 0.4);
+  --accent-glow:   oklch(0.48 0.11 150 / 0.18);
+
+  /* Secondary */
+  --ochre:    oklch(0.58 0.11 80);
+  --ochre-bg: oklch(0.92 0.04 80 / 0.4);
+}

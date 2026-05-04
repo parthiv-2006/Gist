@@ -43,13 +43,13 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 .headerCount {
   font-size: 11px;
-  color: oklch(0.36 0.008 120);
+  color: var(--ink-4);
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -57,7 +57,7 @@
 
 .progressTrack {
   height: 2px;
-  background: oklch(0.23 0.005 120);
+  background: var(--surface-2);
   border-radius: 2px;
   margin-bottom: 28px;
   overflow: hidden;
@@ -65,7 +65,7 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, oklch(0.75 0.11 150), oklch(0.82 0.10 150));
+  background: linear-gradient(90deg, var(--accent), var(--accent-dim));
   border-radius: 2px;
   transition: width 500ms cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -73,8 +73,8 @@
 /* ── Card ── */
 
 .card {
-  background: oklch(0.20 0.005 120 / 0.6);
-  border: 1px solid oklch(0.30 0.006 120);
+  background: color-mix(in oklch, var(--surface) 60%, transparent);
+  border: 1px solid var(--hairline);
   border-radius: 14px;
   padding: 26px 28px;
   margin-bottom: 14px;
@@ -101,14 +101,14 @@
 
 .cardMode {
   font-size: 11px;
-  color: oklch(0.36 0.008 120);
+  color: var(--ink-4);
   flex: 1;
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 .skipBtn {
   font-size: 11px;
-  color: oklch(0.36 0.008 120);
+  color: var(--ink-4);
   background: none;
   border: none;
   cursor: pointer;
@@ -119,7 +119,7 @@
 }
 
 .skipBtn:hover {
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
 }
 
 /* ── Card sections ── */
@@ -133,14 +133,14 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: oklch(0.36 0.008 120);
+  color: var(--ink-4);
   margin: 0 0 9px;
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 .originalText {
   font-size: 14px;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
   line-height: 1.65;
   margin: 0;
 }
@@ -153,7 +153,7 @@
 
 .answerDivider {
   height: 1px;
-  background: oklch(0.23 0.005 120);
+  background: var(--surface-2);
   margin-bottom: 18px;
 }
 
@@ -161,9 +161,9 @@
   width: 100%;
   padding: 11px 16px;
   background: none;
-  border: 1px solid oklch(0.30 0.006 120);
+  border: 1px solid var(--hairline);
   border-radius: 8px;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
@@ -176,9 +176,9 @@
 }
 
 .showAnswerBtn:hover {
-  border-color: oklch(0.36 0.008 120);
-  color: oklch(0.58 0.008 95);
-  background: oklch(0.23 0.005 120 / 0.5);
+  border-color: var(--hairline-2);
+  color: var(--ink-3);
+  background: color-mix(in oklch, var(--surface-2) 50%, transparent);
 }
 
 .showAnswerArrow {
@@ -191,7 +191,7 @@
 
 .explanationText {
   font-size: 13.5px;
-  color: oklch(0.78 0.006 95);
+  color: var(--ink-2);
   line-height: 1.7;
   margin: 0;
 }
@@ -231,10 +231,10 @@
 .goodBtn {
   flex: 1.5;
   padding: 11px 16px;
-  background: oklch(0.30 0.05 150 / 0.1);
-  border: 1px solid oklch(0.55 0.09 150 / 0.28);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
   border-radius: 9px;
-  color: oklch(0.75 0.11 150);
+  color: var(--accent);
   font-size: 12.5px;
   font-weight: 600;
   cursor: pointer;
@@ -247,8 +247,8 @@
 }
 
 .goodBtn:hover {
-  background: oklch(0.30 0.05 150 / 0.16);
-  border-color: oklch(0.55 0.09 150 / 0.4);
+  background: color-mix(in oklch, var(--accent-bg) 160%, transparent);
+  border-color: var(--accent-dim);
 }
 
 /* ── Keyboard hint ── */
@@ -256,7 +256,7 @@
 .hint {
   text-align: center;
   font-size: 10.5px;
-  color: oklch(0.30 0.006 120);
+  color: var(--hairline-2);
   font-family: "JetBrains Mono", ui-monospace, monospace;
   margin: 0;
 }
@@ -276,8 +276,8 @@
 .spinner {
   width: 30px;
   height: 30px;
-  border: 2px solid oklch(0.30 0.006 120);
-  border-top-color: oklch(0.75 0.11 150);
+  border: 2px solid var(--hairline);
+  border-top-color: var(--accent);
   border-radius: 50%;
   animation: spin 0.85s linear infinite;
 }
@@ -289,26 +289,26 @@
 .stateTitle {
   font-size: 17px;
   font-weight: 600;
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
   margin: 0;
 }
 
 .stateText {
   font-size: 13px;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   margin: 0;
 }
 
 .stateSubtext {
   font-size: 13px;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   line-height: 1.7;
   margin: 0;
   max-width: 280px;
 }
 
 .accentText {
-  color: oklch(0.75 0.11 150);
+  color: var(--accent);
   font-weight: 600;
 }
 

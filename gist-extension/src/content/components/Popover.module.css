@@ -79,6 +79,41 @@
   .popover { animation: none; }
 }
 
+/* ── Light theme override ────────────────────────────────────── */
+
+.light {
+  --gist-bg:              rgba(252, 252, 250, 0.97);
+  --gist-bg-elevated:     #f5f5f2;
+  --gist-bg-hover:        #ebebе6;
+
+  --gist-border:          #e0e0da;
+  --gist-border-mid:      #cececа;
+  --gist-border-strong:   #b6b6b0;
+
+  --gist-accent:          #0a9e6e;
+  --gist-accent-dim:      rgba(10, 158, 110, 0.08);
+  --gist-accent-border:   rgba(10, 158, 110, 0.25);
+  --gist-accent-glow:     rgba(10, 158, 110, 0.18);
+
+  --gist-text-primary:    #1a1a16;
+  --gist-text-secondary:  #555550;
+  --gist-text-muted:      #85857e;
+  --gist-text-error:      #dc2626;
+
+  --gist-skeleton-base:   #e6e6e0;
+  --gist-skeleton-shine:  #f0f0ea;
+
+  --gist-shadow:
+    0 24px 48px rgba(0, 0, 0, 0.10),
+    0 8px 16px rgba(0, 0, 0, 0.06),
+    0 0 0 1px rgba(0, 0, 0, 0.07);
+}
+
+.light.sidebar {
+  background: #f8f8f5 !important;
+  border-left-color: var(--gist-border) !important;
+}
+
 /* ── Sidebar Override ────────────────────────────────────────── */
 
 .sidebar {
@@ -395,8 +430,8 @@
 }
 
 .markdown code {
-  background: rgba(255, 255, 255, 0.055);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(128, 128, 128, 0.10);
+  border: 1px solid rgba(128, 128, 128, 0.15);
   padding: 1px 5px;
   border-radius: 3px;
   font-family: 'Space Mono', 'Fira Code', monospace;
@@ -404,7 +439,7 @@
 }
 
 .markdown pre {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(128, 128, 128, 0.06);
   border: 1px solid var(--gist-border);
   padding: 10px 13px;
   border-radius: var(--gist-radius-sm);

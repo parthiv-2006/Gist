@@ -40,30 +40,30 @@ export const FONT = '"Inter", -apple-system, BlinkMacSystemFont, system-ui, sans
 export const MONO = '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
 
 export const T = {
-  // Surfaces — warm paper-dark (not blue-black)
-  bg:           "oklch(0.16 0.004 120)",
-  bgElevated:   "oklch(0.20 0.005 120)",
-  bgHover:      "oklch(0.23 0.005 120)",
-  bgActive:     "oklch(0.27 0.006 120)",
+  // Surfaces
+  bg:           "var(--bg)",
+  bgElevated:   "var(--surface)",
+  bgHover:      "var(--surface-2)",
+  bgActive:     "var(--surface-3)",
   // Borders
-  border:       "oklch(0.30 0.006 120)",
-  borderMid:    "oklch(0.36 0.008 120)",
-  borderStrong: "oklch(0.36 0.008 120)",
+  border:       "var(--hairline)",
+  borderMid:    "var(--hairline-2)",
+  borderStrong: "var(--hairline-2)",
   // Ink
-  text:         "oklch(0.95 0.005 95)",
-  textSub:      "oklch(0.78 0.006 95)",
-  textMuted:    "oklch(0.58 0.008 95)",
-  textDim:      "oklch(0.42 0.008 95)",
-  // Accent — sage/moss (not glowy emerald)
-  accent:       "oklch(0.75 0.11 150)",
-  accentDim:    "oklch(0.55 0.09 150)",
-  accentBg:     "oklch(0.30 0.05 150 / 0.3)",
-  accentInk:    "oklch(0.22 0.03 150)",
-  accentBorder: "oklch(0.55 0.09 150 / 0.4)",
-  accentGlow:   "oklch(0.75 0.11 150 / 0.25)",
+  text:         "var(--ink)",
+  textSub:      "var(--ink-2)",
+  textMuted:    "var(--ink-3)",
+  textDim:      "var(--ink-4)",
+  // Accent — sage/moss
+  accent:       "var(--accent)",
+  accentDim:    "var(--accent-dim)",
+  accentBg:     "var(--accent-bg)",
+  accentInk:    "var(--accent-ink)",
+  accentBorder: "var(--accent-border)",
+  accentGlow:   "var(--accent-glow)",
   // Secondary — warm ochre
-  ochre:        "oklch(0.78 0.11 80)",
-  ochreBg:      "oklch(0.30 0.04 80 / 0.3)",
+  ochre:        "var(--ochre)",
+  ochreBg:      "var(--ochre-bg)",
 } as const;
 
 export const CATEGORY_COLORS: Record<string, string> = {

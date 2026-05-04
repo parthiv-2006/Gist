@@ -90,6 +90,7 @@ export interface PopoverProps {
   onVisualize?: (text: string) => void;
   onDrill?: (term: string) => void;
   onJumpToDrillingLevel?: (levelIndex: number) => void;
+  isLightTheme?: boolean;
 }
 
 export function Popover({
@@ -117,6 +118,7 @@ export function Popover({
   onVisualize,
   onDrill,
   onJumpToDrillingLevel,
+  isLightTheme = false,
 }: PopoverProps) {
   const [inputValue, setInputValue] = useState("");
   const [ttsState, setTtsState] = useState<"idle" | "playing" | "paused">("idle");
@@ -313,7 +315,7 @@ export function Popover({
 
   return (
     <div
-      className={`${styles.popover} ${isSidebarMode ? styles.sidebar : ""}`}
+      className={`${styles.popover}${isSidebarMode ? " " + styles.sidebar : ""}${isLightTheme ? " " + styles.light : ""}`}
       role="dialog"
       aria-label="Gist explanation"
       aria-live="polite"

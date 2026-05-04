@@ -11,9 +11,9 @@
 .layout {
   display: flex;
   min-height: 100vh;
-  background: oklch(0.16 0.004 120);
+  background: var(--bg);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
 }
 
 /* ── Sidebar ── */
@@ -26,8 +26,8 @@
   position: sticky;
   top: 0;
   height: 100vh;
-  background: oklch(0.16 0.004 120);
-  border-right: 1px solid oklch(0.30 0.006 120);
+  background: var(--bg);
+  border-right: 1px solid var(--hairline);
   overflow: hidden;
   padding: 20px 14px;
 }
@@ -59,14 +59,14 @@
   font-size: 14px;
   font-weight: 600;
   letter-spacing: -0.2px;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
   line-height: 1;
 }
 
 .sidebarSubLabel {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 9.5px;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   margin-top: 1px;
 }
 
@@ -78,11 +78,11 @@
   gap: 8px;
   padding: 8px 10px;
   margin-bottom: 16px;
-  background: oklch(0.23 0.005 120);
-  border: 1px solid oklch(0.36 0.008 120);
+  background: var(--surface-2);
+  border: 1px solid var(--hairline-2);
   border-radius: 6px;
   cursor: pointer;
-  color: oklch(0.78 0.006 95);
+  color: var(--ink-2);
   font-family: "Inter", -apple-system, system-ui, sans-serif;
   font-size: 12px;
   flex-shrink: 0;
@@ -90,7 +90,7 @@
 }
 
 .searchBtn:hover {
-  background: oklch(0.27 0.006 120);
+  background: var(--surface-3);
 }
 
 .searchBtnLabel {
@@ -109,7 +109,7 @@
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 9.5px;
   font-weight: 600;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   letter-spacing: 1px;
   text-transform: uppercase;
   padding: 0 10px 6px;
@@ -144,8 +144,8 @@
 }
 
 .navItemActive {
-  background: oklch(0.23 0.005 120);
-  color: oklch(0.95 0.005 95);
+  background: var(--surface-2);
+  color: var(--ink);
 }
 
 .navItemActive::before {
@@ -155,21 +155,21 @@
   top: 6px;
   bottom: 6px;
   width: 2px;
-  background: oklch(0.75 0.11 150);
+  background: var(--accent);
   border-radius: 0 1px 1px 0;
 }
 
 .navItemInactive {
-  color: oklch(0.78 0.006 95);
+  color: var(--ink-2);
 }
 
 .navItemInactive:hover {
-  background: oklch(0.20 0.005 120);
-  color: oklch(0.95 0.005 95);
+  background: var(--surface);
+  color: var(--ink);
 }
 
 .navItem:focus-visible {
-  outline: 1.5px solid oklch(0.75 0.11 150 / 0.5);
+  outline: 1.5px solid color-mix(in oklch, var(--accent) 50%, transparent);
   outline-offset: -2px;
 }
 
@@ -183,8 +183,8 @@
   min-width: 17px;
   height: 17px;
   border-radius: 9px;
-  background: oklch(0.75 0.11 150);
-  color: oklch(0.22 0.03 150);
+  background: var(--accent);
+  color: var(--accent-ink);
   font-size: 9px;
   font-weight: 700;
   display: flex;
@@ -205,8 +205,8 @@
 
 .streakCard {
   padding: 10px 12px;
-  background: oklch(0.20 0.005 120);
-  border: 1px solid oklch(0.30 0.006 120);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
   border-radius: 6px;
   margin-bottom: 10px;
   flex-shrink: 0;
@@ -216,7 +216,7 @@
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 9.5px;
   font-weight: 600;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   letter-spacing: 1px;
   text-transform: uppercase;
   margin-bottom: 6px;
@@ -233,12 +233,12 @@
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 22px;
   font-weight: 600;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
 }
 
 .streakUnit {
   font-size: 11px;
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
 }
 
 .streakBars {
@@ -250,14 +250,14 @@
   flex: 1;
   height: 4px;
   border-radius: 1px;
-  background: oklch(0.75 0.11 150);
+  background: var(--accent);
 }
 
 .streakBarDim {
   flex: 1;
   height: 4px;
   border-radius: 1px;
-  background: oklch(0.55 0.09 150);
+  background: var(--accent-dim);
   opacity: 0.35;
 }
 
@@ -274,14 +274,14 @@
 .sidebarFooterText {
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 10px;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
 }
 
 .sidebarFooterDot {
   width: 5px;
   height: 5px;
   border-radius: 50%;
-  background: oklch(0.75 0.11 150);
+  background: var(--accent);
   margin-left: auto;
   animation: pulse 2.5s ease infinite;
 }
@@ -295,14 +295,14 @@
   min-width: 18px;
   height: 18px;
   padding: 0 4px;
-  background: oklch(0.27 0.006 120);
-  border: 1px solid oklch(0.36 0.008 120);
+  background: var(--surface-3);
+  border: 1px solid var(--hairline-2);
   border-bottom-width: 2px;
   border-radius: 3px;
   font-family: "JetBrains Mono", ui-monospace, monospace;
   font-size: 10px;
   font-weight: 500;
-  color: oklch(0.78 0.006 95);
+  color: var(--ink-2);
 }
 
 /* ── Main content area ── */
@@ -310,7 +310,7 @@
 .content {
   flex: 1;
   overflow-y: auto;
-  background: oklch(0.16 0.004 120);
+  background: var(--bg);
   min-height: 100vh;
 }
 

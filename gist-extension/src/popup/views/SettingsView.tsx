@@ -3,6 +3,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { getBackendBase } from "../tokens";
 import { ToggleSwitch } from "../components/ToggleSwitch";
 import { IconExport, IconTrash } from "../icons";
+import { useTheme, type ThemePref } from "../hooks/useTheme";
 import styles from "./SettingsView.module.css";
 
 // ── Toast helper ──────────────────────────────────────────────────────────────
@@ -34,6 +35,69 @@ function ToggleRow({ label, sub, enabled, onToggle, ariaLabel }: {
 
 // ── SettingsView ──────────────────────────────────────────────────────────────
 
+// ── Theme option icons ────────────────────────────────────────────────────────
+
+function IconSun() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="4"/>
+      <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+    </svg>
+  );
+}
+
+function IconMoon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+}
+
+function IconMonitor() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="3" width="20" height="14" rx="2"/>
+      <path d="M8 21h8M12 17v4"/>
+    </svg>
+  );
+}
+
+// ── Theme picker ──────────────────────────────────────────────────────────────
+
+const THEME_OPTIONS: { value: ThemePref; label: string; Icon: () => JSX.Element }[] = [
+  { value: "light",  label: "Light",  Icon: IconSun     },
+  { value: "dark",   label: "Dark",   Icon: IconMoon    },
+  { value: "system", label: "System", Icon: IconMonitor },
+];
+
+function ThemePicker({ current, onChange }: { current: ThemePref; onChange: (t: ThemePref) => void }) {
+  return (
+    <div className={styles.themePicker}>
+      {THEME_OPTIONS.map(({ value, label, Icon }) => {
+        const active = current === value;
+        return (
+          <button
+            key={value}
+            className={`${styles.themeOption} ${active ? styles.themeOptionActive : ""}`}
+            onClick={() => onChange(value)}
+            aria-pressed={active}
+            type="button"
+          >
+            <span className={styles.themeOptionIcon}><Icon /></span>
+            <span className={styles.themeOptionLabel}>{label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── SettingsView ──────────────────────────────────────────────────────────────
+
 export function SettingsView() {
   const [autoGist, setAutoGist]     = useState(false);
   const [sidebarMode, setSidebar]   = useState(false);
@@ -43,6 +107,7 @@ export function SettingsView() {
   const [apiKeyShown, setShown]     = useState(false);
   const [apiKeySaved, setKeySaved]  = useState(false);
   const toast = useToast();
+  const { pref: themePref, setTheme } = useTheme();
 
   // Load from storage on mount
   useEffect(() => {
@@ -227,9 +292,13 @@ export function SettingsView() {
       {/* ── Appearance ── */}
       <section className={styles.section}>
         <p className={styles.sectionTitle}>Appearance</p>
-        <div className={styles.placeholder}>
-          Theme customization coming soon.
+        <div className={styles.row}>
+          <div className={styles.rowInfo}>
+            <div className={styles.rowLabel}>Theme</div>
+            <div className={styles.rowSub}>Choose how Gist looks. System follows your OS setting.</div>
+          </div>
         </div>
+        <ThemePicker current={themePref} onChange={setTheme} />
       </section>
 
       {/* Toast */}

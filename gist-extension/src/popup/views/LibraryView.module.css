@@ -38,7 +38,7 @@
 .toolbarTitle {
   font-size: 20px;
   font-weight: 700;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
   letter-spacing: -0.02em;
   margin: 0;
 }
@@ -47,9 +47,9 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  background: oklch(0.30 0.05 150 / 0.15);
-  border: 1px solid oklch(0.55 0.09 150 / 0.35);
-  color: oklch(0.75 0.11 150);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
+  color: var(--accent);
   border-radius: 6px;
   padding: 3px 8px 3px 9px;
   font-size: 11px;
@@ -65,44 +65,47 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: oklch(0.55 0.09 150 / 0.7);
+  color: var(--accent-dim);
   padding: 0;
   transition: color 120ms ease;
 }
 
-.activeTagClear:hover { color: oklch(0.75 0.11 150); }
-.activeTagClear:focus-visible { outline: 1px solid oklch(0.75 0.11 150 / 0.5); border-radius: 2px; }
+.activeTagClear:hover { color: var(--accent); }
+.activeTagClear:focus-visible {
+  outline: 1px solid color-mix(in oklch, var(--accent) 50%, transparent);
+  border-radius: 2px;
+}
 
 .searchBar {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: oklch(0.20 0.005 120);
-  border: 1px solid oklch(0.30 0.006 120);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
   border-radius: 10px;
   padding: 10px 14px;
   transition: border-color 200ms ease, box-shadow 200ms ease;
 }
 
 .searchBarFocused {
-  border-color: oklch(0.55 0.09 150 / 0.4);
-  box-shadow: 0 0 0 3px oklch(0.75 0.11 150 / 0.08);
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 8%, transparent);
 }
 
 .searchBarSearching {
-  border-color: oklch(0.55 0.09 150 / 0.4);
-  box-shadow: 0 0 0 3px oklch(0.75 0.11 150 / 0.08);
+  border-color: var(--accent-border);
+  box-shadow: 0 0 0 3px color-mix(in oklch, var(--accent) 8%, transparent);
 }
 
 .searchIcon {
   display: flex;
   flex-shrink: 0;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   transition: color 200ms ease;
 }
 
 .searchIconActive {
-  color: oklch(0.75 0.11 150);
+  color: var(--accent);
 }
 
 .searchInput {
@@ -111,20 +114,20 @@
   border: none;
   outline: none;
   font-size: 13px;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
   font-family: "Inter", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
   padding: 0;
 }
 
 .searchInput::placeholder {
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
 }
 
 .searchPulse {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: oklch(0.75 0.11 150);
+  background: var(--accent);
   flex-shrink: 0;
   animation: pulse 1s ease-in-out infinite;
 }
@@ -138,19 +141,19 @@
   background: none;
   border: none;
   cursor: pointer;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   padding: 0;
   display: flex;
   transition: color 120ms ease;
 }
 
-.clearBtn:hover { color: oklch(0.58 0.008 95); }
+.clearBtn:hover { color: var(--ink-3); }
 
 .askBtn {
-  background: oklch(0.75 0.11 150);
+  background: var(--accent);
   border: none;
   border-radius: 4px;
-  color: oklch(0.22 0.03 150);
+  color: var(--accent-ink);
   font-size: 9px;
   font-weight: 700;
   font-family: "JetBrains Mono", ui-monospace, monospace;
@@ -179,36 +182,36 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 500;
-  border: 1px solid oklch(0.30 0.006 120);
-  background: oklch(0.20 0.005 120);
+  border: 1px solid var(--hairline);
+  background: var(--surface);
   cursor: pointer;
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
   transition: all 150ms ease;
   font-family: inherit;
   white-space: nowrap;
 }
 
 .pill:hover {
-  border-color: oklch(0.36 0.008 120);
-  color: oklch(0.95 0.005 95);
+  border-color: var(--hairline-2);
+  color: var(--ink);
 }
 
 .pill:focus-visible {
-  outline: 1.5px solid oklch(0.75 0.11 150 / 0.55);
+  outline: 1.5px solid color-mix(in oklch, var(--accent) 55%, transparent);
   outline-offset: 2px;
 }
 
 .pillActive {
-  background: oklch(0.30 0.05 150 / 0.12);
-  border-color: oklch(0.55 0.09 150 / 0.3);
-  color: oklch(0.75 0.11 150);
+  background: var(--accent-bg);
+  border-color: var(--accent-border);
+  color: var(--accent);
 }
 
 /* ── Divider ── */
 
 .divider {
   height: 1px;
-  background: oklch(0.30 0.006 120);
+  background: var(--hairline);
   margin: 14px 32px 0;
   flex-shrink: 0;
 }
@@ -243,8 +246,8 @@
 /* ── Ask result ── */
 
 .answerCard {
-  background: oklch(0.30 0.05 150 / 0.1);
-  border: 1px solid oklch(0.55 0.09 150 / 0.28);
+  background: var(--accent-bg);
+  border: 1px solid var(--accent-border);
   border-radius: 10px;
   padding: 14px 16px;
   margin-bottom: 20px;
@@ -262,14 +265,14 @@
   font-weight: 700;
   letter-spacing: 0.09em;
   text-transform: uppercase;
-  color: oklch(0.75 0.11 150);
+  color: var(--accent);
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 .answerText {
   margin: 0;
   font-size: 13px;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
   line-height: 1.65;
 }
 
@@ -278,7 +281,7 @@
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   margin: 0 0 8px;
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
@@ -286,8 +289,8 @@
 /* ── Skeleton cards ── */
 
 .skeletonCard {
-  background: oklch(0.20 0.005 120 / 0.6);
-  border: 1px solid oklch(0.30 0.006 120);
+  background: color-mix(in oklch, var(--surface) 60%, transparent);
+  border: 1px solid var(--hairline);
   border-radius: 10px;
   padding: 13px 14px;
   display: flex;
@@ -305,9 +308,9 @@
   border-radius: 4px;
   background: linear-gradient(
     90deg,
-    oklch(0.20 0.005 120) 25%,
-    oklch(0.27 0.006 120) 50%,
-    oklch(0.20 0.005 120) 75%
+    var(--surface) 25%,
+    var(--surface-3) 50%,
+    var(--surface) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s linear infinite;
@@ -333,19 +336,19 @@
 }
 
 .emptyIcon {
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   opacity: 0.35;
 }
 
 .emptyText {
   font-size: 13px;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   line-height: 1.7;
   margin: 0;
 }
 
 .emptySubText {
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
 }
 
 .errorCard {
@@ -391,8 +394,8 @@
   right: 0;
   width: 380px;
   height: 100vh;
-  background: oklch(0.16 0.004 120);
-  border-left: 1px solid oklch(0.30 0.006 120);
+  background: var(--bg);
+  border-left: 1px solid var(--hairline);
   z-index: 50;
   display: flex;
   flex-direction: column;
@@ -408,12 +411,12 @@
 @media (prefers-reduced-motion: reduce) {
   .container { animation: none; }
   .drawer    { transition: none; }
-  .skeletonLine { animation: none; background: oklch(0.20 0.005 120); }
+  .skeletonLine { animation: none; background: var(--surface); }
 }
 
 .drawerHeader {
   padding: 18px 20px 14px;
-  border-bottom: 1px solid oklch(0.30 0.006 120);
+  border-bottom: 1px solid var(--hairline);
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -440,16 +443,16 @@
 
 .drawerMeta {
   font-size: 10px;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 .drawerCloseBtn {
-  background: oklch(0.20 0.005 120);
-  border: 1px solid oklch(0.30 0.006 120);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
   border-radius: 6px;
   cursor: pointer;
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
   padding: 5px;
   display: flex;
   align-items: center;
@@ -459,12 +462,12 @@
 }
 
 .drawerCloseBtn:hover {
-  color: oklch(0.95 0.005 95);
-  border-color: oklch(0.36 0.008 120);
+  color: var(--ink);
+  border-color: var(--hairline-2);
 }
 
 .drawerCloseBtn:focus-visible {
-  outline: 1.5px solid oklch(0.75 0.11 150 / 0.55);
+  outline: 1.5px solid color-mix(in oklch, var(--accent) 55%, transparent);
   outline-offset: 2px;
 }
 
@@ -482,14 +485,14 @@
   font-weight: 700;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   margin-bottom: 8px;
   font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 .drawerExplanation {
   font-size: 13px;
-  color: oklch(0.95 0.005 95);
+  color: var(--ink);
   line-height: 1.7;
   margin: 0;
 }
@@ -497,7 +500,7 @@
 /* Collapsible original text */
 
 .collapseWrapper {
-  border: 1px solid oklch(0.30 0.006 120);
+  border: 1px solid var(--hairline);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -508,26 +511,26 @@
   justify-content: space-between;
   padding: 9px 13px;
   cursor: pointer;
-  background: oklch(0.20 0.005 120);
+  background: var(--surface);
   border: none;
   width: 100%;
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
   transition: color 120ms ease;
 }
 
-.collapseToggle:hover { color: oklch(0.95 0.005 95); }
+.collapseToggle:hover { color: var(--ink); }
 
 .collapseBody {
   padding: 12px 14px;
   font-size: 12px;
-  color: oklch(0.58 0.008 95);
+  color: var(--ink-3);
   line-height: 1.65;
   max-height: 160px;
   overflow-y: auto;
-  border-top: 1px solid oklch(0.30 0.006 120);
+  border-top: 1px solid var(--hairline);
 }
 
 /* Source URL row */
@@ -537,14 +540,14 @@
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
-  background: oklch(0.20 0.005 120);
-  border: 1px solid oklch(0.30 0.006 120);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
   border-radius: 8px;
   text-decoration: none;
   transition: border-color 150ms ease;
 }
 
-.sourceRow:hover { border-color: oklch(0.36 0.008 120); }
+.sourceRow:hover { border-color: var(--hairline-2); }
 
 .favicon {
   width: 14px;
@@ -557,14 +560,14 @@
   flex: 1;
   font-size: 10.5px;
   font-family: "JetBrains Mono", ui-monospace, monospace;
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .externalIcon {
-  color: oklch(0.42 0.008 95);
+  color: var(--ink-4);
   display: flex;
   flex-shrink: 0;
 }
@@ -573,7 +576,7 @@
 
 .drawerFooter {
   padding: 14px 20px;
-  border-top: 1px solid oklch(0.30 0.006 120);
+  border-top: 1px solid var(--hairline);
   flex-shrink: 0;
 }
 
@@ -648,9 +651,9 @@
   flex: 1;
   padding: 7px;
   border-radius: 6px;
-  background: oklch(0.20 0.005 120);
-  border: 1px solid oklch(0.30 0.006 120);
-  color: oklch(0.58 0.008 95);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  color: var(--ink-3);
   font-size: 11px;
   font-weight: 500;
   cursor: pointer;
@@ -658,4 +661,4 @@
   transition: color 120ms ease;
 }
 
-.confirmNo:hover { color: oklch(0.95 0.005 95); }
+.confirmNo:hover { color: var(--ink); }
