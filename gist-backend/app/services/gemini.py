@@ -80,7 +80,7 @@ _MOCK_EXPLANATIONS: dict[str, str] = {
     "text":   "Mock mode active — this is a placeholder explanation for local development and testing. No Gemini API call was made.",
     "visual": "Mock mode active — this is a placeholder visual explanation for local development. No Gemini API call was made.",
 }
-_MOCK_EMBEDDING_DIM = 768
+_MOCK_EMBEDDING_DIM = 3072
 
 
 def _mock_embedding(text: str) -> list[float]:
@@ -187,13 +187,13 @@ def build_prompt(
 
 # ─── Embedding ────────────────────────────────────────────────────────────────
 
-EMBEDDING_MODEL = "text-embedding-004"
+EMBEDDING_MODEL = "gemini-embedding-001"
 _EMBED_MAX_CHARS = 8000  # safety truncation before sending to the API
 
 
 async def embed_text(text: str, api_key: str | None = None) -> list[float]:
     """
-    Generate a 768-dimensional embedding for the given text using text-embedding-004.
+    Generate a 3072-dimensional embedding for the given text using gemini-embedding-001.
     Runs the synchronous SDK call in a thread executor to avoid blocking the event loop.
     """
     if _MOCK_LLM:

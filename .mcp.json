@@ -1,5 +1,12 @@
 {
   "mcpServers": {
+    "mongodb": {
+      "command": "mongodb-mcp-server",
+      "args": [],
+      "env": {
+        "MONGODB_URI": "mongodb+srv://parthivpaul5545_db_user:LPFIfuYHtpOA6DDr@cluster0.qrmv6qf.mongodb.net/?appName=Cluster0"
+      }
+    },
     "qmd": {
       "type": "stdio",
       "command": "node",

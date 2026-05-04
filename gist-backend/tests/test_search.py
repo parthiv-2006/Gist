@@ -21,6 +21,7 @@ async def test_embed_text_returns_float_list():
         mock_embedding = MagicMock()
         mock_embedding.values = fake_values
         mock_response = MagicMock()
+        mock_response.embedding = mock_embedding  # singular — SDK v1 shape
         mock_response.embeddings = [mock_embedding]
         mock_client.models.embed_content.return_value = mock_response
 
@@ -53,6 +54,7 @@ async def test_embed_text_truncates_long_input():
         mock_embedding = MagicMock()
         mock_embedding.values = [0.5] * 768
         mock_response = MagicMock()
+        mock_response.embedding = mock_embedding  # singular — SDK v1 shape
         mock_response.embeddings = [mock_embedding]
         mock_client.models.embed_content.return_value = mock_response
 
