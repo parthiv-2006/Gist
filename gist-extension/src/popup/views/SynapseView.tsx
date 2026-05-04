@@ -153,11 +153,22 @@ export function SynapseView() {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const factor = e.deltaY < 0 ? 1.12 : 0.89;
-      setTxfm((p) => ({ ...p, scale: Math.max(0.1, Math.min(6, p.scale * factor)) }));
+      setTxfm((p) => {
+        const newScale = Math.max(0.1, Math.min(6, p.scale * factor));
+        const rect = el.getBoundingClientRect();
+        const mx = e.clientX - rect.left - rect.width / 2;
+        const my = e.clientY - rect.top - rect.height / 2;
+        const ratio = newScale / p.scale;
+        return {
+          x: p.x * ratio + mx * (1 - ratio),
+          y: p.y * ratio + my * (1 - ratio),
+          scale: newScale
+        };
+      });
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [data]);
 
   const handleMouseDown = useCallback(
     (e: React.MouseEvent) => {
