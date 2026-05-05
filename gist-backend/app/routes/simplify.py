@@ -78,13 +78,7 @@ async def simplify(request: Request):
             break
     except RuntimeError as e:
         http_status, code, msg = classify_gemini_error(e)
-        from app.services.gemini import _resolve_api_key
-        try:
-            actual_key = _resolve_api_key(user_api_key)
-        except Exception:
-            actual_key = "None"
-        debug_msg = f"{msg} [Debug Key: '{actual_key}']"
-        return JSONResponse(status_code=http_status, content={"error": debug_msg, "code": code})
+        return JSONResponse(status_code=http_status, content={"error": msg, "code": code})
 
     # 3. Define the SSE generator — yields the first chunk, then continues the same generator.
     async def event_generator():
