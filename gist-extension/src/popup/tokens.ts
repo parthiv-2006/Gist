@@ -1,7 +1,7 @@
 // Gist design tokens — warm paper-dark, sage accent, JetBrains Mono + Inter
 
 const _LOCAL = "http://localhost:8000";
-const _RENDER = "https://gist-vc8m.onrender.com";
+const _PROD = "https://parthiv-2006-gist-backend.hf.space";
 let _cachedBase: string | null = null;
 let _cachedAt = 0;
 const _BASE_TTL = 60_000; // re-probe after 60 s — session can recover if server starts/stops
@@ -27,9 +27,9 @@ export async function getBackendBase(): Promise<string> {
       }
     }
   } catch { /* no local server or DB unavailable */ }
-  _cachedBase = _RENDER;
+  _cachedBase = _PROD;
   _cachedAt = Date.now();
-  return _RENDER;
+  return _PROD;
 }
 
 // Backwards-compatible alias: existing `await BACKEND_BASE` callsites still work,

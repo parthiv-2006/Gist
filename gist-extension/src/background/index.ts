@@ -1,10 +1,10 @@
 import { buildGistRequest, isGistMessage, type GistMessage, type ChatMessage } from "../utils/messages";
 
 const LOCAL_BASE  = "http://localhost:8000";
-const RENDER_BASE = "https://gist-vc8m.onrender.com";
+const PROD_BASE   = "https://parthiv-2006-gist-backend.hf.space";
 
 // Resolve the backend base URL once at startup: try localhost (600 ms timeout),
-// fall back to Render. Uses localhost only when the server is up AND the DB is
+// fall back to the hosted backend (Hugging Face). Uses localhost only when the server is up AND the DB is
 // connected — avoids routing library requests to a local backend with no DB.
 // Result is cached for the lifetime of the service worker.
 let _resolvedBase: string | null = null;
@@ -29,9 +29,9 @@ async function resolveBase(): Promise<string> {
       }
     }
   } catch { /* local server not running or DB unavailable */ }
-  _resolvedBase = RENDER_BASE;
+  _resolvedBase = PROD_BASE;
   _resolvedAt = Date.now();
-  return RENDER_BASE;
+  return PROD_BASE;
 }
 
 async function getStoredApiKey(): Promise<string | null> {
@@ -316,7 +316,7 @@ async function saveGistToLibrary(
 
   // Try primary backend first, then fall back to the other one.
   // This ensures saves survive even if the local backend is hung or Render is cold-starting.
-  const fallback = primary === LOCAL_BASE ? RENDER_BASE : LOCAL_BASE;
+  const fallback = primary === LOCAL_BASE ? PROD_BASE : LOCAL_BASE;
   const targets = [primary, fallback];
 
   for (const target of targets) {
