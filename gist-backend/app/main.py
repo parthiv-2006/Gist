@@ -106,8 +106,9 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
 async def health():
     """
     Health check endpoint.
-    Ping this on extension install (chrome.runtime.onInstalled) to warm up
-    Render's free tier and avoid the 30s cold-start delay.
+    Also used as the keep-warm target: the GitHub Actions `keep-warm` workflow
+    pings this on a schedule so the free host (Hugging Face Space) never sleeps
+    and visitors avoid a cold-start delay.
     """
     return {"status": "ok", "db": get_db_status()}
 

@@ -91,7 +91,7 @@ via SSE back to the extension.
 91: | Backend framework | FastAPI | Uses async lifespan (DB connect/disconnect) |
 92: | Database | MongoDB (Motor) | Stores gists for Library view |
 93: | LLM | Google Gemini (`gemini-1.5-flash`) | Via `google-genai` SDK (v1.x) |
-94: | Hosting | Render (free tier) | Config in `render.yaml` |
+94: | Hosting | Hugging Face Spaces (Docker, free) | `gist-backend/Dockerfile` + Space card in `gist-backend/README.md`; auto-deployed via `.github/workflows/deploy-hf.yml`; kept warm by `.github/workflows/keep-warm.yml`. Render (`render.yaml`) retained as fallback. |
 95: 
 96: ---
 97: 
