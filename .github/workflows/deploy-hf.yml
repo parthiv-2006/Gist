@@ -1,0 +1,61 @@
+name: Deploy backend to Hugging Face Spaces
+
+# Mirrors the gist-backend/ folder to a Hugging Face Space, which rebuilds the
+# Docker container automatically. Only safe files are copied — never .env,
+# venv/, tests, or the Windows requirements.lock.
+#
+# One-time setup (see repo docs / migration notes):
+#   1. Create a Docker Space at https://huggingface.co/new-space (SDK: Docker).
+#   2. Create a WRITE access token at https://huggingface.co/settings/tokens.
+#   3. In GitHub repo Settings -> Secrets and variables -> Actions:
+#        - Secret   HF_TOKEN    = the write token
+#        - Variable  HF_SPACE_ID = <your-hf-username>/<space-name>
+#   4. Run this workflow (Actions tab -> "Deploy backend to Hugging Face Spaces"
+#      -> Run workflow), or just push a change under gist-backend/.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "gist-backend/**"
+      - ".github/workflows/deploy-hf.yml"
+  workflow_dispatch: {}
+
+concurrency:
+  group: deploy-hf
+  cancel-in-progress: true
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Mirror gist-backend to the Hugging Face Space
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
+        run: |
+          if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE_ID" ]; then
+            echo "HF_TOKEN secret or HF_SPACE_ID variable is not set — skipping."
+            exit 0
+          fi
+
+          # Stage only the files the Space needs. NEVER copy .env / venv / tests.
+          rm -rf hf-space && mkdir hf-space
+          cp -r gist-backend/app           hf-space/app
+          cp    gist-backend/requirements.txt hf-space/requirements.txt
+          cp    gist-backend/Dockerfile     hf-space/Dockerfile
+          cp    gist-backend/.dockerignore  hf-space/.dockerignore
+          cp    gist-backend/README.md      hf-space/README.md
+
+          cd hf-space
+          git init -q
+          git checkout -q -b main
+          git config user.email "actions@github.com"
+          git config user.name "github-actions[bot]"
+          git add .
+          git commit -q -m "Deploy from ${GITHUB_SHA}"
+          # Force-push: the Space repo is a managed mirror of this folder.
+          git push -f "https://user:${HF_TOKEN}@huggingface.co/spaces/${HF_SPACE_ID}.git" main
+          echo "Pushed to Space ${HF_SPACE_ID}; HF will rebuild the container."
