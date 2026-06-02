@@ -34,7 +34,10 @@ jobs:
       - name: Mirror gist-backend to the Hugging Face Space
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
-          HF_SPACE_ID: ${{ vars.HF_SPACE_ID }}
+          # Prefer the repo Variable, fall back to a Secret (in case it was added
+          # there by mistake), then to the known Space id so a fresh checkout
+          # still deploys. Override by setting the HF_SPACE_ID repo variable.
+          HF_SPACE_ID: ${{ vars.HF_SPACE_ID || secrets.HF_SPACE_ID || 'parthiv-2006/gist-backend' }}
         run: |
           if [ -z "$HF_TOKEN" ] || [ -z "$HF_SPACE_ID" ]; then
             echo "HF_TOKEN secret or HF_SPACE_ID variable is not set — skipping."
