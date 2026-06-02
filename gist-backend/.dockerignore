@@ -1,0 +1,16 @@
+# Keep the image small and free of secrets / dev artifacts.
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+tests/
+venv/
+.venv/
+.env
+.env.*
+.git/
+.gitignore
+*.md
+# Windows-only freeze (pins pywin32 etc.) — not usable in a Linux image.
+requirements.lock
