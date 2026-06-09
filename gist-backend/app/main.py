@@ -69,11 +69,12 @@ async def add_security_headers(request: Request, call_next) -> Response:
 
 # ─── CORS ─────────────────────────────────────────────────────────────────────
 
-# In production (Render), set ALLOWED_ORIGINS=chrome-extension://YOUR_EXTENSION_ID
-# For local development the .env file sets ALLOWED_ORIGINS=chrome-extension://...
-# Fallback to "*" only so the local server starts without a .env file.
+# ALLOWED_ORIGINS env var (comma-separated) controls the extension/local origins.
+# The portfolio demo origin is always included so the live site works without
+# requiring an env var update every time the domain changes.
+_PORTFOLIO_ORIGIN = "https://www.parthivpaul.me"
 allowed_origins_raw = os.environ.get("ALLOWED_ORIGINS", "*")
-allowed_origins = [o.strip() for o in allowed_origins_raw.split(",")]
+allowed_origins = list({o.strip() for o in allowed_origins_raw.split(",") if o.strip()} | {_PORTFOLIO_ORIGIN})
 
 app.add_middleware(
     CORSMiddleware,
