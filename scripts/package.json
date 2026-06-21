@@ -1,0 +1,11 @@
+{
+  "name": "gist-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "capture": "node capture_screenshots.js"
+  },
+  "dependencies": {
+    "playwright": "^1.49.0"
+  }
+}
