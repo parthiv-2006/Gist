@@ -21,6 +21,32 @@ async function screenshot(page, name) {
   console.log(`  ✓  ${name}`);
 }
 
+// Screenshot clipped to the popover element (+ padding) so feature detail is legible.
+// Falls back to a full-page shot if the popover bounds can't be resolved.
+async function screenshotPopover(page, name, pad = 24) {
+  const box = await page.evaluate(() => {
+    const host = document.querySelector('#gist-shadow-host');
+    if (!host?.shadowRoot) return null;
+    const el = host.shadowRoot.querySelector('[class*="popover"]');
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width < 40 || r.height < 40) return null;
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+  if (!box) {
+    await page.screenshot({ path: path.join(SS_DIR, name) });
+    console.log(`  ✓  ${name} (full page — no popover bounds)`);
+    return;
+  }
+  const vp = page.viewportSize();
+  const x = Math.max(0, box.x - pad);
+  const y = Math.max(0, box.y - pad);
+  const width  = Math.min(vp.width  - x, box.width  + pad * 2);
+  const height = Math.min(vp.height - y, box.height + pad * 2);
+  await page.screenshot({ path: path.join(SS_DIR, name), clip: { x, y, width, height } });
+  console.log(`  ✓  ${name} (clipped ${Math.round(width)}×${Math.round(height)})`);
+}
+
 async function main() {
   // Always start with a clean profile so session-restore doesn't redirect us
   if (fs.existsSync(USER_DATA)) {
@@ -116,12 +142,41 @@ async function main() {
     }, textOrRegex instanceof RegExp ? textOrRegex : textOrRegex);
   };
 
+  // Wait for a button matching an aria-label substring to exist in the shadow DOM
+  const waitForShadowBtn = async (page, ariaSubstr, timeout = 30000) => {
+    try {
+      await page.waitForFunction((sub) => {
+        const host = document.querySelector('#gist-shadow-host');
+        if (!host?.shadowRoot) return false;
+        return [...host.shadowRoot.querySelectorAll('button')]
+          .some(b => (b.getAttribute('aria-label') ?? '').includes(sub));
+      }, ariaSubstr, { timeout });
+      return true;
+    } catch {
+      console.log(`     ⚠  Timed out waiting for button [aria-label*="${ariaSubstr}"]`);
+      return false;
+    }
+  };
+
+  // Click a button by aria-label substring; returns true if found+clicked
+  const shadowClickAria = async (page, ariaSubstr) => {
+    return page.evaluate((sub) => {
+      const host = document.querySelector('#gist-shadow-host');
+      if (!host?.shadowRoot) return false;
+      const btn = [...host.shadowRoot.querySelectorAll('button')]
+        .find(b => (b.getAttribute('aria-label') ?? '').includes(sub));
+      if (!btn) return false;
+      btn.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true, cancelable: true, view: window }));
+      return true;
+    }, ariaSubstr);
+  };
+
   // ─────────────────────────────────────────────────────────────
   // ONBOARDING
   // ─────────────────────────────────────────────────────────────
   console.log('📸  Onboarding flow...');
   const ob = await ctx.newPage();
-  await ob.setViewportSize({ width: 1440, height: 900 });
+  await ob.setViewportSize({ width: 600, height: 800 });
   await ob.goto(`chrome-extension://${EXT_ID}/onboarding.html`);
   await delay(1000);
   await screenshot(ob, 'onboarding-welcome.png');
@@ -142,7 +197,7 @@ async function main() {
   // ─────────────────────────────────────────────────────────────
   console.log('\n📸  Dashboard views...');
   const dash = await ctx.newPage();
-  await dash.setViewportSize({ width: 1440, height: 900 });
+  await dash.setViewportSize({ width: 1440, height: 750 });
   await dash.goto(`chrome-extension://${EXT_ID}/popup.html`);
   await delay(2000);
   await screenshot(dash, 'dashboard.png');
@@ -231,58 +286,153 @@ async function main() {
   console.log(`     Selection: ${selResult}`);
   await delay(500);
 
-  // Trigger and wait for popover to mount
+  // Helper: detect popover ERROR state (Gemini 503 high-demand throttling is intermittent)
+  const popoverErrored = () => wiki.evaluate(() => {
+    const host = document.querySelector('#gist-shadow-host');
+    const t = host?.shadowRoot?.textContent ?? '';
+    return /went wrong|try again|unavailable|high demand|error|failed/i.test(t)
+      && !t.includes('Save to library');
+  });
+
+  // Reusable: re-select the same paragraph, trigger, and retry until DONE ("Save to library").
+  // /api/v1/simplify can return 503 under Gemini load, so retry up to `tries` times.
+  const reselect = () => wiki.evaluate(() => {
+    const paras = document.querySelectorAll('.mw-parser-output > p');
+    for (const p of paras) {
+      if ((p.textContent?.trim().length ?? 0) > 60) {
+        const range = document.createRange();
+        range.selectNodeContents(p);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+        return true;
+      }
+    }
+    return false;
+  });
+  const triggerUntilDone = async (label, tries = 6) => {
+    for (let attempt = 1; attempt <= tries; attempt++) {
+      console.log(`     ${label} attempt ${attempt}...`);
+      await reselect();
+      await delay(300);
+      await triggerGistOn(wiki);
+      await waitForPopover(wiki, 20000);
+      if (await waitForShadowBtn(wiki, 'Save to library', 25000)) return true;
+      console.log(`     ${label} attempt ${attempt}: not done (errored=${await popoverErrored()}) — retry in 8s`);
+      await delay(8000);
+    }
+    return false;
+  };
+
+  // ── Initial gist: capture streaming, then done
   await triggerGistOn(wiki);
-  const appeared = await waitForPopover(wiki, 20000);
-  console.log(`     Popover appeared: ${appeared}`);
+  await waitForPopover(wiki, 20000);
+  await delay(1400);
+  await screenshotPopover(wiki, 'popover-streaming.png');
+  let reachedDone = await waitForShadowBtn(wiki, 'Save to library', 25000);
+  if (!reachedDone) reachedDone = await triggerUntilDone('Gist');
+  await delay(600);
+  await screenshotPopover(wiki, 'popover-done.png');
 
-  // ── Streaming state
-  await delay(1500);
-  await screenshot(wiki, 'popover-streaming.png');
+  // ── Mermaid diagram — click Visualize (also can 503, retry up to 4×), then scroll diagram into view
+  let diagramDone = false;
+  for (let v = 1; v <= 4 && !diagramDone; v++) {
+    await shadowClickAria(wiki, 'Visualize as diagram');
+    await waitForShadowText(wiki, 'Drawing diagram', 8000);
+    try {
+      await wiki.waitForFunction(() => {
+        const t = document.querySelector('#gist-shadow-host')?.shadowRoot?.textContent ?? '';
+        return t.includes('Visual diagram') || t.includes('Diagram source');
+      }, { timeout: 25000 });
+      diagramDone = true;
+    } catch {
+      console.log(`     Visualize attempt ${v}: not drawn — retry in 6s`);
+      await delay(6000);
+    }
+  }
+  console.log(`     Diagram drawn: ${diagramDone}`);
+  // The mermaid SVG is tall; scroll the diagram panel's TOP to the top of the
+  // popover's scroll viewport so the diagram heading + first nodes are framed.
+  await wiki.evaluate(() => {
+    const sr = document.querySelector('#gist-shadow-host')?.shadowRoot;
+    const panel = sr?.querySelector('[class*="diagramPanel"]');
+    const scroller = sr?.querySelector('[class*="chatHistory"]');
+    if (panel && scroller) {
+      const pr = panel.getBoundingClientRect();
+      const cr = scroller.getBoundingClientRect();
+      scroller.scrollTop += (pr.top - cr.top) - 4; // align panel top just below viewport top
+    }
+  });
+  await delay(900);
+  await screenshotPopover(wiki, 'popover-mermaid.png');
 
-  // ── Done state (wait for Save button text in shadow DOM)
-  await waitForShadowText(wiki, 'Save', 28000);
-  await delay(400);
-  await screenshot(wiki, 'popover-done.png');
-
-  // ── ELI5 mode tab
-  await shadowClick(wiki, 'ELI5');
-  await delay(500);
-  await screenshot(wiki, 'popover-modes.png');
-
-  // ── Follow-up chat input — fill without submitting
+  // ── Follow-up chat input — fill without submitting (state still DONE, input enabled)
   await wiki.evaluate(() => {
     const host = document.querySelector('#gist-shadow-host');
     if (!host?.shadowRoot) return;
+    // scroll back to top so the input + conversation are framed nicely
+    const body = host.shadowRoot.querySelector('[class*="popover"] [class*="body"], [class*="messages"]');
+    if (body) body.scrollTop = body.scrollHeight;
     const input = host.shadowRoot.querySelector('input[type="text"], textarea');
     if (input) {
       input.focus();
-      // React synthetic events need nativeInputValueSetter
       const setter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, 'value')?.set;
       if (setter) setter.call(input, 'Can you give a real-world example?');
       input.dispatchEvent(new Event('input', { bubbles: true }));
     }
   });
   await delay(400);
-  await screenshot(wiki, 'popover-chat.png');
+  await screenshotPopover(wiki, 'popover-chat.png');
 
-  // ── Mermaid diagram
-  await shadowClick(wiki, /diagram|visual|map/i);
-  await delay(7000);
-  await screenshot(wiki, 'popover-mermaid.png');
+  // ── ELI5 mode tab — click highlights it instantly (re-triggers a stream we don't wait on)
+  await shadowClick(wiki, 'ELI5');
+  await delay(1100);
+  await screenshotPopover(wiki, 'popover-modes.png');
 
-  // ── Nested — double-click a word in rendered explanation text
-  await wiki.evaluate(() => {
-    const host = document.querySelector('#gist-shadow-host');
-    if (!host?.shadowRoot) return;
-    const paras = [...host.shadowRoot.querySelectorAll('p, [class*="text"], [class*="content"]')]
-      .filter(el => el.children.length === 0 && (el.textContent?.trim().length ?? 0) > 20);
-    if (paras[0]) {
-      paras[0].dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));
+  // ── Nested (progressive disclosure): fresh standard gist → REAL double-click on a word.
+  // The handler reads window.getSelection().toString(), so a synthetic event won't work —
+  // we need an actual mouse double-click at the word's coordinates to select it natively.
+  await triggerUntilDone('Nested-setup');
+  await delay(800);
+  let nestedDone = false;
+  for (let n = 1; n <= 4 && !nestedDone; n++) {
+    // Explicitly select a word and add it to the window selection, THEN dispatch
+    // dblclick so the handler's window.getSelection().toString() returns the word.
+    const word = await wiki.evaluate(() => {
+      const host = document.querySelector('#gist-shadow-host');
+      const md = host?.shadowRoot?.querySelector('[class*="markdown"]');
+      if (!md) return null;
+      const walker = document.createTreeWalker(md, NodeFilter.SHOW_TEXT);
+      let node;
+      while ((node = walker.nextNode())) {
+        const m = /[A-Za-z]{6,}/.exec(node.textContent ?? '');
+        if (m) {
+          const range = document.createRange();
+          range.setStart(node, m.index);
+          range.setEnd(node, m.index + m[0].length);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+          md.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, composed: true, cancelable: true, view: window }));
+          return m[0];
+        }
+      }
+      return null;
+    });
+    console.log(`     Nested attempt ${n}: drilled on "${word}"`);
+    try {
+      await wiki.waitForFunction(() => {
+        return (document.querySelector('#gist-shadow-host')?.shadowRoot?.textContent ?? '').includes('›');
+      }, { timeout: 15000 });
+      nestedDone = true;
+    } catch {
+      console.log(`     Nested attempt ${n}: no breadcrumb — retry in 4s`);
+      await delay(4000);
     }
-  });
-  await delay(3000);
-  await screenshot(wiki, 'popover-nested.png');
+  }
+  console.log(`     Nested done: ${nestedDone}`);
+  await delay(1500);
+  await screenshotPopover(wiki, 'popover-nested.png');
 
   // ─────────────────────────────────────────────────────────────
   // CAPTURE OVERLAY
@@ -297,9 +447,14 @@ async function main() {
     const tab = activeTabs[0] ?? allTabs.sort((a, b) => (b.id ?? 0) - (a.id ?? 0))[0];
     if (tab?.id) await chrome.tabs.sendMessage(tab.id, { type: 'GIST_CAPTURE_START', payload: {} });
   });
-  await delay(1200);
+  await delay(1000);
+  // Drag out a visible selection rectangle so the overlay is clearly shown
+  await wiki.mouse.move(260, 200);
+  await wiki.mouse.down();
+  await wiki.mouse.move(820, 560, { steps: 20 });
+  await delay(400);
   await screenshot(wiki, 'capture-overlay.png');
-  await wiki.keyboard.press('Escape');
+  await wiki.mouse.up();
   await delay(300);
 
   // ─────────────────────────────────────────────────────────────
@@ -310,17 +465,54 @@ async function main() {
   await delay(400);
   await wiki.reload({ waitUntil: 'domcontentloaded' });
   await delay(1500);
-  // Dismiss donation banner after reload
-  try {
-    await wiki.locator('a, button').filter({ hasText: /Maybe later|No thanks/i }).first().click({ timeout: 3000 });
-    await delay(400);
-  } catch {}
-  // Scroll to trigger IntersectionObserver
+  // Dismiss any Wikipedia donation / email-reminder modal that may overlay the widget
+  for (const label of [/Maybe later/i, /No thanks/i, /Close/i, /^×$/]) {
+    try { await wiki.locator('a, button').filter({ hasText: label }).first().click({ timeout: 1500 }); await delay(300); } catch {}
+  }
+  await wiki.keyboard.press('Escape');
+  await delay(300);
+
+  // Scroll to trigger the IntersectionObserver → /autogist call
   await wiki.evaluate(() => window.scrollTo(0, 700));
-  await delay(700);
+  await delay(800);
   await wiki.evaluate(() => window.scrollTo(0, 1500));
-  await delay(7000);
-  await screenshot(wiki, 'autogist-widget.png');
+
+  // Wait for the widget to reach "ready" state (takeaways rendered, not the idle hint)
+  try {
+    await wiki.waitForFunction(() => {
+      const sr = document.querySelector('#gist-shadow-host')?.shadowRoot;
+      const mount = sr?.querySelector('#gist-widget-mount');
+      const txt = mount?.textContent ?? '';
+      return txt.includes('AutoGist') && !txt.includes('Scroll to auto-summarize') && txt.replace('AutoGist', '').trim().length > 10;
+    }, { timeout: 20000 });
+    console.log('     AutoGist widget ready');
+  } catch {
+    console.log('     ⚠  AutoGist widget did not populate — capturing current state');
+  }
+  await delay(800);
+
+  // The widget is "ghost UI" (opacity 0.2 at rest) — hover it to full opacity, then clip to it
+  const wBox = await wiki.evaluate(() => {
+    const sr = document.querySelector('#gist-shadow-host')?.shadowRoot;
+    const w = sr?.querySelector('#gist-widget-mount [class*="widget"]');
+    if (!w) return null;
+    const r = w.getBoundingClientRect();
+    return { x: r.x, y: r.y, width: r.width, height: r.height };
+  });
+  if (wBox) {
+    await wiki.mouse.move(wBox.x + wBox.width / 2, wBox.y + wBox.height / 2);
+    await delay(600); // let the hover opacity transition (350ms) complete
+    const pad = 26;
+    const vp = wiki.viewportSize();
+    const x = Math.max(0, wBox.x - pad), y = Math.max(0, wBox.y - pad);
+    await wiki.screenshot({
+      path: path.join(SS_DIR, 'autogist-widget.png'),
+      clip: { x, y, width: Math.min(vp.width - x, wBox.width + pad * 2), height: Math.min(vp.height - y, wBox.height + pad * 2) },
+    });
+    console.log('  ✓  autogist-widget.png (clipped to widget)');
+  } else {
+    await screenshot(wiki, 'autogist-widget.png');
+  }
 
   await wiki.close();
   console.log(`\n✅  All screenshots saved to:\n   ${SS_DIR}`);
