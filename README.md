@@ -5,7 +5,8 @@ A Chrome extension that streams plain-English explanations of highlighted text, 
 [![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9_Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Gemini](https://img.shields.io/badge/Google_Gemini-2.5_Flash-886FBF?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
+[![Groq](https://img.shields.io/badge/Groq-Llama_3.3_70B-F55036?logo=meta&logoColor=white)](https://groq.com/)
+[![Gemini](https://img.shields.io/badge/Gemini-Embeddings-886FBF?logo=googlegemini&logoColor=white)](https://ai.google.dev/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
@@ -80,8 +81,8 @@ Everything you save is stored with a vector embedding and a few generated tags. 
 | Extension testing | Vitest 4, Testing Library, jsdom |
 | Backend framework | FastAPI 0.110 |
 | Database | MongoDB Atlas via Motor 3 |
-| AI / LLM | Google Gemini 2.5 Flash |
-| Embeddings | gemini-embedding-001 (3072 dims) |
+| Text generation | Groq (`llama-3.3-70b-versatile`), with Google Gemini 2.5 Flash as a fallback |
+| Embeddings | Gemini `gemini-embedding-001` (3072 dims) |
 | Compute | NumPy 1.26 (PCA via SVD, KMeans via Lloyd's, cosine similarity) |
 | Diagrams | mermaid.ink (server-side SVG render) |
 | Rate limiting | SlowAPI 0.1.9 |
@@ -128,7 +129,8 @@ The Gemini streaming path bridges two incompatible concurrency models: the `goog
 |------|---------|-------|
 | Node.js | 18+ | Extension build |
 | Python | 3.11+ | Backend runtime |
-| Google Gemini API key | Any | Free at [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| Google Gemini API key | Any | Free at [aistudio.google.com](https://aistudio.google.com/app/apikey). Used for embeddings |
+| Groq API key | Any | Optional. Free at [console.groq.com](https://console.groq.com/keys). Handles text generation when set |
 | MongoDB Atlas | Free tier | Optional. Library, Synapse, and Recall are disabled without it |
 
 ### Installation
@@ -146,7 +148,7 @@ venv\Scripts\activate          # Windows
 pip install -r requirements.txt
 
 cp .env.example .env
-# Edit .env: set GEMINI_API_KEY (and optionally MONGODB_URI)
+# Edit .env: set GEMINI_API_KEY (and optionally GROQ_API_KEY, MONGODB_URI)
 
 uvicorn app.main:app --reload --port 8000
 
@@ -162,7 +164,9 @@ In Chrome: navigate to `chrome://extensions`, enable **Developer mode**, click *
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `GEMINI_API_KEY` | Yes | Google Gemini API key |
+| `GEMINI_API_KEY` | Yes | Google Gemini API key. Used for embeddings, and for text when no Groq key is set |
+| `GROQ_API_KEY` | No | Groq API key. When set, all text generation goes through Groq instead of Gemini |
+| `GROQ_MODEL` | No | Groq model name; defaults to `llama-3.3-70b-versatile` |
 | `MONGODB_URI` | No | MongoDB connection string; Library, Synapse, and Recall are disabled without it |
 | `ALLOWED_ORIGINS` | No | Comma-separated CORS origins; defaults to `*` |
 | `MOCK_LLM` | No | `true` for offline development with deterministic mock responses |
