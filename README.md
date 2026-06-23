@@ -19,7 +19,7 @@ A Chrome extension that streams plain-English explanations of any highlighted te
 
 Gist collapses the "copy → new tab → paste → read → find your place again" loop into a single keystroke. Highlight any text, press `Ctrl+Shift+E`, and a streaming explanation appears directly on the page in under 500ms. Every saved explanation gets embedded as a vector, auto-tagged, and stored — so over time your library becomes queryable with natural language, studyable as flashcards, and visualizable as a semantic knowledge graph.
 
-**Live backend:** https://gist-vc8m.onrender.com (Render free tier — ~30s cold start after inactivity)
+**Live backend:** https://parthiv-2006-gist-backend.hf.space (Hugging Face Spaces, Docker — always warm)
 
 ---
 
