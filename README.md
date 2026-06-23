@@ -1,6 +1,6 @@
 # Gist
 
-A Chrome extension that streams plain-English explanations of any highlighted text, then builds a searchable, visualizable knowledge base from everything you save.
+A Chrome extension that streams plain-English explanations of highlighted text, then turns everything you save into a searchable knowledge base.
 
 [![Chrome MV3](https://img.shields.io/badge/Chrome-Manifest_V3-4285F4?logo=googlechrome&logoColor=white)](https://developer.chrome.com/docs/extensions/mv3/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9_Strict-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
@@ -9,17 +9,15 @@ A Chrome extension that streams plain-English explanations of any highlighted te
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-<div align="center">
-  <img src=".github/assets/demo.gif" width="900" alt="Gist demo — highlight text, get an instant explanation, explore your knowledge graph"/>
-</div>
-
 ---
 
 ## What It Is
 
-Gist collapses the "copy → new tab → paste → read → find your place again" loop into a single keystroke. Highlight any text, press `Ctrl+Shift+E`, and a streaming explanation appears directly on the page in under 500ms. Every saved explanation gets embedded as a vector, auto-tagged, and stored — so over time your library becomes queryable with natural language, studyable as flashcards, and visualizable as a semantic knowledge graph.
+Reading something dense on the web usually means copying the text, opening a new tab, pasting it somewhere, and then trying to find your place again. Gist skips that. Highlight any text, press `Ctrl+Shift+E`, and a plain-English explanation streams onto the page in about half a second.
 
-**Live backend:** https://parthiv-2006-gist-backend.hf.space (Hugging Face Spaces, Docker — always warm)
+Everything you save is stored with a vector embedding and a few generated tags. Over time the library turns into something you can search in plain language, review as flashcards, or browse as a graph of related notes.
+
+**Live backend:** https://parthiv-2006-gist-backend.hf.space (Hugging Face Spaces on Docker)
 
 ---
 
@@ -41,32 +39,32 @@ Gist collapses the "copy → new tab → paste → read → find your place agai
 
 <table>
 <tr>
-<td align="center" width="50%"><img src=".github/assets/screenshots/popover-streaming.png" width="440"/><br/><sub><b>Streaming explanation</b> — SSE chunks render word by word inside a Shadow DOM popover at z-index 2147483647, invisible to the host page's CSS</sub></td>
-<td align="center" width="50%"><img src=".github/assets/screenshots/popover-done.png" width="440"/><br/><sub><b>Done state</b> — Save to library, open a follow-up chat, or generate a Mermaid concept map</sub></td>
+<td align="center" width="50%"><img src=".github/assets/screenshots/popover-streaming.png" width="440"/><br/><sub><b>Streaming explanation.</b> Text renders word by word inside a Shadow DOM popover, isolated from the host page's CSS.</sub></td>
+<td align="center" width="50%"><img src=".github/assets/screenshots/popover-done.png" width="440"/><br/><sub><b>Done state.</b> Save to the library, open a follow-up chat, or draw a concept map.</sub></td>
 </tr>
 <tr>
-<td align="center"><img src=".github/assets/screenshots/popover-modes.png" width="440"/><br/><sub><b>Explanation modes</b> — Standard, ELI5, Legal, and Academic each use a distinct system prompt; the active mode persists across sessions</sub></td>
-<td align="center"><img src=".github/assets/screenshots/popover-chat.png" width="440"/><br/><sub><b>Follow-up chat</b> — Full conversation history is included in each request; the server enforces a 20,000-character cap</sub></td>
+<td align="center"><img src=".github/assets/screenshots/popover-modes.png" width="440"/><br/><sub><b>Explanation modes.</b> Standard, ELI5, Legal, and Academic each use a different prompt. The active mode sticks across sessions.</sub></td>
+<td align="center"><img src=".github/assets/screenshots/popover-chat.png" width="440"/><br/><sub><b>Follow-up chat.</b> Each request carries the full conversation history, capped at 20,000 characters on the server.</sub></td>
 </tr>
 <tr>
-<td align="center"><img src=".github/assets/screenshots/popover-nested.png" width="440"/><br/><sub><b>Progressive disclosure</b> — Double-click any word to drill into a nested definition; breadcrumbs let you navigate back up to 10 levels</sub></td>
-<td align="center"><img src=".github/assets/screenshots/popover-mermaid.png" width="440"/><br/><sub><b>Mermaid diagram</b> — Gemini generates a flowchart; the backend sanitizes and renders it via mermaid.ink, falling back to raw source on failure</sub></td>
+<td align="center"><img src=".github/assets/screenshots/popover-nested.png" width="440"/><br/><sub><b>Progressive disclosure.</b> Double-click any word to drill into a nested definition. Breadcrumbs track up to 10 levels.</sub></td>
+<td align="center"><img src=".github/assets/screenshots/popover-mermaid.png" width="440"/><br/><sub><b>Mermaid diagram.</b> The model writes a flowchart, which the backend sanitizes and renders through mermaid.ink.</sub></td>
 </tr>
 <tr>
-<td align="center"><img src=".github/assets/screenshots/capture-overlay.png" width="440"/><br/><sub><b>Visual capture</b> — <code>Alt+Shift+G</code> opens a drag-to-select overlay; the background worker crops and base64-encodes the PNG as a multimodal input</sub></td>
-<td align="center"><img src=".github/assets/screenshots/autogist-widget.png" width="440"/><br/><sub><b>AutoGist</b> — An IntersectionObserver fires on scroll; an 8-second per-tab cooldown in the service worker prevents rapid-fire requests</sub></td>
+<td align="center"><img src=".github/assets/screenshots/capture-overlay.png" width="440"/><br/><sub><b>Visual capture.</b> <code>Alt+Shift+G</code> opens a drag-to-select overlay. The background worker crops the region and sends it as image input.</sub></td>
+<td align="center"><img src=".github/assets/screenshots/autogist-widget.png" width="440"/><br/><sub><b>AutoGist.</b> An IntersectionObserver summarizes new content as you scroll, with an 8-second per-tab cooldown.</sub></td>
 </tr>
 <tr>
-<td align="center"><img src=".github/assets/screenshots/library-grid.png" width="440"/><br/><sub><b>Gist Library</b> — Masonry grid of saved explanations with category badges, AI-generated tags, and keyword filtering</sub></td>
-<td align="center"><img src=".github/assets/screenshots/library-detail.png" width="440"/><br/><sub><b>Split-pane detail</b> — Source URL, original text, full explanation, recall card status, and a "Chat with this Gist" input</sub></td>
+<td align="center"><img src=".github/assets/screenshots/library-grid.png" width="440"/><br/><sub><b>Gist Library.</b> A grid of saved explanations with category badges, tags, and keyword filtering.</sub></td>
+<td align="center"><img src=".github/assets/screenshots/library-detail.png" width="440"/><br/><sub><b>Split-pane detail.</b> Source URL, original text, full explanation, recall status, and a chat box, all in one pane.</sub></td>
 </tr>
 <tr>
-<td align="center"><img src=".github/assets/screenshots/library-search.png" width="440"/><br/><sub><b>Semantic search</b> — Query is embedded and matched against stored vectors; Gemini synthesizes an answer from the top 5 retrieved notes</sub></td>
-<td align="center"><img src=".github/assets/screenshots/synapse-graph.png" width="440"/><br/><sub><b>Synapse knowledge graph</b> — PCA-projected embeddings on a 1000×1000 canvas, KMeans-clustered, with AI-labeled cluster groups</sub></td>
+<td align="center"><img src=".github/assets/screenshots/library-search.png" width="440"/><br/><sub><b>Semantic search.</b> Your query is embedded, matched against stored vectors, and answered from the top five notes.</sub></td>
+<td align="center"><img src=".github/assets/screenshots/synapse-graph.png" width="440"/><br/><sub><b>Synapse graph.</b> Embeddings projected to 2D with PCA, clustered with KMeans, and labeled by topic.</sub></td>
 </tr>
 <tr>
-<td align="center"><img src=".github/assets/screenshots/recall-cards.png" width="440"/><br/><sub><b>Recall flashcards</b> — Gemini generates front/back cards for each gist; spaced-repetition scheduling surfaces them for review</sub></td>
-<td align="center"><img src=".github/assets/screenshots/settings.png" width="440"/><br/><sub><b>Settings</b> — Personal Gemini API key, dark/light/system theme, and AutoGist toggle</sub></td>
+<td align="center"><img src=".github/assets/screenshots/recall-cards.png" width="440"/><br/><sub><b>Recall flashcards.</b> A front/back card for each gist, surfaced on a spaced-repetition schedule.</sub></td>
+<td align="center"><img src=".github/assets/screenshots/settings.png" width="440"/><br/><sub><b>Settings.</b> Personal API key, dark/light/system theme, and an AutoGist toggle.</sub></td>
 </tr>
 </table>
 
@@ -106,7 +104,7 @@ TypeScript · React 19 · Vite 8              Python 3.11 · Uvicorn · Motor ·
   Background Service Worker                   POST|PUT|DELETE /library/{id}/recall
     All fetch() calls                         GET /synapse/graph
     SSE stream relay                          POST /synapse/compute
-    resolveBase(): localhost or Render                 |
+    resolveBase(): localhost or HF Space               |
     Save with primary/fallback retry                   |
           |                                   MongoDB Atlas
           +-- HTTPS ----------------------->  gists collection
@@ -130,8 +128,8 @@ The Gemini streaming path bridges two incompatible concurrency models: the `goog
 |------|---------|-------|
 | Node.js | 18+ | Extension build |
 | Python | 3.11+ | Backend runtime |
-| Google Gemini API key | — | Free at [aistudio.google.com](https://aistudio.google.com/app/apikey) |
-| MongoDB Atlas | Free tier | Optional — disables Library, Synapse, and Recall without it |
+| Google Gemini API key | Any | Free at [aistudio.google.com](https://aistudio.google.com/app/apikey) |
+| MongoDB Atlas | Free tier | Optional. Library, Synapse, and Recall are disabled without it |
 
 ### Installation
 
@@ -204,11 +202,10 @@ The backend has 12 pytest test files covering all routes and services. All Gemin
 
 ## Known Limitations
 
-- **Chrome/Chromium only.** Firefox support requires a `browser` namespace shim and validation against Firefox's stricter content script CSP defaults.
-- **Render free-tier cold starts.** First request after 15 minutes of inactivity can take 20–30 seconds.
-- **Synapse requires at least 4 embedded gists.** The KMeans minimum cluster count is 4. Gists saved before the embedding feature was added need a manual `POST /library/backfill`.
-- **Atlas Vector Search requires a paid cluster.** The numpy cosine fallback works on free-tier Atlas but loads up to 500 documents into memory per query.
-- **No image compression before upload.** Visual Capture sends the full viewport PNG as base64 (typically 2–4 MB at 1440×900).
+- **Chrome and Chromium only.** Firefox support would need a `browser` namespace shim and testing against Firefox's stricter content script CSP defaults.
+- **Synapse needs at least 4 embedded gists.** The KMeans minimum cluster count is 4. Gists saved before embeddings existed need a manual `POST /library/backfill`.
+- **Atlas Vector Search needs a paid cluster.** The numpy cosine fallback works on free-tier Atlas but loads up to 500 documents into memory per query.
+- **No image compression before upload.** Visual Capture sends the full viewport PNG as base64, usually 2 to 4 MB at 1440×900.
 
 ---
 
@@ -220,14 +217,14 @@ Gist/
 │   └── app/
 │       ├── main.py                      App factory, CORS, security headers
 │       ├── routes/
-│       │   ├── simplify.py              POST /api/v1/simplify — SSE with first-chunk error probe
-│       │   ├── library.py               CRUD + concurrent embed/tag on save
+│       │   ├── simplify.py              POST /api/v1/simplify, SSE with first-chunk error probe
+│       │   ├── library.py               CRUD plus concurrent embed/tag on save
 │       │   ├── search.py                RAG: Atlas $vectorSearch with numpy cosine fallback
 │       │   ├── synapse.py               Graph pipeline (PCA, KMeans, cosine edges)
 │       │   ├── recall.py                Flashcard CRUD
 │       │   ├── autogist.py              Viewport summarizer
 │       │   ├── nested.py                Progressive disclosure definitions
-│       │   └── visualize.py             Mermaid generation + mermaid.ink render
+│       │   └── visualize.py             Mermaid generation plus mermaid.ink render
 │       └── services/
 │           ├── gemini.py                Streaming thread bridge, embed, tags, recall cards
 │           ├── synapse.py               Pure numpy: PCA, KMeans, cosine edges
