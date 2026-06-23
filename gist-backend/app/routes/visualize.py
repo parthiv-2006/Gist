@@ -24,7 +24,7 @@ from google import genai
 from pydantic import BaseModel, field_validator
 
 from app.limiter import limiter
-from app.services.gemini import GEMINI_MODEL, _resolve_api_key, classify_gemini_error
+from app.services.gemini import GEMINI_MODEL, _resolve_api_key, classify_gemini_error, generate_text
 
 logger = logging.getLogger(__name__)
 
@@ -172,19 +172,8 @@ async def _generate_mermaid(text: str, api_key: str | None = None) -> str:
     if _MOCK_LLM:
         return _MOCK_MERMAID
 
-    client = genai.Client(api_key=_resolve_api_key(api_key))
     prompt = _PROMPT_TEMPLATE.format(text=text)
-
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None,
-        lambda: client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-        ),
-    )
-
-    raw = result.text or ""
+    raw = await generate_text(prompt, api_key)
     extracted = _extract_mermaid(raw)
     return _sanitize_mermaid(extracted)
 

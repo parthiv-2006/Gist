@@ -7,6 +7,7 @@ import re
 import threading
 from typing import AsyncGenerator, Optional
 
+import httpx
 from google import genai
 from google.genai import types as _genai_types  # noqa: F401 — kept for future use
 
@@ -16,6 +17,83 @@ from google.genai import types as _genai_types  # noqa: F401 — kept for future
 # The model name is defined here as a single source of truth.
 # gemini-2.5-flash is the current default; update here if the project migrates.
 GEMINI_MODEL = "gemini-2.5-flash"
+
+# ─── Groq Provider (text generation) ──────────────────────────────────────────
+# When GROQ_API_KEY is set, all TEXT generation routes through Groq's
+# OpenAI-compatible API instead of Gemini. Embeddings always stay on Gemini
+# (Groq has no embeddings endpoint). This keeps the app responsive when the
+# Gemini free tier returns 503 "high demand" errors.
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+
+
+def _groq_key() -> str:
+    return os.environ.get("GROQ_API_KEY", "")
+
+
+def _groq_model() -> str:
+    return os.environ.get("GROQ_MODEL", "llama-3.3-70b-versatile")
+
+
+def _use_groq() -> bool:
+    """Read at call time (not import time) so .env loads before this is checked."""
+    return bool(_groq_key())
+
+
+async def _groq_generate(prompt: str) -> str:
+    """Non-streaming chat completion via Groq (OpenAI-compatible)."""
+    async with httpx.AsyncClient(timeout=45.0) as client:
+        resp = await client.post(
+            f"{GROQ_BASE_URL}/chat/completions",
+            headers={"Authorization": f"Bearer {_groq_key()}"},
+            json={
+                "model": _groq_model(),
+                "messages": [{"role": "user", "content": prompt}],
+                "stream": False,
+            },
+        )
+        resp.raise_for_status()
+        data = resp.json()
+        return (data["choices"][0]["message"].get("content") or "").strip()
+
+
+async def _groq_stream(messages: list[dict]) -> AsyncGenerator[str, None]:
+    """Streaming chat completion via Groq. Yields content deltas as they arrive."""
+    async with httpx.AsyncClient(timeout=60.0) as client:
+        async with client.stream(
+            "POST",
+            f"{GROQ_BASE_URL}/chat/completions",
+            headers={"Authorization": f"Bearer {_groq_key()}"},
+            json={"model": _groq_model(), "messages": messages, "stream": True},
+        ) as resp:
+            resp.raise_for_status()
+            async for line in resp.aiter_lines():
+                if not line.startswith("data:"):
+                    continue
+                payload = line[len("data:"):].strip()
+                if payload == "[DONE]":
+                    return
+                try:
+                    delta = json.loads(payload)["choices"][0]["delta"].get("content")
+                except (json.JSONDecodeError, KeyError, IndexError):
+                    continue
+                if delta:
+                    yield delta
+
+
+async def generate_text(prompt: str, api_key: str | None = None) -> str:
+    """
+    Unified non-streaming text generation. Routes to Groq when GROQ_API_KEY is set,
+    otherwise falls back to Gemini. Callers handle their own MOCK_LLM short-circuit.
+    """
+    if _use_groq():
+        return await _groq_generate(prompt)
+    client = genai.Client(api_key=_resolve_api_key(api_key))
+    loop = asyncio.get_running_loop()
+    result = await loop.run_in_executor(
+        None,
+        lambda: client.models.generate_content(model=GEMINI_MODEL, contents=prompt),
+    )
+    return (result.text or "").strip()
 
 # ─── Mock Mode ────────────────────────────────────────────────────────────────
 # Set MOCK_LLM=true in your .env to skip all Gemini API calls during development.
@@ -264,17 +342,8 @@ async def generate_cluster_label(excerpts: list[str], api_key: str | None = None
     )
     prompt = _CLUSTER_LABEL_PROMPT.format(excerpts=wrapped)
 
-    client = genai.Client(api_key=_resolve_api_key(api_key))
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None,
-        lambda: client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-        ),
-    )
-
-    raw = _CONTROL_RE.sub("", (result.text or "")).strip().strip('"').strip("'")
+    text = await generate_text(prompt, api_key)
+    raw = _CONTROL_RE.sub("", text).strip().strip('"').strip("'")
     raw = raw[:_CLUSTER_LABEL_MAX_CHARS]
     if not raw or not _SAFE_LABEL_RE.match(raw):
         raise ValueError(f"Cluster label failed safety validation: {raw!r}")
@@ -326,17 +395,7 @@ async def generate_tags(original_text: str, explanation: str, api_key: str | Non
     )
 
     try:
-        resolved_key = _resolve_api_key(api_key)
-        client = genai.Client(api_key=resolved_key)
-        loop = asyncio.get_running_loop()
-        result = await loop.run_in_executor(
-            None,
-            lambda: client.models.generate_content(
-                model=GEMINI_MODEL,
-                contents=prompt,
-            ),
-        )
-        raw = (result.text or "").strip()
+        raw = (await generate_text(prompt, api_key)).strip()
         candidates = [t.strip().lower() for t in raw.split(",")]
         valid_tags: list[str] = []
         for tag in candidates:
@@ -387,13 +446,7 @@ async def generate_recall_card(
         original_text=original_text[:2000],
         explanation=explanation[:2000],
     )
-    client = genai.Client(api_key=_resolve_api_key(api_key))
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None,
-        lambda: client.models.generate_content(model=GEMINI_MODEL, contents=prompt),
-    )
-    raw = (result.text or "").strip()
+    raw = (await generate_text(prompt, api_key)).strip()
     cleaned = re.sub(r"```(?:json)?\s*|\s*```", "", raw).strip()
     try:
         card = json.loads(cleaned)
@@ -426,6 +479,22 @@ async def stream_explanation(
     if _MOCK_LLM:
         feature_type = "visual" if image_data else "text"
         async for chunk in _mock_stream_explanation(feature_type):
+            yield chunk
+        return
+
+    # ── Groq path (text only — Groq llama models have no image input) ──────────
+    if _use_groq():
+        if not messages:
+            prompt = build_prompt(
+                selected_text, page_context, complexity_level, has_image=bool(image_data)
+            )
+            groq_messages = [{"role": "user", "content": prompt}]
+        else:
+            groq_messages = [
+                {"role": "assistant" if m["role"] == "model" else "user", "content": m["content"]}
+                for m in messages
+            ]
+        async for chunk in _groq_stream(groq_messages):
             yield chunk
         return
 

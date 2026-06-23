@@ -16,7 +16,7 @@ from google import genai
 from pydantic import BaseModel, field_validator
 
 from app.limiter import limiter
-from app.services.gemini import GEMINI_MODEL, _resolve_api_key, classify_gemini_error
+from app.services.gemini import GEMINI_MODEL, _resolve_api_key, classify_gemini_error, generate_text
 
 logger = logging.getLogger(__name__)
 
@@ -58,22 +58,11 @@ async def _get_nested_definition(term: str, parent_context: str, api_key: str | 
     if _MOCK_LLM:
         return _MOCK_DEFINITION
 
-    client = genai.Client(api_key=_resolve_api_key(api_key))
     prompt = _PROMPT_TEMPLATE.format(
         context=(parent_context or "An explanation")[:_MAX_CONTEXT_LEN],
         term=term,
     )
-
-    loop = asyncio.get_running_loop()
-    result = await loop.run_in_executor(
-        None,
-        lambda: client.models.generate_content(
-            model=GEMINI_MODEL,
-            contents=prompt,
-        ),
-    )
-
-    raw = result.text or ""
+    raw = await generate_text(prompt, api_key)
     return raw.strip()
 
 
